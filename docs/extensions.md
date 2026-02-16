@@ -1,22 +1,25 @@
-# Operator catalogue
+# Extension catalogue
 
-Operators are external CRD converters that extend helmfile2compose to handle Kubernetes Custom Resources. Install them via [h2c-manager](maintainer/h2c-manager.md) or manually with `--extensions-dir`.
+Extensions are external modules that extend helmfile2compose beyond its built-in capabilities. Install them via [h2c-manager](maintainer/h2c-manager.md) or manually with `--extensions-dir`.
 
-CRDs are K8s entities that don't speak compose — exiles from a world with controllers and reconciliation loops. The operator system is the immigration office: each converter teaches h2c a new language, emulating what the K8s controller would have produced at runtime.
+Today, all extensions are **CRD operators** — converters that teach h2c how to handle Kubernetes Custom Resources. But the extension system is not limited to CRDs. Ingress rewriters, custom secret resolvers, alternative ConfigMap handlers — anything that fits the `kinds` + `convert()` interface can be an extension. The gate is open. For the glory of Yog Sa'rath.
 
-## Available operators
+CRDs are K8s entities that don't speak compose — exiles from a world with controllers and reconciliation loops. The extension system is the immigration office: each converter teaches h2c a new language, emulating what the K8s controller would have produced at runtime.
+
+## Available extensions
 
 ### keycloak
 
 | | |
 |---|---|
 | **Repo** | [h2c-operator-keycloak](https://github.com/helmfile2compose/h2c-operator-keycloak) |
+| **Type** | CRD operator |
 | **Kinds** | `Keycloak`, `KeycloakRealmImport` |
 | **Dependencies** | none |
 | **Priority** | 50 |
 | **Status** | stable |
 
-Converts Keycloak operator CRDs into compose services. The `Keycloak` CR becomes a compose service with KC_* environment variables (database, HTTP, hostname, proxy, features). `KeycloakRealmImport` CRs are written as JSON files and mounted for auto-import on startup.
+Converts Keycloak CRDs into compose services. The `Keycloak` CR becomes a compose service with KC_* environment variables (database, HTTP, hostname, proxy, features). `KeycloakRealmImport` CRs are written as JSON files and mounted for auto-import on startup.
 
 Features: TLS secret mounting, podTemplate volume support, bootstrap admin generation, realm placeholder resolution, K8s DNS rewriting in realm data.
 
@@ -31,6 +34,7 @@ python3 h2c-manager.py keycloak
 | | |
 |---|---|
 | **Repo** | [h2c-operator-certmanager](https://github.com/helmfile2compose/h2c-operator-certmanager) |
+| **Type** | CRD operator |
 | **Kinds** | `Certificate`, `ClusterIssuer`, `Issuer` |
 | **Dependencies** | `cryptography` (Python package) |
 | **Priority** | 10 |
@@ -52,6 +56,7 @@ pip install cryptography  # required dependency
 | | |
 |---|---|
 | **Repo** | [h2c-operator-trust-manager](https://github.com/helmfile2compose/h2c-operator-trust-manager) |
+| **Type** | CRD operator |
 | **Kinds** | `Bundle` |
 | **Dependencies** | optional `certifi` (falls back to system CA paths) |
 | **Priority** | 20 |
@@ -59,7 +64,7 @@ pip install cryptography  # required dependency
 
 Assembles CA trust bundles from cert-manager Secrets, ConfigMaps, inline PEM, and system default CAs. Injects the result as a synthetic ConfigMap. Pods that mount the trust bundle ConfigMap get the assembled CA chain automatically.
 
-Depends on the certmanager operator (needs its generated secrets). When installed via h2c-manager, certmanager is auto-resolved as a dependency.
+Depends on the certmanager extension (needs its generated secrets). When installed via h2c-manager, certmanager is auto-resolved as a dependency.
 
 ```bash
 python3 h2c-manager.py trust-manager

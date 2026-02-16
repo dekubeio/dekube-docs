@@ -179,7 +179,7 @@ CLI `--core-version` overrides this.
 
 ### `depends`
 
-List of [h2c extensions](../operators.md) required by this project. When `h2c-manager` is run with no explicit extensions on the command line, it reads this list and installs them automatically.
+List of [h2c extensions](../extensions.md) required by this project. When `h2c-manager` is run with no explicit extensions on the command line, it reads this list and installs them automatically.
 
 ```yaml
 depends:

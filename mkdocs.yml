@@ -43,7 +43,7 @@ nav:
       - Architecture: developer/architecture.md
       - Writing operators: developer/writing-operators.md
   - Reference:
-      - Operator catalogue: operators.md
+      - Extension catalogue: extensions.md
       - Limitations: limitations.md
       - Roadmap: roadmap.md
 

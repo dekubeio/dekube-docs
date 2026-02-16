@@ -1,6 +1,6 @@
 # h2c-manager
 
-h2c-manager is a lightweight package manager for helmfile2compose. It downloads the core script and CRD operator modules from GitHub releases. Python 3, stdlib only — no dependencies.
+h2c-manager is a lightweight package manager for helmfile2compose. It downloads the core script and extensions from GitHub releases. Python 3, stdlib only — no dependencies.
 
 ## Installation
 
@@ -13,19 +13,19 @@ curl -fsSL https://raw.githubusercontent.com/helmfile2compose/h2c-manager/main/h
 ## Usage
 
 ```bash
-# Core only (no operators)
+# Core only (no extensions)
 python3 h2c-manager.py
 
-# Core + keycloak operator
+# Core + keycloak extension
 python3 h2c-manager.py keycloak
 
-# Core + multiple operators
+# Core + multiple extensions
 python3 h2c-manager.py keycloak certmanager trust-manager
 
 # Pin core version
 python3 h2c-manager.py --core-version v2.0.0 keycloak
 
-# Pin operator version
+# Pin extension version
 python3 h2c-manager.py keycloak==0.1.0
 
 # Custom install directory (default: .h2c/)
@@ -63,7 +63,7 @@ Defaults: `--helmfile-dir .`, `--extensions-dir .h2c/extensions` (if it exists),
 - No flag: latest GitHub release of `helmfile2compose/h2c-core`
 - `--core-version v2.0.0`: exact tag
 
-### Operators
+### Extensions
 
 - Bare name (`keycloak`): latest GitHub release
 - Pinned (`keycloak==0.1.0`): exact version. The `v` prefix is added automatically if missing (`0.1.0` -> `v0.1.0`).
@@ -72,7 +72,7 @@ No version ranges. Just `latest` and `==exact`.
 
 ## Dependency resolution
 
-Operators can declare dependencies in the registry. For example, `trust-manager` depends on `certmanager`:
+Extensions can declare dependencies in the registry. For example, `trust-manager` depends on `certmanager`:
 
 ```bash
 python3 h2c-manager.py trust-manager
@@ -85,19 +85,19 @@ Dependencies are resolved one level deep (no transitive chains). Duplicates are 
 
 ## Python dependency checking
 
-Some operators require Python packages (e.g. certmanager requires `cryptography`). h2c-manager checks if they're installed and prints an aggregated warning:
+Some extensions require Python packages (e.g. certmanager requires `cryptography`). h2c-manager checks if they're installed and prints an aggregated warning:
 
 ```
-Missing Python dependencies for operators:
+Missing Python dependencies:
   certmanager: cryptography
 Install with: pip install cryptography
 ```
 
-This is a warning, not a fatal error — the operator file is still downloaded. Install the dependency before running helmfile2compose with that operator.
+This is a warning, not a fatal error — the extension file is still downloaded. Install the dependency before running helmfile2compose with that extension.
 
-## Operator registry
+## Extension registry
 
-The registry lives at `helmfile2compose/h2c-manager` as `extensions.json`. It maps extension names (operators, ingress rewriters, etc.) to GitHub repos:
+The registry lives at `helmfile2compose/h2c-manager` as `extensions.json`. It maps extension names to GitHub repos:
 
 ```json
 {
@@ -119,7 +119,7 @@ Available versions are whatever tags/releases exist on each repo. The registry d
 
 Open a PR to `helmfile2compose/h2c-manager` adding your extension to `extensions.json`. Requirements:
 
-- The operator repo must exist and have at least one GitHub Release
+- The extension repo must exist and have at least one GitHub Release
 - The `file` field must point to the `.py` file in the repo root
 - Optional: `requirements.txt` in the repo root (downloaded and checked by the manager)
 

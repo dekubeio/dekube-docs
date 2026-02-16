@@ -33,7 +33,7 @@ compose.yml + Caddyfile
 - **`WorkloadConverter`** — kinds: DaemonSet, Deployment, Job, StatefulSet
 - **`IngressConverter`** — kinds: Ingress
 
-### External converters (operators)
+### External converters (extensions)
 
 Loaded via `--extensions-dir`. Each `.py` file (or one-level subdirectory with `.py` files) is scanned for classes with `kinds` and `convert()`. Loaded converters are sorted by `priority` (lower = earlier, default 100) and registered into the dispatch loop.
 
@@ -68,7 +68,7 @@ See [Writing operators](writing-operators.md) for the full guide.
 
 ### Silently ignored (no compose equivalent)
 
-- RBAC, ServiceAccounts, NetworkPolicies, CRDs (unless claimed by a loaded operator), IngressClass, Webhooks, Namespaces
+- RBAC, ServiceAccounts, NetworkPolicies, CRDs (unless claimed by a loaded extension), IngressClass, Webhooks, Namespaces
 - Probes (liveness, readiness, startup) — no healthcheck generation
 - Unknown kinds trigger a warning
 
@@ -80,8 +80,8 @@ See [Writing operators](writing-operators.md) for the full guide.
 4. **Build port map** — K8s Service port -> container port resolution (named ports resolved via container spec).
 5. **Pre-register PVCs** — from both regular volumes and `volumeClaimTemplates`.
 6. **First-run init** — auto-exclude K8s-only workloads, generate default config.
-7. **Dispatch to converters** — each converter receives its kind's manifests + a `ConvertContext`. External operators run in priority order (lower first), then built-in converters.
-8. **Post-process env** — DNS rewriting, alias resolution, port remapping, replacements applied to all service environments (idempotent — catches operator-produced services).
+7. **Dispatch to converters** — each converter receives its kind's manifests + a `ConvertContext`. Extensions run in priority order (lower first), then built-in converters.
+8. **Post-process env** — DNS rewriting, alias resolution, port remapping, replacements applied to all service environments (idempotent — catches extension-produced services).
 9. **Apply overrides** — deep merge from config `overrides:` and `services:` sections.
 10. **Hostname truncation** — services with names >63 chars get explicit `hostname:`.
 11. **Write output** — `compose.yml`, `Caddyfile`, config/secret files.

@@ -44,7 +44,7 @@ The generated `compose.yml` contains your database passwords, your API keys, you
 
 In Kubernetes, services can use mTLS (via service mesh or cert-manager) for internal communication. In compose, inter-service traffic is plain HTTP on the shared bridge network by default. Only the Caddy reverse proxy terminates TLS for external access.
 
-The [certmanager operator](operators.md#certmanager) can generate real certificates at conversion time, enabling TLS between services when needed. Caddy backend SSL annotations (`haproxy.org/server-ssl`, `nginx.ingress.kubernetes.io/backend-protocol: HTTPS`) are translated to Caddy TLS transport configuration.
+The [certmanager extension](extensions.md#certmanager) can generate real certificates at conversion time, enabling TLS between services when needed. Caddy backend SSL annotations (`haproxy.org/server-ssl`, `nginx.ingress.kubernetes.io/backend-protocol: HTTPS`) are translated to Caddy TLS transport configuration.
 
 ### Bind mount permissions (Linux / WSL)
 
@@ -93,9 +93,9 @@ Not converted. A CronJob would need an external scheduler or a `sleep`-loop wrap
 
 ### CRDs (Custom Resource Definitions)
 
-Operator-managed resources (`Keycloak`, `KeycloakRealmImport`, Zalando `postgresql`, Strimzi `Kafka`, etc.) are skipped with a warning unless a loaded [operator](operators.md) handles them.
+Operator-managed resources (`Keycloak`, `KeycloakRealmImport`, Zalando `postgresql`, Strimzi `Kafka`, etc.) are skipped with a warning unless a loaded [extension](extensions.md) handles them.
 
-External operators can be loaded via `--extensions-dir` or installed with [h2c-manager](maintainer/h2c-manager.md). See the [operator catalogue](operators.md) for available converters.
+Extensions can be loaded via `--extensions-dir` or installed with [h2c-manager](maintainer/h2c-manager.md). See the [extension catalogue](extensions.md) for available converters.
 
 ### Longhorn
 

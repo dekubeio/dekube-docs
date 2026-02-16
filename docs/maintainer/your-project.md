@@ -48,7 +48,7 @@ reflector:
 
 Everything else stays enabled — the tool needs to see your Deployments, Services, ConfigMaps, Secrets, and Ingress resources to do its job.
 
-If your stack uses CRDs that have an [h2c operator](../operators.md) (Keycloak, cert-manager, trust-manager), keep those enabled — the operator converter will handle them.
+If your stack uses CRDs that have an [h2c extension](../extensions.md) (Keycloak, cert-manager, trust-manager), keep those enabled — the extension will handle them.
 
 ## First run
 
@@ -81,7 +81,7 @@ See [Configuration](../user/configuration.md) for the full reference.
 | `--from-dir` | Skip helmfile, read pre-rendered YAML from this directory |
 | `--output-dir` | Where to write output files (default: `.`) |
 | `--compose-file` | Name of the generated compose file (default: `compose.yml`) |
-| `--extensions-dir` | Directory containing external operator `.py` files |
+| `--extensions-dir` | Directory containing extension `.py` files |
 
 ### Output files
 
@@ -98,11 +98,11 @@ See [Configuration](../user/configuration.md) for the full reference.
 - **Services** — hostname rewriting, alias resolution, port remapping. If your K8s Service remaps port 80 to targetPort 8080, the tool rewrites URLs and env vars automatically.
 - **Ingress** — converted to a Caddy reverse proxy with automatic TLS. Path-based routing, host-based routing, catch-all backends. Backend SSL annotations supported.
 - **PVCs** — registered in config as bind mounts. `volumeClaimTemplates` (StatefulSets) included.
-- **CRDs** — with [operators](../operators.md), Keycloak, cert-manager, and trust-manager CRDs are fully converted.
+- **CRDs** — with [extensions](../extensions.md), Keycloak, cert-manager, and trust-manager CRDs are fully converted.
 
 ## What needs manual help
 
-- **Unsupported CRDs** — Zalando PostgreSQL, Strimzi Kafka, etc. are skipped with a warning unless you write an operator. You'll need to add equivalent services manually via the `services:` section in config.
+- **Unsupported CRDs** — Zalando PostgreSQL, Strimzi Kafka, etc. are skipped with a warning unless you write an extension. You'll need to add equivalent services manually via the `services:` section in config.
 - **Bitnami images** — often need replacing with vanilla equivalents via `overrides:`. Bitnami images have opinions about environment variables, init scripts, and volume paths that don't always translate well.
 - **S3 virtual-hosted style** — compose DNS can't resolve `bucket.minio:9000`. Force path-style in your app config and use a `replacement` if needed.
 - **CronJobs** — not converted. Run them externally or use a sleep-loop wrapper (but please don't).
@@ -123,11 +123,11 @@ Any other controller's annotations (Traefik, Contour, Ambassador, etc.) are **si
 
 1. **One helmfile, two environments.** Keep your K8s environment as-is. Add a `compose` environment that disables cluster-only components. Same charts, same values (mostly), different targets.
 
-2. **Ship a `generate-compose.sh`.** A wrapper script that downloads h2c-manager, installs h2c + operators, runs the conversion, and maybe generates secrets. See stoatchat-platform or lasuite-platform for examples.
+2. **Ship a `generate-compose.sh`.** A wrapper script that downloads h2c-manager, installs h2c + extensions, runs the conversion, and maybe generates secrets. See stoatchat-platform or lasuite-platform for examples.
 
 3. **Ship a `helmfile2compose.yaml.template`.** Pre-configure excludes, overrides, and volume mappings that are specific to your project. The generate script copies it to `helmfile2compose.yaml` on first run. Users then customize their copy.
 
-4. **Pin a release.** Use `--core-version` in h2c-manager and `==version` for operators. Don't point at `main`. The tool's behavior may change between releases (or mutate on its own, I don't know anything at this point).
+4. **Pin a release.** Use `--core-version` in h2c-manager and `==version` for extensions. Don't point at `main`. The tool's behavior may change between releases (or mutate on its own, I don't know anything at this point).
 
 ## The two projects that caused this to exist
 
