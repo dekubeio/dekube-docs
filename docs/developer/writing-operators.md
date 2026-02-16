@@ -4,7 +4,7 @@ An operator is an external CRD converter — a Python module that teaches helmfi
 
 > *To name a thing is to summon it. To teach another its name is to bind your fate to what answers.*
 >
-> — *Book of Eibon, Des Noms et des Liens (probablement)*
+> — *Book of Eibon, On Names and Bindings (probably²)*
 
 ## The contract
 

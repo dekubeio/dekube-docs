@@ -40,4 +40,4 @@ h2c is converging toward a K8s-to-compose emulator — taking declarative K8s re
 - **In-cluster auth** — ServiceAccount tokens, RBAC-gated API calls. [The documents have been falsified](https://github.com/baptisterajaut/h2c-api#leader-election). We don't talk about it.
 
 > *He who flattens the world into files shall find that each file begets another, and each mount begets a service, until the flattening itself becomes a world — and the disciple realizes he has built not a bridge, but a second shore.*
-> — *Necronomicon, On the Limits of Flattening (probably)*
+> — *Necronomicon, On the Limits of Flattening (I think)*
