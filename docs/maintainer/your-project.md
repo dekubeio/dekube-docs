@@ -4,7 +4,7 @@ I'm sorry you're here. Truly. If you're reading this, it means you maintain a he
 
 I've been there. Twice. This tool is the scar tissue.
 
-From now on we will call this script **h2c**, because the concept is already mind-numbing enough — reading the full "helmfile2compose" every three words will certainly not help.
+From now on we will call this project **h2c**, because the concept is already mind-numbing enough — reading the full "helmfile2compose" every three words will certainly not help.
 
 > *He who renders the celestial into the mundane does not ascend — he merely ensures that both realms now share his suffering equally.*
 >

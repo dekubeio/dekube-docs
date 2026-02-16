@@ -6,9 +6,7 @@ For the emulation boundary — what can cross the bridge and what can't — see 
 
 ## Done
 
-The Moldavian Scam got its green card. [^1]
-
-[^1]: "Moldavian Scam" (arnaque moldave) is a French Hearthstone community reference to pro player Torlk (a.k.a. "Jérémy Torlkany"), famous for pulling off improbably lucky plays in tournaments. Not a comment on Moldova.
+The Moldavian Scam got its green card. ("Moldavian Scam" — *arnaque moldave* — is a French Hearthstone community reference to pro player Torlk, famous for pulling off improbably lucky plays in tournaments. Not a comment on Moldova.)
 
 What started as a half-measure — CRD converters forging fake Deployments — is now a proper converter abstraction with external loading, a package manager, and its own GitHub org. The documents are no longer falsified. They are *official*.
 

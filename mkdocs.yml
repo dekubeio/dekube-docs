@@ -42,6 +42,7 @@ nav:
       - Concepts: developer/concepts.md
       - Architecture: developer/architecture.md
       - Writing operators: developer/writing-operators.md
+      - Code quality: developer/code-quality.md
   - Reference:
       - Extension catalogue: extensions.md
       - Limitations: limitations.md
