@@ -57,7 +57,7 @@ Despite the name, **helmfile is not required** — the core accepts any director
 |------|-------------|
 | [h2c-core](https://github.com/helmfile2compose/h2c-core) | Core converter script (`helmfile2compose.py`) |
 | [h2c-manager](https://github.com/helmfile2compose/h2c-manager) | Package manager + extension registry |
-| [h2c-docs](https://github.com/helmfile2compose/h2c-docs) | This documentation site |
+| [h2c-docs](https://github.com/helmfile2compose/helmfile2compose.github.io) | This documentation site |
 | [h2c-operator-keycloak](https://github.com/helmfile2compose/h2c-operator-keycloak) | Keycloak and KeycloakRealmImport CRDs |
 | [h2c-operator-certmanager](https://github.com/helmfile2compose/h2c-operator-certmanager) | Certificate, ClusterIssuer, Issuer CRDs |
 | [h2c-operator-trust-manager](https://github.com/helmfile2compose/h2c-operator-trust-manager) | Bundle CRD (trust-manager) |

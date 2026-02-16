@@ -2,7 +2,7 @@
 
 Documentation site for [helmfile2compose](https://github.com/helmfile2compose).
 
-Published at **[helmfile2compose.github.io/h2c-docs](https://helmfile2compose.github.io/h2c-docs/)**.
+Published at **[helmfile2compose.github.io](https://helmfile2compose.github.io/)**.
 
 ## Local preview
 
