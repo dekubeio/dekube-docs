@@ -10,6 +10,12 @@ name: my-platform
 volume_root: ./data
 caddy_email: admin@example.com
 
+core_version: v2.0.0
+depends:
+  - keycloak
+  - certmanager==0.1.0
+  - trust-manager
+
 volumes:
   data-postgresql:
     driver: local
@@ -160,6 +166,31 @@ If set, generates a global Caddy block for automatic HTTPS certificate provision
 ### `caddy_tls_internal`
 
 If `true`, adds `tls internal` to all Caddyfile host blocks. Forces Caddy to use its internal CA for all domains (useful for `.local` development domains).
+
+### `core_version`
+
+Pin the h2c-core version. When `h2c-manager` runs, it uses this instead of fetching the latest release.
+
+```yaml
+core_version: v2.0.0
+```
+
+CLI `--core-version` overrides this.
+
+### `depends`
+
+List of [h2c extensions](../operators.md) required by this project. When `h2c-manager` is run with no explicit extensions on the command line, it reads this list and installs them automatically.
+
+```yaml
+depends:
+  - keycloak
+  - certmanager==0.1.0
+  - trust-manager
+```
+
+Version pinning is supported with `==`. Explicit CLI extensions override the yaml list.
+
+This turns `helmfile2compose.yaml` into the single source of truth for the project's dependencies — no hardcoded lists in shell scripts.
 
 ### `disableCaddy`
 

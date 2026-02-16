@@ -123,6 +123,32 @@ Open a PR to `helmfile2compose/h2c-manager` adding your extension to `extensions
 - The `file` field must point to the `.py` file in the repo root
 - Optional: `requirements.txt` in the repo root (downloaded and checked by the manager)
 
+## Declarative dependencies
+
+If `helmfile2compose.yaml` exists, h2c-manager reads `core_version` and `depends` from it:
+
+```yaml
+# helmfile2compose.yaml
+core_version: v2.0.0
+depends:
+  - keycloak
+  - certmanager==0.1.0
+  - trust-manager
+```
+
+```bash
+python3 h2c-manager.py
+# Core version from helmfile2compose.yaml: v2.0.0
+# Fetching h2c-core v2.0.0...
+# Reading extensions from helmfile2compose.yaml: keycloak, certmanager==0.1.0, trust-manager
+# Fetching extension keycloak v0.1.0...
+# ...
+```
+
+CLI flags override the yaml: `--core-version` overrides `core_version`, explicit extension args override `depends`. This keeps behavior predictable: either the yaml drives it, or you drive it.
+
+h2c-manager also checks that `pyyaml` is installed (required by h2c-core) and warns alongside any extension-specific missing dependencies.
+
 ## Integration with generate-compose.sh
 
 Projects that ship a `generate-compose.sh` wrapper can use h2c-manager as the bootstrap:
@@ -132,7 +158,7 @@ Projects that ship a `generate-compose.sh` wrapper can use h2c-manager as the bo
 set -euo pipefail
 
 H2C_MANAGER_URL="https://raw.githubusercontent.com/helmfile2compose/h2c-manager/main/h2c-manager.py"
-curl -fsSL "$H2C_MANAGER_URL" -o /tmp/h2c-manager.py
-python3 /tmp/h2c-manager.py --core-version v2.0.0 keycloak==0.1.0
-python3 /tmp/h2c-manager.py run -e compose
+curl -fsSL "$H2C_MANAGER_URL" -o h2c-manager.py
+python3 h2c-manager.py          # reads depends from helmfile2compose.yaml
+python3 h2c-manager.py run -e compose
 ```
