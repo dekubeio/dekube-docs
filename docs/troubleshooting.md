@@ -54,9 +54,10 @@ nerdctl compose silently ignores `networks.*.aliases` — the key that makes K8s
 python3 h2c-manager.py flatten-internal-urls
 ```
 
-Trade-off: flattening is incompatible with the `cert-manager` extension (certificate SANs reference FQDNs). If you need inter-service TLS, switch to Docker Compose instead — see [limitations](limitations.md#network-aliases-nerdctl) for the full list of options.
+!!! note "nerdctl + cert-manager"
+    `flatten-internal-urls` is incompatible with the `cert-manager` extension — certificate SANs reference FQDNs that flattening strips. If you start on nerdctl with flattening today and later need inter-service TLS, you will have to switch to Docker Compose (or Podman Compose) and drop this transform. Plan accordingly. See [limitations](limitations.md#network-aliases-nerdctl) for the full list of options.
 
-If you are running Rancher Desktop with containerd: switching to dockerd (moby) in Rancher Desktop settings is also an option. One checkbox, one VM restart.
+If you are running Rancher Desktop with containerd: switching to dockerd (moby) in Rancher Desktop settings avoids the problem entirely. One checkbox, one VM restart — and you keep full compatibility with cert-manager down the road.
 
 ## For maintainers: chart-specific issues
 
