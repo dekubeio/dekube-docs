@@ -31,7 +31,7 @@ Workarounds:
 
 Kubernetes init containers block the main container until they complete. In compose, init containers become separate services with `restart: on-failure` — they retry until they succeed, but nothing prevents the main container from starting concurrently and crash-looping until its dependencies are ready.
 
-This works in practice (everything eventually converges), but expect noisy logs on first boot.
+This works in practice (everything eventually converges), but expect noisy logs on first boot. Kubernetes solved this elegantly — init containers block, dependencies are declared, the scheduler respects the order. You chose to leave that behind.
 
 Why not `depends_on`? nerdctl compose ignores it entirely. Docker compose supports `condition: service_completed_successfully`, but relying on it would break nerdctl compatibility. Brute force retry works everywhere.
 
@@ -61,7 +61,7 @@ The generated `compose.yml` contains your database passwords, your API keys, you
 
 ### TLS between services
 
-In Kubernetes, services can use mTLS (via service mesh or cert-manager) for internal communication. In compose, inter-service traffic is plain HTTP on the shared bridge network by default. Only the Caddy reverse proxy terminates TLS for external access.
+In Kubernetes, services can use mTLS (via service mesh or cert-manager) for internal communication. You had encryption between every pod. You had mutual authentication. You had a trust model. In compose, inter-service traffic is plain HTTP on the shared bridge network by default. Only the Caddy reverse proxy terminates TLS for external access.
 
 The [cert-manager extension](extensions.md#cert-manager) can generate real certificates at conversion time, enabling TLS between services when needed. Caddy backend SSL annotations (`haproxy.org/server-ssl`, `nginx.ingress.kubernetes.io/backend-protocol: HTTPS`) are translated to Caddy TLS transport configuration.
 
@@ -77,7 +77,7 @@ Linux hostnames are limited to 63 characters. Compose uses the service name as t
 
 ## What is ignored
 
-Safe to skip — these affect the cluster's operational behavior, not what the application does.
+Safe to skip — but only because you already abandoned the cluster that would enforce them. These affect operational behavior, not what the application does.
 
 ### Scaling and replicas
 

@@ -106,4 +106,4 @@ These are Docker/Compose limitations, not conversion limitations. See [Limitatio
 - **hostNetwork** — K8s pods can bind directly to the host network. In Compose, every exposed port must be mapped explicitly.
 - **S3 virtual-hosted style** — AWS SDKs default to virtual-hosted bucket URLs (`bucket-name.s3:9000`). Compose DNS can't resolve dotted hostnames. Configure your app to use path-style access and use a `replacement` if needed.
 
-These are not bugs. These are the terms and conditions you accepted when you signed the pact.
+These are not bugs. These are the terms and conditions you accepted when you decided to commit perjury upon the Kubernetes temple.

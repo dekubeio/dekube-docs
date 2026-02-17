@@ -24,7 +24,9 @@ What started as a half-measure — CRD converters forging fake Deployments — i
 
 Today, ConfigMap, Secret, Service, and PVC processing is hardcoded in the core. It works, but it means you can't swap out how any of these are handled without forking the script. The goal: make every kind dispatched through the same extension interface. Want to handle ConfigMaps differently? Write a ConfigMap extension. Want to add a custom Secret resolver? Drop it in `extensions/`.
 
-Same for Ingress annotations — translation is currently hardcoded to `haproxy.org/*` and `nginx.ingress.kubernetes.io/*`. An `IngressRewriter` extension dispatched by `ingressClassName` or annotation prefix would let you add Traefik, Contour, or whatever your cluster uses without touching the core.
+Same for Ingress annotations — translation is currently hardcoded to `haproxy.org/*` and `nginx.ingress.kubernetes.io/*`. An `IngressRewriter` extension dispatched by `ingressClassName` or annotation prefix would let you swap annotation sets without touching the core. The rewriter contract should give extensions full control over the Caddy output — raw directives, not a fixed set of fields. HAProxy stays in core (it's what we use). Nginx moves out as a deprecated extension. Should some crazy cultist — because that won't be me — write a Traefik one, Contour one, Istio one: same ceremony.
+
+The Kubernetes [Gateway API](https://gateway-api.sigs.k8s.io/) is the eventual successor to Ingress — `HTTPRoute`, `Gateway`, `GRPCRoute` instead of `Ingress`. A `GatewayRewriter` extension would handle these kinds the same way `IngressRewriter` handles Ingress annotations: read the Gateway API resources, produce Caddy config. No rush — Gateway API adoption is still ramping up — but the extension system should be ready for it when it comes.
 
 ### Shrink the core
 

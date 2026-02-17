@@ -22,7 +22,7 @@ For the mechanical reality of how the conversion works, see [Architecture](archi
 
 ## The emulation boundary
 
-h2c is converging toward a K8s-to-compose emulator — taking declarative K8s representations and materializing them in a compose runtime. Not everything can cross that bridge.
+h2c is converging toward a K8s-to-compose emulator — taking declarative K8s representations and materializing them in a compose runtime. Not everything survives the crossing.
 
 ### Three tiers
 
@@ -63,3 +63,15 @@ The temple was desecrated. But the names — the names refused to die.
 > *The scribe tore the names from the temple walls and carved simpler ones in their place. But the prayers failed — for the gods answer only to the names they were given at consecration. And so the scribe, humbled, carved the old names back, letter by letter, onto walls that were never meant to hold them.*
 >
 > — *The Nameless City, On Names That Refuse to Die (unverified)*
+
+## On knowing what you destroy
+
+Again: this tool works. Not "works for a demo" — works with real helmfiles, real operators, real cert chains, real multi-service platforms. Applications don't notice they've been evicted from Kubernetes.
+
+The original intent was reasonable: don't abandon the power of Kubernetes just to maintain a parallel compose setup. One source of truth, two outputs. Clean. Elegant, even. Then the edge cases started. Then the init containers. Then the cert chains. Then someone built a fake apiserver and nobody stopped him.
+
+The uncomfortable truth is that none of this would work without intimate knowledge of the temple. You cannot desecrate what you do not understand. Every shortcut in the converter exists because someone knew exactly what Kubernetes does at each layer and how to fake it convincingly enough. A lesser heresy would have produced a broken tool. This one produces working compose files, which is arguably worse.
+
+> *The architect knew every stone, and he respected every stone. Yet he tore the temple down and stripped it of its beauty — all so he would not have to build a shed beside it.*
+>
+> — *Cultes des Goules, On Stones That Were Built to Withstand Greatness (trust me on this)*
