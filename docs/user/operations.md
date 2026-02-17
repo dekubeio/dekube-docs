@@ -66,7 +66,7 @@ For `.local` domains, Caddy uses its internal CA. Browsers show a certificate wa
 
 ### Database not ready
 
-Init jobs (migrations, superuser creation) use `restart: on-failure` and retry until the database is ready. This is brute-force purgatory — the job crashes, restarts, crashes again, and eventually the database deigns to accept it. The logs will be noisy. This is normal. Do not panic.
+Init jobs (migrations, superuser creation) use `restart: on-failure` and retry until the database is ready. This is brute-force purgatory — the job crashes, restarts, crashes again, and eventually the database deigns to accept it. The logs will be noisy. This is normal. This is penance.
 
 Check progress:
 

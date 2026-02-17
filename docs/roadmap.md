@@ -26,6 +26,14 @@ Today, ConfigMap, Secret, Service, and PVC processing is hardcoded in the core. 
 
 Same for Ingress annotations — translation is currently hardcoded to `haproxy.org/*` and `nginx.ingress.kubernetes.io/*`. An `IngressRewriter` extension dispatched by `ingressClassName` or annotation prefix would let you add Traefik, Contour, or whatever your cluster uses without touching the core.
 
+### Shrink the core
+
+The base objects (ConfigMap, Secret, Service, PVC) stay in the core — they're needed for any cluster. What should move out: optional convenience features that aren't required for a minimal conversion. Fix-permissions init containers, vendor-specific Ingress annotation rewriting, and similar opinionated logic are all candidates for extraction into extensions. Smaller core = less tentacles at your door.
+
+### Decentralized dependency resolution
+
+Today, extension metadata (repo, file, depends) lives in a central `extensions.json` in h2c-manager. That works for a handful of extensions but won't scale. The plan: each extension repo declares its own dependencies (and optional dependencies) in a manifest file at its root (e.g. `h2c-extension.json`). h2c-manager fetches the manifest from the repo directly instead of consulting a central registry. `extensions.json` becomes a lightweight index (name → repo) or goes away entirely. A single sacred text that all disciples must consult before summoning — the hubris writes itself.
+
 ### More extensions
 
 New CRD operators as needed. The extension system exists — writing a new one is straightforward (see [Writing operators](developer/writing-operators.md)).

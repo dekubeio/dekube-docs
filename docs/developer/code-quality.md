@@ -23,7 +23,7 @@ All repos use the same toolchain:
 | Repo | Score | Notes |
 |------|-------|-------|
 | h2c-core | 9.71/10 | Style only (too-many-args on converter internals) |
-| h2c-manager | 9.92/10 | Style only |
+| h2c-manager | 10.00/10 | — |
 | h2c-operator-keycloak | 9.75/10 | Style + expected `import-error` (helmfile2compose not in path) |
 | h2c-operator-cert-manager | 9.45/10 | Style + expected `import-error` |
 | h2c-operator-servicemonitor | 9.35/10 | Style + expected `import-error` |
@@ -55,16 +55,18 @@ Zero warnings across all repos. We don't know how. We don't ask.
 
 No D/E/F rated functions.
 
-### Average complexity
+### Average complexity & maintainability
 
-| Repo | Average CC | Rating |
-|------|----------:|--------|
-| h2c-operator-trust-manager | 7.8 | B |
-| h2c-core | 6.6 | B |
-| h2c-operator-servicemonitor | 5.3 | B |
-| h2c-operator-keycloak | 4.6 | A |
-| h2c-manager | 4.0 | A |
-| h2c-operator-cert-manager | 4.0 | A |
+| Repo | Avg CC | CC rating | MI | MI rating |
+|------|-------:|-----------|---:|-----------|
+| h2c-operator-trust-manager | 7.8 | B | 64.66 | A |
+| h2c-core | 6.6 | B | 0.00 | C |
+| h2c-operator-servicemonitor | 5.3 | B | 40.86 | A |
+| h2c-operator-keycloak | 4.6 | A | 32.28 | A |
+| h2c-manager | 3.95 | A | 43.55 | A |
+| h2c-operator-cert-manager | 4.0 | A | 47.70 | A |
+
+h2c-core MI is 0.00. MI is the only metric that sees through the cloud of desecration — alas, it is for the wrong reasons. Radon penalizes file size and volume of code heavily, so a 1700-line single-file converter with 50+ functions will bottom out regardless of internal structure. It condemned the temple not for the rituals performed within, but for the square footage.
 
 ## The uncomfortable truth
 
