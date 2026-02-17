@@ -4,6 +4,8 @@
 
 Convert Kubernetes manifests to `compose.yml` + `Caddyfile`. Not Kubernetes-in-Docker (kind, k3d, minikube...) — no cluster, no kubelet, no shim. A devolution of the power of Kubernetes into the simplicity of compose: real `docker compose up`, real Caddy, plain stupid containers.
 
+Here because this upmost abomination is causing issues? Here's the path to (partial) redemption: **[Troubleshooting](troubleshooting.md)**.
+
 ## But why?
 
 There are dozens of tools that go from Compose to Kubernetes ([Kompose](https://github.com/kubernetes/kompose), [Compose Bridge](https://docs.docker.com/compose/bridge/), [Move2Kube](https://move2kube.konveyor.io/), etc.) — that's the "normal" direction. Almost nothing goes the other way, because who would design their deployment in K8s first and then downgrade?
@@ -31,6 +33,7 @@ The name is `helmfile2compose` because both helmfile and docker-compose share th
 *"I have a helmfile and need to provide a compose deployment."*
 
 - **[Your project](maintainer/your-project.md)** — installation, first run, adapting h2c for your own helmfile
+- **[Known workarounds](maintainer/known-workarounds/index.md)** — sushi recipes for the tentacles that don't fit
 - **[h2c-manager](maintainer/h2c-manager.md)** — installing h2c and extensions via the package manager
 
 ### For developers
@@ -39,6 +42,8 @@ The name is `helmfile2compose` because both helmfile and docker-compose share th
 - **[Architecture](developer/architecture.md)** — converter pipeline, what gets converted, dispatch loop
 - **[Writing operators](developer/writing-operators.md)** — develop your own CRD converter
 - **[Code quality](developer/code-quality.md)** — linter scores, complexity metrics, existential dread
+
+- **[Troubleshooting](troubleshooting.md)** — when the cursed lands fight back
 
 ### Reference
 
@@ -65,7 +70,7 @@ Despite the name, **helmfile is not required** — the core accepts any director
 What started as a single script became an ecosystem of three components:
 
 - **[h2c-core](https://github.com/helmfile2compose/h2c-core)** — *the mad scribe.* A single Python script (~1500 lines) that reads K8s manifests and writes compose. Handles Deployments, StatefulSets, DaemonSets, Jobs, Services, Ingress, ConfigMaps, Secrets, PVCs, init containers, sidecars, and more things than anyone asked for.
-- **[Extensions](extensions.md)** — *the damned.* External modules that teach h2c new tricks. Today, all extensions are CRD operators (Keycloak, cert-manager, trust-manager) — but the system is open to anything that fits the interface. Each extension is a single `.py` file. For the glory of Yog Sa'rath.
+- **[Extensions](extensions.md)** — *the damned.* External modules that teach h2c new tricks. Today, all extensions are CRD operators (Keycloak, cert-manager, trust-manager, servicemonitor) — but the system is open to anything that fits the interface. Each extension is a single `.py` file. For the glory of Yog Sa'rath.
 - **[h2c-manager](https://github.com/helmfile2compose/h2c-manager)** — *the dark priest.* Downloads h2c-core and extensions from GitHub releases, resolves dependencies, and provides a `run` shortcut. Reads `helmfile2compose.yaml` for declarative dependency management. Stdlib only, no dependencies.
 
 ## Repositories
@@ -76,8 +81,9 @@ What started as a single script became an ecosystem of three components:
 | [h2c-manager](https://github.com/helmfile2compose/h2c-manager) | Package manager + extension registry |
 | [helmfile2compose.github.io](https://github.com/helmfile2compose/helmfile2compose.github.io) | This documentation site |
 | [h2c-operator-keycloak](https://github.com/helmfile2compose/h2c-operator-keycloak) | Keycloak and KeycloakRealmImport CRDs |
-| [h2c-operator-certmanager](https://github.com/helmfile2compose/h2c-operator-certmanager) | Certificate, ClusterIssuer, Issuer CRDs |
+| [h2c-operator-cert-manager](https://github.com/helmfile2compose/h2c-operator-cert-manager) | Certificate, ClusterIssuer, Issuer CRDs |
 | [h2c-operator-trust-manager](https://github.com/helmfile2compose/h2c-operator-trust-manager) | Bundle CRD (trust-manager) |
+| [h2c-operator-servicemonitor](https://github.com/helmfile2compose/h2c-operator-servicemonitor) | Prometheus and ServiceMonitor CRDs |
 
 ## Compatible projects
 

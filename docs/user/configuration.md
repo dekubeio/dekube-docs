@@ -10,10 +10,10 @@ name: my-platform
 volume_root: ./data
 caddy_email: admin@example.com
 
-core_version: v2.0.0
+core_version: v2.1.0
 depends:
   - keycloak
-  - certmanager==0.1.0
+  - cert-manager==0.1.0
   - trust-manager
 
 volumes:
@@ -176,7 +176,7 @@ If `true`, adds `tls internal` to all Caddyfile host blocks. Forces Caddy to use
 Pin the h2c-core version for [h2c-manager](../maintainer/h2c-manager.md). Ignored by h2c-core itself.
 
 ```yaml
-core_version: v2.0.0
+core_version: v2.1.0
 ```
 
 ### `depends`
@@ -186,7 +186,7 @@ List of [h2c extensions](../extensions.md) required by this project. h2c-manager
 ```yaml
 depends:
   - keycloak
-  - certmanager==0.1.0
+  - cert-manager==0.1.0
   - trust-manager
 ```
 

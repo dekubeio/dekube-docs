@@ -8,6 +8,25 @@ Kubernetes is an orchestrator. Docker Compose is a list of containers. This docu
 
 Things you need to know for the output to work correctly.
 
+### Network aliases (nerdctl) {#network-aliases-nerdctl}
+
+!!! warning "This is a hard requirement"
+    If you use nerdctl compose, **nothing will work**. This is not a cosmetic limitation — services will fail to reach each other.
+
+h2c generates Docker Compose `networks.default.aliases` on each service so that Kubernetes FQDNs (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`) resolve natively via compose DNS. This is how inter-service communication works without rewriting hostnames — the FQDNs match certificate SANs, Prometheus targets resolve, Grafana datasources work, everything behaves like it did in K8s.
+
+**This requires Docker Compose.** nerdctl compose does not implement network aliases — it silently ignores the `aliases` key and does not support the `--network-alias` flag either. If you run containerd without Kubernetes (Rancher Desktop in containerd mode, Lima, etc.), FQDNs will not resolve and services that reference other services by their K8s DNS names will fail.
+
+Workarounds:
+
+- **Switch to Docker Compose** (recommended). Rancher Desktop can use dockerd (moby) as its backend instead of containerd. The switch takes one checkbox and a VM restart.
+- **Use Podman Compose** — supports `networks.<name>.aliases` since v1.0.6.
+- **Don't use this project.** You already run containerd. You already have a container runtime that speaks to Kubernetes natively. You are one `kubeadm init` away from having a real cluster. Why are you here? What offering did you bring to the altar of Yog Sa'rath that led you to this page? Go home. Deploy your helmfile on a real cluster. Be free.
+
+> *The disciple forged a world without masters, without wards, without the sovereign's gaze — and found that the names he had given his servants no longer carried across the void. For in a realm stripped of all authority, even the act of calling out is an unanswered prayer.*
+>
+> — *Unaussprechlichen Kulten, On Worlds Without Shepherds (apocryphal)*
+
 ### Startup ordering
 
 Kubernetes init containers block the main container until they complete. In compose, init containers become separate services with `restart: on-failure` — they retry until they succeed, but nothing prevents the main container from starting concurrently and crash-looping until its dependencies are ready.
@@ -44,7 +63,7 @@ The generated `compose.yml` contains your database passwords, your API keys, you
 
 In Kubernetes, services can use mTLS (via service mesh or cert-manager) for internal communication. In compose, inter-service traffic is plain HTTP on the shared bridge network by default. Only the Caddy reverse proxy terminates TLS for external access.
 
-The [certmanager extension](extensions.md#certmanager) can generate real certificates at conversion time, enabling TLS between services when needed. Caddy backend SSL annotations (`haproxy.org/server-ssl`, `nginx.ingress.kubernetes.io/backend-protocol: HTTPS`) are translated to Caddy TLS transport configuration.
+The [cert-manager extension](extensions.md#cert-manager) can generate real certificates at conversion time, enabling TLS between services when needed. Caddy backend SSL annotations (`haproxy.org/server-ssl`, `nginx.ingress.kubernetes.io/backend-protocol: HTTPS`) are translated to Caddy TLS transport configuration.
 
 ### Bind mount permissions (Linux / WSL)
 

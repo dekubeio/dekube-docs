@@ -13,7 +13,7 @@ What started as a half-measure — CRD converters forging fake Deployments — i
 - **Extension loading** (`--extensions-dir`) — CRD converters as external Python modules. Dispatch loop, `ConvertContext`/`ConvertResult`, dynamic loading all in place.
 - **GitHub org** — `helmfile2compose/` org with separate repos for core, manager, docs, extensions.
 - **h2c-manager** — lightweight package manager for installing h2c-core + extensions from GitHub releases.
-- **Extension repos** — keycloak, certmanager, trust-manager published as standalone repos with GitHub releases.
+- **Extension repos** — keycloak, cert-manager, trust-manager published as standalone repos with GitHub releases.
 - **Deep merge for overrides** — nested dict merging instead of shallow `dict.update()`.
 - **Hostname truncation** — services >63 chars get explicit `hostname:` to avoid sethostname failures.
 - **Backend SSL** — Caddy TLS transport for HTTPS backends (server-ca, server-sni annotations).
@@ -38,4 +38,4 @@ CronJobs, resource limits, HPA, PDB, probes-to-healthcheck. See [Limitations](li
 
 > *Thus spoke the disciple unto the void: "Yog Sa'rath, my hour has come." And the void answered not — for even it knew that some invocations are answered not with knowledge, but with consequences.*
 >
-> — *De Vermis Mysteriis, On the Hubris of the Disciple (don't quote me on this)*
+> — *De Vermis Mysteriis, On the Hubris of the Disciple (probably³)*

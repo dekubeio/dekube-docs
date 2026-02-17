@@ -20,22 +20,22 @@ python3 h2c-manager.py
 python3 h2c-manager.py keycloak
 
 # Core + multiple extensions
-python3 h2c-manager.py keycloak certmanager trust-manager
+python3 h2c-manager.py keycloak cert-manager trust-manager
 
 # Pin core version
-python3 h2c-manager.py --core-version v2.0.0 keycloak
+python3 h2c-manager.py --core-version v2.1.0 keycloak
 
 # Pin extension version
-python3 h2c-manager.py keycloak==0.1.0
+python3 h2c-manager.py keycloak==0.2.0
 
 # Custom install directory (default: .h2c/)
 python3 h2c-manager.py -d ./tools keycloak
 
-# Delete .h2c/ and re-download everything
-python3 h2c-manager.py --force-reinstall
+# Skip download, reuse cached .h2c/ (missing files still downloaded)
+python3 h2c-manager.py --no-reinstall
 
-# Force reinstall + run
-python3 h2c-manager.py --force-reinstall run -e compose
+# Same with run mode
+python3 h2c-manager.py --no-reinstall run -e compose
 ```
 
 ## Output
@@ -47,7 +47,7 @@ h2c-manager creates the following directory structure:
 ├── helmfile2compose.py       # core script
 └── extensions/
     ├── keycloak.py            # requested extension
-    └── certmanager.py         # auto-resolved dependency
+    └── cert_manager.py         # auto-resolved dependency
 ```
 
 ## Run mode
@@ -60,6 +60,10 @@ python3 h2c-manager.py run -e compose
 # python3 .h2c/helmfile2compose.py --helmfile-dir . --extensions-dir .h2c/extensions --output-dir . -e compose
 ```
 
+By default, `run` re-downloads h2c-core and all extensions before every invocation, overwriting cached files. Versions follow normal resolution: latest release, or the pinned version from `helmfile2compose.yaml` / CLI flags. If you change a pin in the yaml, the next `run` picks it up.
+
+Use `--no-reinstall` to skip downloads for files already present in `.h2c/` (missing files are still fetched). There is no version tracking: a cached file is either kept as-is or replaced with whatever version resolves. No in-between.
+
 Defaults: `--helmfile-dir .`, `--extensions-dir .h2c/extensions` (if it exists), `--output-dir .`. Any explicit flag overrides the default. All extra arguments are passed through to helmfile2compose.
 
 ## Version resolution
@@ -67,35 +71,35 @@ Defaults: `--helmfile-dir .`, `--extensions-dir .h2c/extensions` (if it exists),
 ### Core
 
 - No flag: latest GitHub release of `helmfile2compose/h2c-core`
-- `--core-version v2.0.0`: exact tag
+- `--core-version v2.1.0`: exact tag
 
 ### Extensions
 
 - Bare name (`keycloak`): latest GitHub release
-- Pinned (`keycloak==0.1.0`): exact version. The `v` prefix is added automatically if missing (`0.1.0` -> `v0.1.0`).
+- Pinned (`keycloak==0.2.0`): exact version. The `v` prefix is added automatically if missing (`0.1.0` -> `v0.1.0`).
 
 No version ranges. Just `latest` and `==exact`.
 
 ## Dependency resolution
 
-Extensions can declare dependencies in the registry. For example, `trust-manager` depends on `certmanager`:
+Extensions can declare dependencies in the registry. For example, `trust-manager` depends on `cert-manager`:
 
 ```bash
 python3 h2c-manager.py trust-manager
-# Fetching h2c-core v2.0.0...
-# Fetching extension certmanager v0.1.0 (dependency of trust-manager)...
-# Fetching extension trust-manager v0.1.0...
+# Fetching h2c-core v2.1.0...
+# Fetching extension cert-manager v0.1.0 (dependency of trust-manager)...
+# Fetching extension trust-manager v0.1.1...
 ```
 
 Dependencies are resolved one level deep (no transitive chains). Duplicates are deduplicated.
 
 ## Python dependency checking
 
-Some extensions require Python packages (e.g. certmanager requires `cryptography`). h2c-manager checks if they're installed and prints an aggregated warning:
+Some extensions require Python packages (e.g. cert-manager requires `cryptography`). h2c-manager checks if they're installed and prints an aggregated warning:
 
 ```
 Missing Python dependencies:
-  certmanager: cryptography
+  cert-manager: cryptography
 Install with: pip install cryptography
 ```
 
@@ -131,19 +135,19 @@ If `helmfile2compose.yaml` exists, h2c-manager reads `core_version` and `depends
 
 ```yaml
 # helmfile2compose.yaml
-core_version: v2.0.0
+core_version: v2.1.0
 depends:
   - keycloak
-  - certmanager==0.1.0
+  - cert-manager==0.1.0
   - trust-manager
 ```
 
 ```bash
 python3 h2c-manager.py
-# Core version from helmfile2compose.yaml: v2.0.0
-# Fetching h2c-core v2.0.0...
-# Reading extensions from helmfile2compose.yaml: keycloak, certmanager==0.1.0, trust-manager
-# Fetching extension keycloak v0.1.0...
+# Core version from helmfile2compose.yaml: v2.1.0
+# Fetching h2c-core v2.1.0...
+# Reading extensions from helmfile2compose.yaml: keycloak, cert-manager==0.1.0, trust-manager
+# Fetching extension keycloak v0.2.0...
 # ...
 ```
 

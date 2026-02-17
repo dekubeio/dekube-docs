@@ -12,7 +12,7 @@ For the mechanical reality of how the conversion works, see [Architecture](archi
 |--------|-----------|---------|
 | Reverse proxy | Ingress controller (HAProxy, nginx, traefik) | Caddy (auto-TLS, path routing) |
 | TLS | cert-manager (selfsigned or Let's Encrypt) | Caddy (internal CA or Let's Encrypt) |
-| Service discovery | K8s DNS (`.svc.cluster.local`) | Compose DNS (service names) |
+| Service discovery | K8s DNS (`.svc.cluster.local`) | Compose DNS + network aliases (K8s FQDNs preserved) |
 | Secrets | K8s Secrets (base64, RBAC-gated) | Inline env vars (plain text in compose.yml) |
 | Volumes | PVCs (dynamic provisioning) | Bind mounts or named volumes |
 | Port exposure | hostNetwork / NodePort / LoadBalancer | Explicit port mappings |
@@ -40,4 +40,26 @@ h2c is converging toward a K8s-to-compose emulator — taking declarative K8s re
 - **In-cluster auth** — ServiceAccount tokens, RBAC-gated API calls. [The documents have been falsified](https://github.com/baptisterajaut/h2c-api#leader-election). We don't talk about it.
 
 > *He who flattens the world into files shall find that each file begets another, and each mount begets a service, until the flattening itself becomes a world — and the disciple realizes he has built not a bridge, but a second shore.*
-> — *Necronomicon, On the Limits of Flattening (I think)*
+> — *Necronomicon, On the Limits of Flattening (supposedly)*
+
+## The curse of names
+
+The original plan was clean: rewrite K8s DNS names at conversion time. `keycloak.auth.svc.cluster.local` becomes `keycloak`. Simple. Contained. The flattening works as intended — K8s names go in, compose names come out.
+
+Then the temple defended itself.
+
+Certificates have SANs. Prometheus scrape targets use FQDNs. Grafana datasources hardcode the full K8s service path. Keycloak realm URLs embed the issuer hostname. Every time we rewrote a name, something downstream expected the original — and failed silently, or with a TLS error three layers deep, or not at all until someone tried to federate two services that suddenly couldn't verify each other's certificates.
+
+DNS rewriting was a losing game. Every new integration brought new URL patterns to match, new edge cases where the regex missed, new silent breakage discovered weeks later. The more we rewrote, the more we broke.
+
+So we stopped rewriting. Instead, we cursed ourselves.
+
+**Network aliases** make compose services answer to their full K8s FQDNs. Every service gets `networks.default.aliases` with `svc.ns.svc.cluster.local`, `svc.ns.svc`, and `svc.ns` — the complete set of names that Kubernetes DNS would resolve. Compose DNS resolves them natively. No rewriting. No regex. No silent breakage. The names that Kubernetes gave its servants now carry across into compose, unchanged.
+
+The cost: every compose service now bears the weight of its former K8s identity. The YAML is uglier. The network aliases section is a monument to a naming convention designed for a distributed system running on a single laptop. We carry the full FQDN of a cluster that does not exist, because the certificates were signed for a world we dismantled.
+
+The temple was desecrated. But the names — the names refused to die.
+
+> *The scribe tore the names from the temple walls and carved simpler ones in their place. But the prayers failed — for the gods answer only to the names they were given at consecration. And so the scribe, humbled, carved the old names back, letter by letter, onto walls that were never meant to hold them.*
+>
+> — *The Nameless City, On Names That Refuse to Die (unverified)*

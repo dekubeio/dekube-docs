@@ -37,12 +37,14 @@ nav:
       - Advanced: user/advanced.md
   - Maintainer guide:
       - Your project: maintainer/your-project.md
+      - Known workarounds: maintainer/known-workarounds/index.md
       - h2c-manager: maintainer/h2c-manager.md
   - Developer guide:
       - Concepts: developer/concepts.md
       - Architecture: developer/architecture.md
       - Writing operators: developer/writing-operators.md
       - Code quality: developer/code-quality.md
+  - Troubleshooting: troubleshooting.md
   - Reference:
       - Extension catalogue: extensions.md
       - Limitations: limitations.md

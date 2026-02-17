@@ -58,7 +58,7 @@ The conversion context passed to every converter. Key attributes:
 | `ctx.alias_map` | `dict` | Service alias map (K8s Service name -> workload name) |
 | `ctx.service_port_map` | `dict` | Service port map ((svc_name, port) -> container_port) |
 | `ctx.fix_permissions` | `dict[str, int]` | Map of volume path -> UID. Entries generate a `fix-permissions` service that runs `chown -R <uid>` on the path. **Writable** — operators can register paths for non-root containers with bind mounts. |
-| `ctx.services_by_selector` | `dict` | Index of workload names by label selector. Used internally to resolve K8s Services to compose service names. |
+| `ctx.services_by_selector` | `dict` | Index of K8s Services by name. Each entry has `name`, `namespace`, `selector`, `type`, `ports`. Used to resolve Services to compose names, generate network aliases, and build port maps. **Writable** — operators should register runtime-created Services here. |
 | `ctx.pvc_names` | `set[str]` | Names of PersistentVolumeClaims discovered in manifests. Used to distinguish PVC mounts from other volume types during conversion. |
 
 ### Priority
@@ -188,10 +188,42 @@ Your operator can import from `helmfile2compose`:
 
 ```python
 from helmfile2compose import ConvertResult           # return type
-from helmfile2compose import rewrite_k8s_dns          # rewrite *.svc.cluster.local
-from helmfile2compose import _apply_replacements      # apply user replacements
-from helmfile2compose import _apply_port_remap        # rewrite port in URL string
-from helmfile2compose import _apply_alias_map         # rewrite service aliases
+from helmfile2compose import apply_replacements      # apply user-defined string replacements
+from helmfile2compose import resolve_env             # resolve env/envFrom into flat list
 ```
 
-Only `ConvertResult` is part of the stable interface. The `_`-prefixed functions work but may change between versions. Pin your h2c-core version if you depend on them.
+`ConvertResult`, `apply_replacements`, and `resolve_env` are part of the public interface.
+
+- **`apply_replacements(text, replacements)`** — applies the user-defined `replacements` list (from `ctx.replacements`) to a string. Each replacement has `old` and `new` keys.
+- **`resolve_env(container, configmaps, secrets, workload_name, warnings, replacements=None, service_port_map=None)`** — resolves a container's `env` and `envFrom` into a flat `list[dict]` of `{name, value}` pairs, inlining ConfigMap/Secret references and applying replacements + port remaps.
+
+The `_`-prefixed functions (`_apply_port_remap`, `_apply_alias_map`, etc.) still exist but may change between versions. Pin your h2c-core version if you depend on them.
+
+### Registering network aliases
+
+If your operator creates services that don't exist in the rendered manifests (e.g. Keycloak — the K8s operator creates the Service at runtime), register them in `ctx.services_by_selector` and `ctx.alias_map` so `_build_network_aliases` generates FQDN aliases:
+
+```python
+# Register the compose service
+ctx.services_by_selector[name] = {
+    "name": name,
+    "namespace": namespace,
+    "selector": {...},
+    "type": "ClusterIP",
+    "ports": [...],
+}
+
+# If the K8s Service name differs from the compose service name,
+# register both in services_by_selector + an alias_map entry
+k8s_svc_name = f"{name}-service"
+ctx.alias_map[k8s_svc_name] = name
+ctx.services_by_selector[k8s_svc_name] = {
+    "name": k8s_svc_name,
+    "namespace": namespace,
+    "selector": {...},
+    "type": "ClusterIP",
+    "ports": [...],
+}
+```
+
+The `namespace` field is required for FQDN alias generation. Without it, only short-name aliases are created.

@@ -21,7 +21,7 @@ CRDs are K8s entities that don't speak compose — exiles from a world with cont
 
 Converts Keycloak CRDs into compose services. The `Keycloak` CR becomes a compose service with KC_* environment variables (database, HTTP, hostname, proxy, features). `KeycloakRealmImport` CRs are written as JSON files and mounted for auto-import on startup.
 
-Features: TLS secret mounting, podTemplate volume support, bootstrap admin generation, realm placeholder resolution, K8s DNS rewriting in realm data.
+Features: TLS secret mounting, podTemplate volume support, bootstrap admin generation, realm placeholder resolution, namespace and K8s Service alias registration for network aliases.
 
 ```bash
 python3 h2c-manager.py keycloak
@@ -29,11 +29,11 @@ python3 h2c-manager.py keycloak
 
 ---
 
-### certmanager
+### cert-manager
 
 | | |
 |---|---|
-| **Repo** | [h2c-operator-certmanager](https://github.com/helmfile2compose/h2c-operator-certmanager) |
+| **Repo** | [h2c-operator-cert-manager](https://github.com/helmfile2compose/h2c-operator-cert-manager) |
 | **Type** | CRD operator |
 | **Kinds** | `Certificate`, `ClusterIssuer`, `Issuer` |
 | **Dependencies** | `cryptography` (Python package) |
@@ -45,7 +45,7 @@ Generates real PEM certificates at conversion time — CA chains, SANs, ECDSA/RS
 Processes certificates in rounds: self-signed CAs first, then CA-issued certs. Merges duplicate `secretName` entries across namespaces into a single cert with combined SANs.
 
 ```bash
-python3 h2c-manager.py certmanager
+python3 h2c-manager.py cert-manager
 pip install cryptography  # required dependency
 ```
 
@@ -64,11 +64,34 @@ pip install cryptography  # required dependency
 
 Assembles CA trust bundles from cert-manager Secrets, ConfigMaps, inline PEM, and system default CAs. Injects the result as a synthetic ConfigMap. Pods that mount the trust bundle ConfigMap get the assembled CA chain automatically.
 
-Depends on the certmanager extension (needs its generated secrets). When installed via h2c-manager, certmanager is auto-resolved as a dependency.
+Depends on the cert-manager extension (needs its generated secrets). When installed via h2c-manager, cert-manager is auto-resolved as a dependency.
 
 ```bash
 python3 h2c-manager.py trust-manager
-# certmanager is installed automatically as a dependency
+# cert-manager is installed automatically as a dependency
+```
+
+---
+
+### servicemonitor
+
+| | |
+|---|---|
+| **Repo** | [h2c-operator-servicemonitor](https://github.com/helmfile2compose/h2c-operator-servicemonitor) |
+| **Type** | CRD operator |
+| **Kinds** | `Prometheus`, `ServiceMonitor` |
+| **Dependencies** | `pyyaml` (already required by h2c-core) |
+| **Priority** | 60 |
+| **Status** | stable |
+
+Converts kube-prometheus-stack CRDs into a Prometheus compose service with auto-generated scrape configuration. The `Prometheus` CR provides image/version/retention. `ServiceMonitor` CRs are resolved against K8s Services to produce `static_configs` in `prometheus.yml`.
+
+Features: FQDN scrape targets (via network aliases), HTTPS scrape with CA bundle mounting (uses trust-manager ConfigMaps if available), named port resolution, label-based Service matching, fallback name-based matching for operator-created Services (e.g. Keycloak). No hard dependencies on other extensions — works standalone for HTTP scrape targets.
+
+For Grafana setup (k8s-sidecar workaround), see [kube-prometheus-stack workaround](maintainer/known-workarounds/kube-prometheus-stack.md).
+
+```bash
+python3 h2c-manager.py servicemonitor
 ```
 
 ## Writing your own

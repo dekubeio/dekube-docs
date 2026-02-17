@@ -17,6 +17,7 @@ For the dark and twisted ritual underlying the conversion — what gets converte
 - Python 3.10+
 - `pyyaml`
 - `helmfile` + `helm` (only if rendering from helmfile directly)
+- **Docker Compose** (v2) — required for running the generated output. nerdctl compose is **not supported** (see [Network aliases limitation](../limitations.md#network-aliases-nerdctl)). Podman Compose works (v1.0.6+).
 
 ## Installation
 
@@ -27,7 +28,7 @@ If your stack uses CRDs (Keycloak, cert-manager, trust-manager), grab the operat
 ```
 extensions/
 ├── keycloak.py            # from h2c-operator-keycloak
-└── certmanager.py         # from h2c-operator-certmanager
+└── cert_manager.py        # from h2c-operator-cert-manager
 ```
 
 That's it. No package manager needed at this stage — [h2c-manager](h2c-manager.md) is for later, when you ship a `generate-compose.sh` to your users (see [Recommended workflow](#recommended-workflow)).
@@ -95,7 +96,7 @@ See [Configuration](../user/configuration.md) for the full reference.
 
 - **Deployments, StatefulSets, DaemonSets, Jobs** — converted to compose services with the right image, env, command, volumes, and ports. Init containers and sidecars get their own services.
 - **ConfigMaps and Secrets** — resolved inline into environment variables, or generated as files when volume-mounted.
-- **Services** — hostname rewriting, alias resolution, port remapping. If your K8s Service remaps port 80 to targetPort 8080, the tool rewrites URLs and env vars automatically.
+- **Services** — network aliases (K8s FQDNs resolve natively via compose DNS), alias resolution, port remapping. If your K8s Service remaps port 80 to targetPort 8080, the tool rewrites URLs and env vars automatically.
 - **Ingress** — converted to a Caddy reverse proxy with automatic TLS. Path-based routing, host-based routing, catch-all backends. Backend SSL annotations supported.
 - **PVCs** — registered in config as bind mounts. `volumeClaimTemplates` (StatefulSets) included.
 - **CRDs** — with [extensions](../extensions.md), Keycloak, cert-manager, and trust-manager CRDs are fully converted.

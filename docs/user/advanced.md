@@ -30,16 +30,16 @@ This skips the Caddy service in `compose.yml` and writes the Ingress rules to `C
 network: shared-infra
 ```
 
-This overrides the default compose network with an external one. Create it once with `docker network create shared-infra` (or `nerdctl network create`), and reference the same network in your other compose files. Host port collisions from services that bind directly (livekit UDP ranges, game servers, etc.) are your problem — disable or exclude duplicates.
+This overrides the default compose network with an external one. Create it once with `docker network create shared-infra` and reference the same network in your other compose files. Host port collisions from services that bind directly (livekit UDP ranges, game servers, etc.) are your problem — disable or exclude duplicates.
 
 Note: the `generate-compose.sh` scripts shipped with stoatchat-platform and lasuite-platform check for drift between expected and actual output. Adding `disableCaddy` and `network` to `helmfile2compose.yaml` will trigger drift warnings on every run. This is expected — and deserved.
 
 
 ### Multiple helmfile2compose projects
 
-Good news: running two (or more) helmfile2compose-generated stacks on the same host is no harder than running one alongside existing infrastructure. Apply the same recipe to each project — `disableCaddy: true`, same `network:`, merge the `Caddyfile-*` fragments — and you're done. Each project gets its own `compose.yml` and its own `helmfile2compose.yaml`, completely independent.
+Good news: running two (or more) helmfile2compose-generated stacks on the same host is no harder than running one alongside existing infrastructure. Apply the same recipe to each project — `disableCaddy: true`, same `network:`, merge the `Caddyfile-*` fragments — and you're done. Each project gets its own `compose.yml` and its own `helmfile2compose.yaml`, completely independent. The desecration scales linearly.
 
-Watch out for host port collisions: if both projects expose the same ports directly (e.g. both have a livekit binding UDP ranges, or a game server on 25565), only one can win. Exclude or disable the duplicate in one of the projects.
+Watch out for **collisions**: host port conflicts (two projects binding the same port — only one wins, exclude the duplicate) and network alias conflicts (short aliases coexist on the same DNS namespace — FQDNs are safe, but short names can round-robin between projects). If something works half the time and breaks the other half, see [Troubleshooting — network alias collisions](../troubleshooting.md#network-alias-collisions-multi-project).
 
 ### Do NOT use `docker compose -p`
 

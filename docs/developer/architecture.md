@@ -40,8 +40,8 @@ Loaded via `--extensions-dir`. Each `.py` file (or one-level subdirectory with `
 ```
 .h2c/extensions/
 ├── keycloak.py                        # flat file
-├── h2c-operator-certmanager/          # cloned repo
-│   ├── certmanager.py                 # converter class
+├── h2c-operator-cert-manager/         # cloned repo
+│   ├── cert_manager.py                # converter class
 │   └── requirements.txt
 ```
 
@@ -54,7 +54,7 @@ See [Writing operators](writing-operators.md) for the full guide.
 | DaemonSet / Deployment / StatefulSet | `services:` (image, env, command, volumes, ports). Init containers become separate services with `restart: on-failure`. Sidecar containers become separate services with `network_mode: container:<main>` (shared network namespace). DaemonSet treated identically to Deployment (single-machine tool). |
 | Job | `services:` with `restart: on-failure` (migrations, superuser creation). Init containers converted the same way. |
 | ConfigMap / Secret | Resolved inline into `environment:` + generated as files for volume mounts |
-| Service (ClusterIP) | Hostname rewriting (K8s Service name -> compose service name) |
+| Service (ClusterIP) | Network aliases (FQDN variants resolve via compose DNS) |
 | Service (ExternalName) | Resolved through alias chain (e.g. `docs-media` -> minio) |
 | Service (NodePort / LoadBalancer) | `ports:` mapping |
 | Ingress | Caddy service + Caddyfile `reverse_proxy` blocks. Path-rewrite annotations -> `uri strip_prefix`. Backend SSL -> Caddy TLS transport. |
@@ -81,7 +81,8 @@ See [Writing operators](writing-operators.md) for the full guide.
 5. **Pre-register PVCs** — from both regular volumes and `volumeClaimTemplates`.
 6. **First-run init** — auto-exclude K8s-only workloads, generate default config.
 7. **Dispatch to converters** — each converter receives its kind's manifests + a `ConvertContext`. Extensions run in priority order (lower first), then built-in converters.
-8. **Post-process env** — DNS rewriting, alias resolution, port remapping, replacements applied to all service environments (idempotent — catches extension-produced services).
+8. **Post-process env** — port remapping and replacements applied to all service environments (idempotent — catches extension-produced services).
+8b. **Build network aliases** — for each K8s Service, add FQDN aliases (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`) + short alias to the compose service's `networks.default.aliases`. FQDNs resolve natively via compose DNS — no hostname rewriting needed.
 9. **Apply overrides** — deep merge from config `overrides:` and `services:` sections.
 10. **Hostname truncation** — services with names >63 chars get explicit `hostname:`.
 11. **Write output** — `compose.yml`, `Caddyfile`, config/secret files.
@@ -90,9 +91,9 @@ See [Writing operators](writing-operators.md) for the full guide.
 
 These happen transparently during conversion:
 
-- **K8s DNS** — `<svc>.<ns>.svc.cluster.local` and `<svc>.<ns>.svc` rewritten to compose service names. Applied to env vars, ConfigMap files, and Caddyfile upstreams.
-- **Service aliases** — K8s Services whose name differs from the workload are resolved. ExternalName services followed through the chain.
-- **Port remapping** — K8s Service port -> container port in URLs. `http://svc` (implicit port 80) and `http://svc:80` both rewritten to `http://svc:8080` if the container listens on 8080.
+- **Network aliases** — each compose service gets `networks.default.aliases` with all K8s FQDN variants (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`). FQDNs in env vars, ConfigMaps, and Caddyfile upstreams resolve natively via compose DNS — no hostname rewriting needed. This preserves cert SANs for HTTPS.
+- **Service aliases** — K8s Services whose name differs from the workload are resolved. ExternalName services followed through the chain. The short K8s Service name is added as a network alias on the compose service.
+- **Port remapping** — K8s Service port -> container port in URLs. `http://svc` (implicit port 80) and `http://svc:80` both rewritten to `http://svc:8080` if the container listens on 8080. FQDN variants (`svc.ns.svc.cluster.local:80`) are also matched.
 - **Kubelet `$(VAR)`** — `$(VAR_NAME)` in container command/args resolved from the container's env vars.
 - **Shell `$VAR` escaping** — `$VAR` in command/entrypoint escaped to `$$VAR` for compose.
 - **String replacements** — user-defined `replacements:` from config applied to env vars, ConfigMap files, and Caddyfile upstreams.
