@@ -47,6 +47,12 @@ Loaded via `--extensions-dir`. Each `.py` file (or one-level subdirectory with `
 
 See [Writing operators](writing-operators.md) for the full guide.
 
+### External transforms
+
+Loaded from the same `--extensions-dir` as converters. The loader distinguishes them automatically: classes with `transform()` and no `kinds` are transforms. Sorted by `priority` (lower = earlier, default 100). Run after all converters, aliases, overrides, and hostname truncation — they see the final output.
+
+See [Writing transforms](writing-transforms.md) for the full guide.
+
 ## What it converts
 
 | K8s kind | Compose equivalent |
@@ -82,10 +88,11 @@ See [Writing operators](writing-operators.md) for the full guide.
 6. **First-run init** — auto-exclude K8s-only workloads, generate default config.
 7. **Dispatch to converters** — each converter receives its kind's manifests + a `ConvertContext`. Extensions run in priority order (lower first), then built-in converters.
 8. **Post-process env** — port remapping and replacements applied to all service environments (idempotent — catches extension-produced services).
-8b. **Build network aliases** — for each K8s Service, add FQDN aliases (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`) + short alias to the compose service's `networks.default.aliases`. FQDNs resolve natively via compose DNS — no hostname rewriting needed.
-9. **Apply overrides** — deep merge from config `overrides:` and `services:` sections.
-10. **Hostname truncation** — services with names >63 chars get explicit `hostname:`.
-11. **Write output** — `compose.yml`, `Caddyfile`, config/secret files.
+9. **Build network aliases** — for each K8s Service, add FQDN aliases (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`) + short alias to the compose service's `networks.default.aliases`. FQDNs resolve natively via compose DNS — no hostname rewriting needed.
+10. **Apply overrides** — deep merge from config `overrides:` and `services:` sections.
+11. **Hostname truncation** — services with names >63 chars get explicit `hostname:`.
+12. **Run transforms** — external post-processing hooks (if loaded). Transforms mutate `compose_services` and `caddy_entries` in place.
+13. **Write output** — `compose.yml`, `Caddyfile`, config/secret files.
 
 ## Automatic rewrites
 

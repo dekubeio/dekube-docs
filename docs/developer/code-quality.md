@@ -4,7 +4,7 @@ This should not score well. A project born from desecration, vibe-coded across m
 
 > *The inquisitors arrived at dawn, instruments of measurement in hand, expecting to find the temple in ruin. Instead they found the walls straight, the columns load-bearing, and the altar — though undeniably profane — structurally sound. They left in silence, more disturbed than when they came.*
 >
-> — *De Vermis Mysteriis, On the Inadequacy of Metrics (so I'm told)*
+> — *De Vermis Mysteriis, On the Inadequacy of Metrics (unfortunately)*
 
 ## Tools
 
@@ -12,7 +12,7 @@ All repos use the same toolchain:
 
 - **[pylint](https://pylint.readthedocs.io/)** — static analysis. Style warnings (too-many-locals, line-too-long, too-many-arguments) are accepted. Real issues (unused imports, actual bugs, f-strings without placeholders) are not.
 - **[pyflakes](https://github.com/PyCQA/pyflakes)** — fast, zero-config, no false positives. Must be clean.
-- **[radon](https://radon.readthedocs.io/)** — cyclomatic complexity. Target: no function rated D or worse. C-rated functions are tolerated. Current worst offender: `main` in h2c-core at 18 (C).
+- **[radon](https://radon.readthedocs.io/)** — cyclomatic complexity. Target: no function rated D or worse. C-rated functions are tolerated. Current worst offenders: `main` and `convert` in h2c-core, both at 18 (C).
 
 ## Current scores
 
@@ -22,9 +22,10 @@ All repos use the same toolchain:
 
 | Repo | Score | Notes |
 |------|-------|-------|
-| h2c-core | 9.71/10 | Style only (too-many-args on converter internals) |
-| h2c-manager | 10.00/10 | — |
+| h2c-manager | 9.89/10 | Style only (too-many-locals) |
+| h2c-transform-flatten-internal-urls | 9.85/10 | Style only |
 | h2c-operator-keycloak | 9.75/10 | Style + expected `import-error` (helmfile2compose not in path) |
+| h2c-core | 9.71/10 | Style only (too-many-args on converter internals) |
 | h2c-operator-cert-manager | 9.45/10 | Style + expected `import-error` |
 | h2c-operator-servicemonitor | 9.35/10 | Style + expected `import-error` |
 | h2c-operator-trust-manager | 9.18/10 | Style + expected `import-error` |
@@ -40,12 +41,14 @@ Zero warnings across all repos. We don't know how. We don't ask.
 | Repo | Worst function | CC | Rating |
 |------|---------------|---:|--------|
 | h2c-core | `main` | 18 | C |
+| h2c-core | `convert` | 18 | C |
 | h2c-core | `_convert_one_ingress` | 17 | C |
-| h2c-core | `convert` | 17 | C |
 | h2c-core | `_infer_namespaces` | 14 | C |
 | h2c-core | `_build_service_port_map` | 13 | C |
+| h2c-core | `_load_extensions` | 13 | C |
 | h2c-manager | `_read_yaml_config` | 13 | C |
 | h2c-operator-servicemonitor | `_resolve_port` | 13 | C |
+| h2c-manager | `main` | 12 | C |
 | h2c-operator-keycloak | `_build_pod_template_volumes` | 12 | C |
 | h2c-operator-trust-manager | `_collect_source` | 12 | C |
 | h2c-operator-servicemonitor | `_process_servicemonitors` | 12 | C |
@@ -63,8 +66,9 @@ No D/E/F rated functions.
 | h2c-core | 6.6 | B | 0.00 | C |
 | h2c-operator-servicemonitor | 5.3 | B | 40.86 | A |
 | h2c-operator-keycloak | 4.6 | A | 32.28 | A |
-| h2c-manager | 3.95 | A | 43.55 | A |
 | h2c-operator-cert-manager | 4.0 | A | 47.70 | A |
+| h2c-manager | 4.43 | A | 39.50 | A |
+| h2c-transform-flatten-internal-urls | 3.6 | A | 65.52 | A |
 
 h2c-core MI is 0.00. MI is the only metric that sees through the cloud of desecration — alas, it is for the wrong reasons. Radon penalizes file size and volume of code heavily, so a 1700-line single-file converter with 50+ functions will bottom out regardless of internal structure. It condemned the temple not for the rituals performed within, but for the square footage.
 

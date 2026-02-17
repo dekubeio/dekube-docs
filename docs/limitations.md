@@ -21,6 +21,7 @@ Workarounds:
 
 - **Switch to Docker Compose** (recommended). Rancher Desktop can use dockerd (moby) as its backend instead of containerd. The switch takes one checkbox and a VM restart.
 - **Use Podman Compose** — supports `networks.<name>.aliases` since v1.0.6.
+- **Use the [`flatten-internal-urls`](extensions.md#flatten-internal-urls) transform** — strips network aliases entirely and rewrites all FQDNs to short compose service names. nerdctl's built-in DNS resolves short names natively, so everything works. Trade-off: you lose FQDN preservation, which means no inter-service TLS with cert-manager SANs (the two extensions are incompatible). If you don't need backend SSL, this is the zero-friction option.
 - **Don't use this project.** You already run containerd. You already have a container runtime that speaks to Kubernetes natively. You are one `kubeadm init` away from having a real cluster. Why are you here? What offering did you bring to the altar of Yog Sa'rath that led you to this page? Go home. Deploy your helmfile on a real cluster. Be free.
 
 > *The disciple forged a world without masters, without wards, without the sovereign's gaze — and found that the names he had given his servants no longer carried across the void. For in a realm stripped of all authority, even the act of calling out is an unanswered prayer.*
@@ -35,7 +36,7 @@ This works in practice (everything eventually converges), but expect noisy logs 
 
 Why not `depends_on`? nerdctl compose ignores it entirely. Docker compose supports `condition: service_completed_successfully`, but relying on it would break nerdctl compatibility. Brute force retry works everywhere.
 
-Exception: sidecar containers use `depends_on` to ensure the main service's container exists before starting (required by `network_mode: container:<name>`). nerdctl compose respects the ordering even though it logs a warning about ignoring the directive.
+Exception: sidecar containers use `depends_on` because `network_mode: container:<name>` needs the parent container to exist. nerdctl compose ignores the directive entirely — the sidecar starts concurrently and usually wins the race (the parent is heavier), but there is no ordering guarantee. If the sidecar starts first, it fails and retries. Same brute-force purgatory, different aisle.
 
 ### Sidecars and pod-level networking
 

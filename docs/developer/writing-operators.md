@@ -201,6 +201,10 @@ from helmfile2compose import resolve_env             # resolve env/envFrom into 
 
 The `_`-prefixed functions (`_apply_port_remap`, `_apply_alias_map`, etc.) still exist but may change between versions. Pin your h2c-core version if you depend on them.
 
+## Transforms
+
+Transforms are a second extension type — post-processing hooks that modify the final compose output. For the full guide, see [Writing transforms](writing-transforms.md).
+
 ### Registering network aliases
 
 If your operator creates services that don't exist in the rendered manifests (e.g. Keycloak — the K8s operator creates the Service at runtime), register them in `ctx.services_by_selector` and `ctx.alias_map` so `_build_network_aliases` generates FQDN aliases:

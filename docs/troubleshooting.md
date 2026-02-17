@@ -34,7 +34,7 @@ Verify: `helm version` should print v3.x.
 # macOS: brew install helmfile
 ```
 
-Verify: `helmfile --version` should print v0.150+.
+Verify: `helmfile --version` should print v1.x.
 
 **helm-diff plugin** (required by helmfile):
 
@@ -46,11 +46,17 @@ If `helmfile template` fails with `Error: plugin "diff" not found`, this is why.
 
 ## nerdctl compose does not work
 
-This is the single most common issue and it is **not fixable**. nerdctl compose silently ignores `networks.*.aliases` — the key that makes K8s FQDNs resolve in compose. Without it, every service that references another by its K8s DNS name (`svc.ns.svc.cluster.local`) will fail to connect.
+nerdctl compose silently ignores `networks.*.aliases` — the key that makes K8s FQDNs resolve in compose. Without it, every service that references another by its K8s DNS name (`svc.ns.svc.cluster.local`) will fail to connect.
 
-There is no partial workaround. There is no flag. nerdctl compose does not implement this feature and does not plan to. See [limitations](limitations.md#network-aliases-nerdctl) for the full explanation and the only three options you have (spoiler: two of them involve switching to a different runtime, and the third involves accepting your fate).
+**The fix**: install the [`flatten-internal-urls`](extensions.md#flatten-internal-urls) transform. It strips all network aliases and rewrites FQDNs to short compose service names, which nerdctl resolves natively. No runtime change needed.
 
-If you are running Rancher Desktop with containerd: switch to dockerd (moby) in Rancher Desktop settings. One checkbox, one VM restart. That's it.
+```bash
+python3 h2c-manager.py flatten-internal-urls
+```
+
+Trade-off: flattening is incompatible with the `cert-manager` extension (certificate SANs reference FQDNs). If you need inter-service TLS, switch to Docker Compose instead — see [limitations](limitations.md#network-aliases-nerdctl) for the full list of options.
+
+If you are running Rancher Desktop with containerd: switching to dockerd (moby) in Rancher Desktop settings is also an option. One checkbox, one VM restart.
 
 ## For maintainers: chart-specific issues
 

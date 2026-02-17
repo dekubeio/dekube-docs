@@ -8,7 +8,7 @@ From now on we will call this project **h2c**, because the concept is already mi
 
 > *He who renders the celestial into the mundane does not ascend — he merely ensures that both realms now share his suffering equally.*
 >
-> — *Necronomicon, On the Folly of Downward Translation (probably)*
+> — *Necronomicon, On the Folly of Downward Translation (I think)*
 
 For the dark and twisted ritual underlying the conversion — what gets converted, how, and what unholy transformations are applied — see [Architecture](../developer/architecture.md).
 

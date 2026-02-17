@@ -4,19 +4,7 @@ Ideas that are too good (or too cursed) to forget but not urgent enough to imple
 
 For the emulation boundary — what can cross the bridge and what can't — see [Concepts](developer/concepts.md#the-emulation-boundary).
 
-## Done
-
-The Moldavian Scam got its green card. ("Moldavian Scam" — *arnaque moldave* — is a French Hearthstone community reference to pro player Torlk, famous for pulling off improbably lucky plays in tournaments. Not a comment on Moldova.)
-
-What started as a half-measure — CRD converters forging fake Deployments — is now a proper converter abstraction with external loading, a package manager, and its own GitHub org. The documents are no longer falsified. They are *official*.
-
-- **Extension loading** (`--extensions-dir`) — CRD converters as external Python modules. Dispatch loop, `ConvertContext`/`ConvertResult`, dynamic loading all in place.
-- **GitHub org** — `helmfile2compose/` org with separate repos for core, manager, docs, extensions.
-- **h2c-manager** — lightweight package manager for installing h2c-core + extensions from GitHub releases.
-- **Extension repos** — keycloak, cert-manager, trust-manager published as standalone repos with GitHub releases.
-- **Deep merge for overrides** — nested dict merging instead of shallow `dict.update()`.
-- **Hostname truncation** — services >63 chars get explicit `hostname:` to avoid sethostname failures.
-- **Backend SSL** — Caddy TLS transport for HTTPS backends (server-ca, server-sni annotations).
+*For what's already been done, see the [cursed journal](journal.md).*
 
 ## Next
 
@@ -32,13 +20,23 @@ The Kubernetes [Gateway API](https://gateway-api.sigs.k8s.io/) is the eventual s
 
 The base objects (ConfigMap, Secret, Service, PVC) stay in the core — they're needed for any cluster. What should move out: optional convenience features that aren't required for a minimal conversion. Fix-permissions init containers, vendor-specific Ingress annotation rewriting, and similar opinionated logic are all candidates for extraction into extensions. Smaller core = less tentacles at your door.
 
+First candidate: `_generate_fix_permissions` — self-contained ~30 lines that generates a busybox service for non-root containers with PVC bind mounts. Niche use case, good fit for a transform extension.
+
+### Pipeline hooks
+
+Named pipeline hooks (`post_aliases`, `pre_write`, etc.) for extensions. Not needed yet — converters + transforms cover known cases. Revisit if a third pattern shows up.
+
+### Extension compatibility matrix
+
+Extension manifests with `core_version_min` / `core_version_max_tested`. Manager warns/errors on mismatch. Today only extension-vs-extension incompatibility is checked — extension-vs-core version compat is not.
+
 ### Decentralized dependency resolution
 
 Today, extension metadata (repo, file, depends) lives in a central `extensions.json` in h2c-manager. That works for a handful of extensions but won't scale. The plan: each extension repo declares its own dependencies (and optional dependencies) in a manifest file at its root (e.g. `h2c-extension.json`). h2c-manager fetches the manifest from the repo directly instead of consulting a central registry. `extensions.json` becomes a lightweight index (name → repo) or goes away entirely. A single sacred text that all disciples must consult before summoning — the hubris writes itself.
 
 ### More extensions
 
-New CRD operators as needed. The extension system exists — writing a new one is straightforward (see [Writing operators](developer/writing-operators.md)).
+New CRD operators and transforms as needed. The extension system exists — writing a new one is straightforward (see [Writing operators](developer/writing-operators.md) and [Writing transforms](developer/writing-transforms.md)).
 
 ## Out of scope
 

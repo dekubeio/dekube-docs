@@ -43,6 +43,7 @@ nav:
       - Concepts: developer/concepts.md
       - Architecture: developer/architecture.md
       - Writing operators: developer/writing-operators.md
+      - Writing transforms: developer/writing-transforms.md
       - Code quality: developer/code-quality.md
   - Troubleshooting: troubleshooting.md
   - Reference:

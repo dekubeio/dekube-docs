@@ -93,6 +93,27 @@ python3 h2c-manager.py trust-manager
 
 Dependencies are resolved one level deep (no transitive chains). Duplicates are deduplicated.
 
+## Incompatibility checking
+
+Some extensions are fundamentally incompatible (e.g. `flatten-internal-urls` strips FQDNs that `cert-manager` certificates rely on). The registry declares these conflicts via `"incompatible"` in `extensions.json`, and h2c-manager blocks the combination before downloading anything:
+
+```
+Error: extensions 'flatten-internal-urls' and 'cert-manager' are incompatible
+  Use --ignore-compatibility-errors flatten-internal-urls to override
+```
+
+The check is bidirectional — if A declares incompatibility with B, installing both A+B or B+A triggers the error.
+
+To override (you know what you're doing):
+
+```bash
+# Install mode
+python3 h2c-manager.py cert-manager flatten-internal-urls --ignore-compatibility-errors flatten-internal-urls
+
+# Run mode
+python3 h2c-manager.py run -e compose --ignore-compatibility-errors flatten-internal-urls
+```
+
 ## Python dependency checking
 
 Some extensions require Python packages (e.g. cert-manager requires `cryptography`). h2c-manager checks if they're installed and prints an aggregated warning:
@@ -117,7 +138,8 @@ The registry lives at `helmfile2compose/h2c-manager` as `extensions.json`. It ma
       "repo": "helmfile2compose/h2c-operator-keycloak",
       "description": "Keycloak and KeycloakRealmImport CRDs",
       "file": "keycloak.py",
-      "depends": []
+      "depends": [],
+      "incompatible": []
     }
   }
 }
