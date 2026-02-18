@@ -85,7 +85,7 @@ On first run, the tool creates `helmfile2compose.yaml` with sensible defaults:
 - Exclude workloads that make no sense outside K8s (operators, CRD controllers, etc.)
 - Add overrides for images that need replacing (e.g. bitnami -> vanilla)
 
-See [Configuration](../user/configuration.md) for the full reference.
+See [Configuration](configuration.md) for the full reference.
 
 ### CLI flags
 
@@ -104,7 +104,7 @@ See [Configuration](../user/configuration.md) for the full reference.
 
 - `compose.yml` — services (incl. Caddy reverse proxy), volumes
 - `Caddyfile` (or `Caddyfile-<project>` when `disableCaddy: true`) — reverse proxy config from Ingress manifests
-- `helmfile2compose.yaml` — persistent config (see [Configuration](../user/configuration.md))
+- `helmfile2compose.yaml` — persistent config (see [Configuration](configuration.md))
 - `configmaps/` — generated files from ConfigMap volume mounts
 - `secrets/` — generated files from Secret volume mounts
 

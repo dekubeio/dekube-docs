@@ -32,10 +32,10 @@ nav:
   - Home: index.md
   - User guide:
       - Operations: user/operations.md
-      - Configuration: user/configuration.md
       - Advanced: user/advanced.md
   - Maintainer guide:
       - Your project: maintainer/your-project.md
+      - Configuration: maintainer/configuration.md
       - Known workarounds:
           - Overview: maintainer/known-workarounds/index.md
           - Common charts: maintainer/known-workarounds/common-charts.md

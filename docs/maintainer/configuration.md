@@ -173,7 +173,7 @@ If `true`, adds `tls internal` to all Caddyfile host blocks. Forces Caddy to use
 
 ### `core_version`
 
-Pin the h2c-core version for [h2c-manager](../maintainer/h2c-manager.md). Ignored by h2c-core itself.
+Pin the h2c-core version for [h2c-manager](h2c-manager.md). Ignored by h2c-core itself.
 
 ```yaml
 core_version: v2.3.0
@@ -190,9 +190,9 @@ depends:
   - trust-manager
 ```
 
-Bare names pull the latest release. Pin with `==version` for reproducibility (recommended — see [Your project](../maintainer/your-project.md#recommended-workflow)).
+Bare names pull the latest release. Pin with `==version` for reproducibility (recommended — see [Your project](your-project.md#recommended-workflow)).
 
-See [h2c-manager — declarative dependencies](../maintainer/h2c-manager.md#declarative-dependencies) for override behavior and details.
+See [h2c-manager — declarative dependencies](h2c-manager.md#declarative-dependencies) for override behavior and details.
 
 ### `ingressTypes`
 
@@ -205,13 +205,13 @@ ingressTypes:
   nginx-internal: nginx
 ```
 
-The mapping is applied before rewriter dispatch. See [Ingress controllers](../maintainer/your-project.md#ingress-controllers) for details.
+The mapping is applied before rewriter dispatch. See [Ingress controllers](your-project.md#ingress-controllers) for details.
 
 ### `disableCaddy`
 
 If `true`, skips the Caddy service in `compose.yml`. Ingress rules are still written to `Caddyfile-<project>` for manual merging with your existing reverse proxy.
 
-**Manual only** — never auto-generated. See [Advanced](advanced.md) for the full cohabitation guide.
+**Manual only** — never auto-generated. See [Advanced](../user/advanced.md) for the full cohabitation guide.
 
 ### `network`
 
@@ -230,7 +230,7 @@ networks:
     external: true
 ```
 
-Required when sharing a network across multiple compose projects. See [Advanced](advanced.md).
+Required when sharing a network across multiple compose projects. See [Advanced](../user/advanced.md).
 
 ## Placeholders
 

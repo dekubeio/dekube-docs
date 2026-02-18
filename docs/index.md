@@ -25,7 +25,6 @@ The name is `helmfile2compose` because both helmfile and docker-compose share th
 *"I received a compose setup and want plug & play."*
 
 - **[Operations](user/operations.md)** — day-to-day: updating, data management, troubleshooting
-- **[Configuration](user/configuration.md)** — `helmfile2compose.yaml` deep dive: volumes, overrides, secrets, replacements
 - **[Advanced](user/advanced.md)** — cohabiting with existing infrastructure, multiple projects, disabling Caddy
 
 ### For maintainers
@@ -33,6 +32,7 @@ The name is `helmfile2compose` because both helmfile and docker-compose share th
 *"I have a helmfile and need to provide a compose deployment."*
 
 - **[Your project](maintainer/your-project.md)** — installation, first run, adapting h2c for your own helmfile
+- **[Configuration](maintainer/configuration.md)** — `helmfile2compose.yaml` deep dive: volumes, overrides, secrets, replacements
 - **[Known workarounds](maintainer/known-workarounds/index.md)** — sushi recipes for the tentacles that don't fit
 - **[h2c-manager](maintainer/h2c-manager.md)** — installing h2c and extensions via the package manager
 
