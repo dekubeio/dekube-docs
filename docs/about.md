@@ -21,6 +21,7 @@ And yet:
 - It is not (too much) a security mess. (The extension system is a security mess, but it's not gonna be much worse than npm)
 - It is entirely in the public domain, as every ai-written software should be.
 - The extension system has a documented interface, versioned releases, and dependency resolution.
+- IT HAS [TESTS](developer/testing.md), OH YOG SA'RATH. With CI. And a torture generator, because of course.
 
 ## The documentation
 
@@ -76,6 +77,6 @@ That's it. That's the whole ritual.
 
 ---
 
-*Built with anguish, tears and blood by [Baptiste Rajaut](https://github.com/baptisterajaut), and with the help of GenAI that was just trying to help.*
+*Built with anguish, tears and blood by [Baptiste Rajaut](https://github.com/baptisterajaut), and with the help of GenAI that was just trying to help. Hopefully that Macbook will end up in the trash, I've never been so happy to be handed an Ubuntu machine*
 
 *Public domain. No rights reserved. Tentacles are there to stay. No Discord server. No Slack. Just docs. Open an issue on Github if you want help. I may answer, but salvation will never come.*
