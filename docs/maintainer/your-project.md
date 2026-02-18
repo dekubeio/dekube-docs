@@ -108,6 +108,16 @@ See [Configuration](../user/configuration.md) for the full reference.
 - `configmaps/` — generated files from ConfigMap volume mounts
 - `secrets/` — generated files from Secret volume mounts
 
+## Check known issues and workarounds
+
+Before debugging something for hours, check the [known workarounds](known-workarounds/index.md). Recurring tentacles have been identified, sliced, and served — no need to catch the same kraken twice.
+
+In particular: if your stack includes **Bitnami charts** (Redis, PostgreSQL, Keycloak), install the [bitnami transform](https://github.com/helmfile2compose/h2c-transform-bitnami). It handles image replacements, volume path fixes, and environment cleanup automatically. We desecrate the temple by deconstructing it — they do it by existing.
+
+## Check known issues and workarounds
+
+Before debugging something for hours, check the [known workarounds](known-workarounds/index.md). Recurring tentacles have been identified, sliced, and served. If your stack includes Bitnami charts (Redis, PostgreSQL, Keycloak), install the [bitnami transform](https://github.com/helmfile2compose/h2c-transform-bitnami) — it handles the worst of it automatically.
+
 ## What works well
 
 - **Deployments, StatefulSets, DaemonSets, Jobs** — converted to compose services with the right image, env, command, volumes, and ports. Init containers and sidecars get their own services.

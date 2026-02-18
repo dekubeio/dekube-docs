@@ -59,7 +59,7 @@ The exact config key depends on your application (Django: `AWS_S3_ADDRESSING_STY
 
 ## Bitnami charts (Redis, PostgreSQL, Keycloak)
 
-Want to fix Bitnami shenanigans? Just install the bitnami transform. For once, this is not our heresy.
+Want to fix Bitnami shenanigans? Just install the bitnami transform. We desecrate the temple by deconstructing it — they do it by existing.
 
 ```bash
 python3 h2c-manager.py bitnami
