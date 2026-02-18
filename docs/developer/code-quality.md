@@ -12,11 +12,11 @@ All repos use the same toolchain:
 
 - **[pylint](https://pylint.readthedocs.io/)** — static analysis. Style warnings (too-many-locals, line-too-long, too-many-arguments) are accepted. Real issues (unused imports, actual bugs, f-strings without placeholders) are not.
 - **[pyflakes](https://github.com/PyCQA/pyflakes)** — fast, zero-config, no false positives. Must be clean.
-- **[radon](https://radon.readthedocs.io/)** — cyclomatic complexity. Target: no function rated D or worse. C-rated functions are tolerated. Current worst offenders: `convert` (18), `_register_extensions` (17), and `_load_extensions` (16) in h2c-core, all C.
+- **[radon](https://radon.readthedocs.io/)** — cyclomatic complexity. Target: no function rated D or worse. C-rated functions are tolerated. Current worst offenders: `convert` (18), `_build_service_port_map` (17), `_register_extensions` (17), and `_load_extensions` (16) in h2c-core, all C.
 
 ## Current scores
 
-*Last updated: 2026-02-18 — the day we taught the gateway to delegate, and the annotations learned new dialects.*
+*Last updated: 2026-02-18 — the null devours silently, and the janitor arrives.*
 
 ### Pylint
 
@@ -26,6 +26,7 @@ All repos use the same toolchain:
 | h2c-transform-flatten-internal-urls | 9.85/10 | Style only |
 | h2c-provider-keycloak | 9.75/10 | Style + expected `import-error` (helmfile2compose not in path) |
 | h2c-core | 9.70/10 | Style only (too-many-args on converter internals) |
+| h2c-transform-bitnami | 9.68/10 | Style only |
 | h2c-converter-cert-manager | 9.45/10 | Style + expected `import-error` |
 | h2c-provider-servicemonitor | 9.35/10 | Style + expected `import-error` |
 | h2c-converter-trust-manager | 9.18/10 | Style + expected `import-error` |
@@ -43,19 +44,21 @@ Zero warnings across all repos. We don't know how. We don't ask.
 | Repo | Worst function | CC | Rating |
 |------|---------------|---:|--------|
 | h2c-core | `convert` | 18 | C |
+| h2c-core | `_build_service_port_map` | 17 | C |
 | h2c-core | `_register_extensions` | 17 | C |
 | h2c-core | `_load_extensions` | 16 | C |
+| h2c-core | `HAProxyRewriter.rewrite` | 15 | C |
 | h2c-manager | `main` | 14 | C |
 | h2c-core | `_infer_namespaces` | 14 | C |
-| h2c-core | `_build_service_port_map` | 13 | C |
 | h2c-core | `_write_caddy_host_block` | 13 | C |
+| h2c-core | `WorkloadConverter._build_service` | 13 | C |
 | h2c-manager | `_read_yaml_config` | 13 | C |
 | h2c-rewriter-nginx | `NginxRewriter.rewrite` | 13 | C |
 | h2c-provider-servicemonitor | `_resolve_port` | 13 | C |
+| h2c-core | `_preregister_pvcs` | 12 | C |
 | h2c-provider-keycloak | `_build_pod_template_volumes` | 12 | C |
 | h2c-converter-trust-manager | `_collect_source` | 12 | C |
 | h2c-provider-servicemonitor | `_process_servicemonitors` | 12 | C |
-| h2c-core | `WorkloadConverter._build_service` | 11 | C |
 | h2c-provider-keycloak | `_build_options_env` | 11 | C |
 
 No D/E/F rated functions.
@@ -67,14 +70,15 @@ No D/E/F rated functions.
 | h2c-rewriter-traefik | 81.08 | A | 6.3 | B |
 | h2c-transform-flatten-internal-urls | 65.52 | A | 3.6 | A |
 | h2c-converter-trust-manager | 64.66 | A | 7.8 | B |
+| h2c-transform-bitnami | 62.31 | A | 4.1 | A |
 | h2c-rewriter-nginx | 58.54 | A | 7.3 | B |
 | h2c-converter-cert-manager | 47.70 | A | 4.0 | A |
 | h2c-provider-servicemonitor | 40.86 | A | 5.3 | B |
 | h2c-manager | 36.29 | A | 4.6 | A |
 | h2c-provider-keycloak | 32.28 | A | 4.6 | A |
-| h2c-core | 0.00 | C | 6.1 | B |
+| h2c-core | 0.00 | C | 6.6 | B |
 
-h2c-core MI is 0.00. MI is the only metric that sees through the cloud of desecration — alas, it is for the wrong reasons. Radon penalizes file size and volume of code heavily, so an 1800-line single-file converter with 50+ functions will bottom out regardless of internal structure. It condemned the temple not for the rituals performed within, but for the square footage.
+h2c-core MI is 0.00. MI is the only metric that sees through the cloud of desecration — alas, it is for the wrong reasons. Radon penalizes file size and volume of code heavily, so an 1858-line single-file converter with 50+ functions will bottom out regardless of internal structure. It condemned the temple not for the rituals performed within, but for the square footage.
 
 ## The uncomfortable truth
 

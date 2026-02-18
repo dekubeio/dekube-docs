@@ -72,7 +72,7 @@ Despite the name, **helmfile is not required** — the core accepts any director
 
 What started as a single script became an ecosystem of three components:
 
-- **[h2c-core](https://github.com/helmfile2compose/h2c-core)** — *the mad scribe.* A single Python script (~1800 lines) that reads K8s manifests and writes compose. Handles Deployments, StatefulSets, DaemonSets, Jobs, Services, Ingress, ConfigMaps, Secrets, PVCs, init containers, sidecars, and more things than anyone asked for.
+- **[h2c-core](https://github.com/helmfile2compose/h2c-core)** — *the mad scribe.* A single Python script (~1860 lines) that reads K8s manifests and writes compose. Handles Deployments, StatefulSets, DaemonSets, Jobs, Services, Ingress, ConfigMaps, Secrets, PVCs, init containers, sidecars, and more things than anyone asked for.
 - **[Extensions](catalogue.md)** — *the damned.* External modules that teach h2c new tricks. Four types: providers (CRD converters that produce compose services), converters (CRD converters that produce synthetic resources), transforms (post-processing hooks that reshape the final output), and ingress rewriters (translate controller-specific annotations to Caddy rules). Each extension is a single `.py` file. For the glory of Yog Sa'rath.
 - **[h2c-manager](https://github.com/helmfile2compose/h2c-manager)** — *the dark priest.* Downloads h2c-core and extensions from GitHub releases, resolves dependencies, and provides a `run` shortcut. Reads `helmfile2compose.yaml` for declarative dependency management. Stdlib only, no dependencies.
 
@@ -88,6 +88,7 @@ What started as a single script became an ecosystem of three components:
 | [h2c-converter-trust-manager](https://github.com/helmfile2compose/h2c-converter-trust-manager) | Bundle CRD (trust-manager) |
 | [h2c-provider-servicemonitor](https://github.com/helmfile2compose/h2c-provider-servicemonitor) | Prometheus and ServiceMonitor CRDs |
 | [h2c-transform-flatten-internal-urls](https://github.com/helmfile2compose/h2c-transform-flatten-internal-urls) | Strip aliases, rewrite FQDNs to short names |
+| [h2c-transform-bitnami](https://github.com/helmfile2compose/h2c-transform-bitnami) | Bitnami Redis, PostgreSQL, Keycloak workarounds |
 | [h2c-rewriter-nginx](https://github.com/helmfile2compose/h2c-rewriter-nginx) | Nginx ingress annotation rewriter |
 | [h2c-rewriter-traefik](https://github.com/helmfile2compose/h2c-rewriter-traefik) | Traefik ingress annotation rewriter (POC) |
 | [h2c-testsuite](https://github.com/helmfile2compose/h2c-testsuite) | Regression & performance test suite |
