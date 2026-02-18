@@ -42,14 +42,19 @@ nav:
   - Developer guide:
       - Concepts: developer/concepts.md
       - Architecture: developer/architecture.md
-      - Writing operators: developer/writing-operators.md
-      - Writing transforms: developer/writing-transforms.md
       - Code quality: developer/code-quality.md
+      - Writing extensions:
+          - Overview: developer/extensions/index.md
+          - Converters: developer/extensions/writing-converters.md
+          - CRD patterns: developer/extensions/writing-operators.md
+          - Transforms: developer/extensions/writing-transforms.md
+          - Rewriters: developer/extensions/writing-rewriters.md
+  - Extension catalogue: catalogue.md
   - Troubleshooting: troubleshooting.md
   - Reference:
-      - Extension catalogue: extensions.md
       - Limitations: limitations.md
       - Roadmap: roadmap.md
+  - About: about.md
 
 markdown_extensions:
   - attr_list

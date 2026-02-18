@@ -33,25 +33,35 @@ compose.yml + Caddyfile
 - **`WorkloadConverter`** — kinds: DaemonSet, Deployment, Job, StatefulSet
 - **`IngressConverter`** — kinds: Ingress
 
-### External converters (extensions)
+### External extensions (providers and converters)
 
-Loaded via `--extensions-dir`. Each `.py` file (or one-level subdirectory with `.py` files) is scanned for classes with `kinds` and `convert()`. Loaded converters are sorted by `priority` (lower = earlier, default 100) and registered into the dispatch loop.
+Loaded via `--extensions-dir`. Each `.py` file (or one-level subdirectory with `.py` files) is scanned for classes with `kinds` and `convert()`. Providers (keycloak, servicemonitor) produce compose services; converters (cert-manager, trust-manager) produce synthetic resources. Both share the same code interface and are sorted by `priority` (lower = earlier, default 100) and registered into the dispatch loop.
 
 ```
 .h2c/extensions/
 ├── keycloak.py                        # flat file
-├── h2c-operator-cert-manager/         # cloned repo
+├── h2c-converter-cert-manager/         # cloned repo
 │   ├── cert_manager.py                # converter class
 │   └── requirements.txt
 ```
 
-See [Writing operators](writing-operators.md) for the full guide.
+See [Writing converters](extensions/writing-converters.md) for the full guide.
 
 ### External transforms
 
 Loaded from the same `--extensions-dir` as converters. The loader distinguishes them automatically: classes with `transform()` and no `kinds` are transforms. Sorted by `priority` (lower = earlier, default 100). Run after all converters, aliases, overrides, and hostname truncation — they see the final output.
 
-See [Writing transforms](writing-transforms.md) for the full guide.
+See [Writing transforms](extensions/writing-transforms.md) for the full guide.
+
+### Ingress rewriters
+
+Ingress annotation handling is dispatched through `IngressRewriter` classes. Each rewriter targets a specific ingress controller (identified by `ingressClassName` or annotation prefix) and translates its annotations into Caddy entries.
+
+The built-in `HAProxyRewriter` handles `haproxy` and empty/absent ingress classes, plus any manifest with `haproxy.org/*` annotations. It also acts as the default fallback when no `ingressClassName` is set — if no external rewriter matches first, HAProxy claims the manifest.
+
+External rewriters are loaded from `--extensions-dir` alongside converters and transforms. A rewriter with the same `name` as a built-in one replaces it. Dispatch order: external rewriters first, then built-in.
+
+See [Writing rewriters](extensions/writing-rewriters.md) for the full guide.
 
 ## What it converts
 
@@ -63,7 +73,7 @@ See [Writing transforms](writing-transforms.md) for the full guide.
 | Service (ClusterIP) | Network aliases (FQDN variants resolve via compose DNS) |
 | Service (ExternalName) | Resolved through alias chain (e.g. `docs-media` -> minio) |
 | Service (NodePort / LoadBalancer) | `ports:` mapping |
-| Ingress | Caddy service + Caddyfile `reverse_proxy` blocks. Path-rewrite annotations -> `uri strip_prefix`. Backend SSL -> Caddy TLS transport. |
+| Ingress | Caddy service + Caddyfile `reverse_proxy` blocks, dispatched to ingress rewriters by `ingressClassName`. Path-rewrite annotations -> `uri strip_prefix`. Backend SSL -> Caddy TLS transport. Rewriters can inject `extra_directives` for rate-limit, auth, headers, etc. |
 | PVC / volumeClaimTemplates | Host-path bind mounts (auto-registered in `helmfile2compose.yaml`) |
 | securityContext (runAsUser) | Auto-generated `fix-permissions` service (`chown -R <uid>`) for non-root bind mounts |
 
@@ -86,7 +96,7 @@ See [Writing transforms](writing-transforms.md) for the full guide.
 4. **Build port map** — K8s Service port -> container port resolution (named ports resolved via container spec).
 5. **Pre-register PVCs** — from both regular volumes and `volumeClaimTemplates`.
 6. **First-run init** — auto-exclude K8s-only workloads, generate default config.
-7. **Dispatch to converters** — each converter receives its kind's manifests + a `ConvertContext`. Extensions run in priority order (lower first), then built-in converters.
+7. **Dispatch to converters** — each converter receives its kind's manifests + a `ConvertContext`. Extensions run in priority order (lower first), then built-in converters. Within `IngressConverter`, each Ingress manifest is dispatched to the first matching `IngressRewriter` (by `ingressClassName` or annotation prefix).
 8. **Post-process env** — port remapping and replacements applied to all service environments (idempotent — catches extension-produced services).
 9. **Build network aliases** — for each K8s Service, add FQDN aliases (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`) + short alias to the compose service's `networks.default.aliases`. FQDNs resolve natively via compose DNS — no hostname rewriting needed.
 10. **Apply overrides** — deep merge from config `overrides:` and `services:` sections.

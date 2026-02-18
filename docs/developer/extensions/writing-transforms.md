@@ -6,7 +6,7 @@ Converters answer the question "what does this K8s manifest become in compose?" 
 
 > *The builders laid every stone according to the plans. Then the mason arrived — not to add stones, but to chisel the ones already placed. The builders protested: the temple was complete. The mason replied: "Complete, yes. Inhabitable, no."*
 >
-> — *Voynich Manuscript, On the Mason's Privilege (so I'm told)*
+> — *Voynich Manuscript, On the Mason's Privilege (or so the rites suggest)*
 
 ## The contract
 
@@ -32,8 +32,8 @@ That's it. No return value — transforms mutate `compose_services` and `caddy_e
 | Argument | Type | Description |
 |----------|------|-------------|
 | `compose_services` | `dict[str, dict]` | All compose service definitions. Keyed by service name. Mutable. |
-| `caddy_entries` | `list[dict]` | Caddy reverse proxy entries. Each has `host`, `path`, `upstream`, `scheme`, optionally `server_ca_secret`, `server_sni`, `strip_prefix`. Mutable. |
-| `ctx` | `ConvertContext` | Same context as converters. See [ConvertContext](writing-operators.md#convertcontext-ctx) for all attributes. |
+| `caddy_entries` | `list[dict]` | Caddy reverse proxy entries. Each has `host`, `path`, `upstream`, `scheme`, optionally `server_ca_secret`, `server_sni`, `strip_prefix`, `extra_directives`. Mutable. |
+| `ctx` | `ConvertContext` | Same context as converters. See [ConvertContext](writing-converters.md#convertcontext-ctx) for all attributes. |
 
 ### When transforms run
 
@@ -73,9 +73,22 @@ Transforms have full access to `compose_services`, `caddy_entries`, and `ctx`. T
 
 ### Example: strip network aliases
 
-The [`flatten-internal-urls`](../extensions.md#flatten-internal-urls) transform is the reference implementation. Its core logic:
+The [`flatten-internal-urls`](../../catalogue.md#flatten-internal-urls) transform is the reference implementation. Its core logic (simplified — the real implementation uses module-level functions, not methods):
 
 ```python
+import re
+
+_K8S_DNS_RE = re.compile(
+    r'([a-z0-9](?:[a-z0-9-]*[a-z0-9])?)'
+    r'\.[a-z0-9-]+\.svc(?:\.cluster\.local)?(?::\d+)?'
+)
+
+def _rewrite_text(text, alias_map):
+    """Rewrite K8s FQDNs to short names, then apply alias map."""
+    text = _K8S_DNS_RE.sub(r'\1', text)
+    # ... alias_map substitution
+    return text
+
 class FlattenInternalUrls:
     priority = 200
 
@@ -87,8 +100,6 @@ class FlattenInternalUrls:
                 for net_cfg in networks.values():
                     if isinstance(net_cfg, dict):
                         net_cfg.pop("aliases", None)
-                if all(not v for v in networks.values()):
-                    del svc["networks"]
 
         # Rewrite FQDNs in env vars
         for svc in compose_services.values():
@@ -98,13 +109,18 @@ class FlattenInternalUrls:
             for key in list(env):
                 val = env[key]
                 if isinstance(val, str):
-                    env[key] = self._rewrite(val, ctx.alias_map)
+                    env[key] = _rewrite_text(val, ctx.alias_map)
+
+        # Rewrite configmap files on disk
+        # (walks ctx.output_dir/configmaps/ and rewrites file contents)
 
         # Rewrite Caddy upstreams
         for entry in caddy_entries:
-            entry["upstream"] = self._rewrite(
+            entry["upstream"] = _rewrite_text(
                 entry["upstream"], ctx.alias_map)
 ```
+
+Note the three rewrite targets: environment variables, configmap files on disk (`_rewrite_configmap_files`), and Caddy upstreams. The module-level functions (`_rewrite_text`, `_rewrite_k8s_dns`, `_apply_alias_map`) are self-contained — see [Self-contained — no core imports](#self-contained--no-core-imports).
 
 ### Example: inject a service
 
@@ -127,67 +143,4 @@ If your transform needs regex patterns or utility functions that exist in the co
 
 The public API (`ConvertResult`, `apply_replacements`, `resolve_env`) is available for import but rarely useful in transforms — those are converter-oriented tools.
 
-## Testing locally
-
-1. Put your `.py` file in a directory:
-
-```
-my-transforms/
-└── my_transform.py
-```
-
-2. Run with `--extensions-dir`:
-
-```bash
-python3 helmfile2compose.py --from-dir /tmp/rendered \
-  --extensions-dir ./my-transforms --output-dir ./output
-```
-
-3. Check that your transform is loaded:
-
-```
-Loaded transforms: MyTransform
-```
-
-4. Verify the compose output reflects your mutations.
-
-Transforms and converters can coexist in the same `--extensions-dir`. The loader detects each type automatically.
-
-## Repo structure
-
-Same as converters. For distribution via [h2c-manager](../maintainer/h2c-manager.md):
-
-```
-h2c-transform-my-transform/
-├── my_transform.py        # transform class (mandatory)
-├── requirements.txt       # Python deps, if any (optional)
-└── README.md              # description, usage (mandatory)
-```
-
-Convention: transform repos use the `h2c-transform-` prefix, operator repos use `h2c-operator-`.
-
-## Publishing
-
-Same process as operators:
-
-1. Create a GitHub repo (org or personal account)
-2. Create a GitHub Release with a tag (e.g. `v0.1.0`)
-3. Add to `extensions.json` in `helmfile2compose/h2c-manager`:
-
-```json
-{
-  "my-transform": {
-    "repo": "helmfile2compose/h2c-transform-my-transform",
-    "description": "What it does",
-    "file": "my_transform.py",
-    "depends": [],
-    "incompatible": []
-  }
-}
-```
-
-The `"incompatible"` field lists extension names that conflict with this transform. The check is bidirectional — declaring it on one side is enough.
-
-```bash
-python3 h2c-manager.py my-transform
-```
+See [Writing extensions](index.md) for testing, repo structure, publishing, and available imports.

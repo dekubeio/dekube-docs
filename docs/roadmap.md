@@ -12,7 +12,7 @@ For the emulation boundary — what can cross the bridge and what can't — see 
 
 Today, ConfigMap, Secret, Service, and PVC processing is hardcoded in the core. It works, but it means you can't swap out how any of these are handled without forking the script. The goal: make every kind dispatched through the same extension interface. Want to handle ConfigMaps differently? Write a ConfigMap extension. Want to add a custom Secret resolver? Drop it in `extensions/`.
 
-Same for Ingress annotations — translation is currently hardcoded to `haproxy.org/*` and `nginx.ingress.kubernetes.io/*`. An `IngressRewriter` extension dispatched by `ingressClassName` or annotation prefix would let you swap annotation sets without touching the core. The rewriter contract should give extensions full control over the Caddy output — raw directives, not a fixed set of fields. HAProxy stays in core (it's what we use). Nginx moves out as a deprecated extension. Should some crazy cultist — because that won't be me — write a Traefik one, Contour one, Istio one: same ceremony.
+~~Ingress annotations~~ — **done**. The `IngressRewriter` extension interface dispatches by `ingressClassName` or annotation prefix. `HAProxyRewriter` is built-in. External rewriters can override or extend. `extra_directives` gives rewriters full control over Caddy output. See [Writing rewriters](developer/extensions/writing-rewriters.md).
 
 The Kubernetes [Gateway API](https://gateway-api.sigs.k8s.io/) is the eventual successor to Ingress — `HTTPRoute`, `Gateway`, `GRPCRoute` instead of `Ingress`. A `GatewayRewriter` extension would handle these kinds the same way `IngressRewriter` handles Ingress annotations: read the Gateway API resources, produce Caddy config. No rush — Gateway API adoption is still ramping up — but the extension system should be ready for it when it comes.
 
@@ -36,7 +36,15 @@ Today, extension metadata (repo, file, depends) lives in a central `extensions.j
 
 ### More extensions
 
-New CRD operators and transforms as needed. The extension system exists — writing a new one is straightforward (see [Writing operators](developer/writing-operators.md) and [Writing transforms](developer/writing-transforms.md)).
+New CRD extensions (providers and converters) and transforms as needed. The extension system exists — writing a new one is straightforward (see [Writing converters](developer/extensions/writing-converters.md) and [Writing transforms](developer/extensions/writing-transforms.md)).
+
+## v3.0 — contract split
+
+Today, converters and providers share one contract: `kinds` + `convert()` → `ConvertResult`, and a `ConvertResult` can contain services, synthetic resources, or both. The distinction between converters (`h2c-converter-*`, resources only) and providers (`h2c-provider-*`, compose services) is a naming convention — nothing in the code enforces it.
+
+The plan for v3.0: formalize the distinction. A converter returning `services` in its `ConvertResult` will first emit a deprecation warning, then fail in a later release. The exact mechanism (a class attribute, a separate base class, a manifest declaration) is TBD.
+
+This requires h2c-manager to handle core version compatibility first — extension manifests with `core_version_min` / `core_version_max_tested` (see [Extension compatibility matrix](#extension-compatibility-matrix) above). Without that, there's no way to migrate extensions gracefully. Alternatively, if h2c moves to pip packaging before then, the standard Python dependency machinery handles this for free — and avoids reinventing the wheel.
 
 ## Out of scope
 

@@ -48,7 +48,7 @@ If `helmfile template` fails with `Error: plugin "diff" not found`, this is why.
 
 nerdctl compose silently ignores `networks.*.aliases` — the key that makes K8s FQDNs resolve in compose. Without it, every service that references another by its K8s DNS name (`svc.ns.svc.cluster.local`) will fail to connect.
 
-**The fix**: install the [`flatten-internal-urls`](extensions.md#flatten-internal-urls) transform. It strips all network aliases and rewrites FQDNs to short compose service names, which nerdctl resolves natively. No runtime change needed.
+**The fix**: install the [`flatten-internal-urls`](catalogue.md#flatten-internal-urls) transform. It strips all network aliases and rewrites FQDNs to short compose service names, which nerdctl resolves natively. No runtime change needed.
 
 ```bash
 python3 h2c-manager.py flatten-internal-urls

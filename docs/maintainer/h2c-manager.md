@@ -38,6 +38,20 @@ python3 h2c-manager.py --no-reinstall
 python3 h2c-manager.py --no-reinstall run -e compose
 ```
 
+## Info mode
+
+`--info` displays registry information about extensions without downloading anything:
+
+```bash
+# Show info for all registered extensions
+python3 h2c-manager.py --info
+
+# Show info for specific extensions (includes dependencies)
+python3 h2c-manager.py --info nginx traefik
+```
+
+If no extension names are given and `helmfile2compose.yaml` has a `depends:` list, info is shown for those extensions.
+
 ## Output
 
 h2c-manager creates the following directory structure:
@@ -65,6 +79,8 @@ By default, `run` re-downloads h2c-core and all extensions before every invocati
 Use `--no-reinstall` to skip downloads for files already present in `.h2c/` (missing files are still fetched). There is no version tracking: a cached file is either kept as-is or replaced with whatever version resolves. No in-between.
 
 Defaults: `--helmfile-dir .`, `--extensions-dir .h2c/extensions` (if it exists), `--output-dir .`. Any explicit flag overrides the default. All extra arguments are passed through to helmfile2compose.
+
+**Note:** In `run` mode, extensions are resolved from `helmfile2compose.yaml` `depends:` (or CLI extension args if provided). Extension names passed *before* the `run` keyword are ignored — only `depends:` and post-`run` flags matter.
 
 ## Version resolution
 
@@ -135,7 +151,7 @@ The registry lives at `helmfile2compose/h2c-manager` as `extensions.json`. It ma
   "schema_version": 1,
   "extensions": {
     "keycloak": {
-      "repo": "helmfile2compose/h2c-operator-keycloak",
+      "repo": "helmfile2compose/h2c-provider-keycloak",
       "description": "Keycloak and KeycloakRealmImport CRDs",
       "file": "keycloak.py",
       "depends": [],
@@ -149,7 +165,7 @@ Available versions are whatever tags/releases exist on each repo. The registry d
 
 ### Adding an extension to the registry
 
-See [Writing operators — publishing](../developer/writing-operators.md#publishing) for the full guide.
+See [Writing extensions — publishing](../developer/extensions/index.md#publishing) for the full guide.
 
 ## Declarative dependencies
 
@@ -187,6 +203,5 @@ set -euo pipefail
 
 H2C_MANAGER_URL="https://raw.githubusercontent.com/helmfile2compose/h2c-manager/main/h2c-manager.py"
 curl -fsSL "$H2C_MANAGER_URL" -o h2c-manager.py
-python3 h2c-manager.py          # reads depends from helmfile2compose.yaml
 python3 h2c-manager.py run -e compose
 ```

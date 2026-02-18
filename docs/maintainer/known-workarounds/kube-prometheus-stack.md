@@ -1,6 +1,6 @@
 # kube-prometheus-stack
 
-kube-prometheus-stack is a Helm chart that deploys Prometheus, Grafana, and a constellation of exporters and operators. Most of it converts cleanly via the [servicemonitor extension](../../extensions.md#servicemonitor). Grafana does not.
+kube-prometheus-stack is a Helm chart that deploys Prometheus, Grafana, and a constellation of exporters and operators. Most of it converts cleanly via the [servicemonitor extension](../../catalogue.md#servicemonitor). Grafana does not.
 
 The problem: Grafana in kube-prometheus-stack ships with **k8s-sidecar** containers that watch ConfigMaps/Secrets via the Kubernetes API at runtime. They provision dashboards and datasources by polling the apiserver for labeled ConfigMaps. This has no compose equivalent — there is no apiserver to poll.
 
@@ -62,12 +62,22 @@ Same pattern: the Helm chart renders dashboard JSON as ConfigMaps. h2c writes th
 
 The chart's default `dashboardproviders.yaml` ConfigMap usually works as-is — mount it from `configmaps/kube-prometheus-stack-grafana/dashboardproviders.yaml`.
 
-## What's excluded by default
+## Other components to exclude
 
-kube-prometheus-stack also includes several components that h2c auto-excludes on first run (K8s-only):
+kube-prometheus-stack also includes several components that serve no purpose in compose:
 
 - `kube-prometheus-stack-operator` — the Prometheus Operator itself (no CRDs to reconcile in compose)
 - `kube-prometheus-stack-kube-state-metrics` — needs the Kubernetes API
 - `kube-prometheus-stack-prometheus-node-exporter` — needs host-level access
 
-These are already handled by first-run auto-exclude. You don't need to add them manually unless your auto-exclude list was generated before they were detected.
+These are **not** auto-excluded by h2c — add them manually to your `exclude:` list:
+
+```yaml
+# helmfile2compose.yaml
+exclude:
+  - kube-prometheus-stack-grafana-sidecar-grafana*
+  - kube-prometheus-stack-admission*
+  - kube-prometheus-stack-operator
+  - kube-prometheus-stack-kube-state-metrics
+  - kube-prometheus-stack-prometheus-node-exporter
+```

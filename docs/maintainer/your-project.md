@@ -19,16 +19,30 @@ For the dark and twisted ritual underlying the conversion — what gets converte
 - `helmfile` + `helm` (only if rendering from helmfile directly)
 - **Docker Compose** (v2) — required for running the generated output. nerdctl compose is **not supported** (see [Network aliases limitation](../limitations.md#network-aliases-nerdctl)). Podman Compose works (v1.0.6+).
 
+## Before you start: ingress controller
+
+Your helmfile already uses an ingress controller. That choice is baked into your Ingress manifests — annotations, `ingressClassName` — and you're not going to change it for a compose migration. h2c needs a **rewriter** that speaks your controller's annotation dialect and translates it to Caddy. If your controller isn't supported, your Ingress manifests will be silently skipped and you'll have no reverse proxy — which is the single most visible thing that breaks.
+
+| Controller | Rewriter | Status |
+|------------|----------|--------|
+| **HAProxy** | built-in | stable |
+| **Nginx** | [h2c-rewriter-nginx](https://github.com/helmfile2compose/h2c-rewriter-nginx) (extension) | stable |
+| **Traefik** | [h2c-rewriter-traefik](https://github.com/helmfile2compose/h2c-rewriter-traefik) (extension) | POC |
+
+If you use something else (Contour, Ambassador, Istio, AWS ALB, etc.) — standard Ingress `host`/`path`/`backend` fields are always read, so basic routing works, but controller-specific annotations won't translate. You'll either need to [write a rewriter](../developer/extensions/writing-rewriters.md) or configure the reverse proxy manually. Check this *before* investing time in the rest of the setup.
+
+CRDs (Keycloak, cert-manager, trust-manager, Prometheus) are a different story — they're optional, and unsupported CRDs are simply skipped with a warning. Your stack works without them; you just lose the resources they would have produced. Ingress is not optional.
+
 ## Installation
 
 Download `helmfile2compose.py` from the [latest h2c-core release](https://github.com/helmfile2compose/h2c-core/releases/latest).
 
-If your stack uses CRDs (Keycloak, cert-manager, trust-manager), grab the operator `.py` files from their repos too and drop them in an `extensions/` directory next to the script:
+If your stack uses CRDs that have an [h2c extension](../catalogue.md) (Keycloak, cert-manager, trust-manager), grab the extension `.py` files from their repos too and drop them in an `extensions/` directory next to the script:
 
 ```
 extensions/
-├── keycloak.py            # from h2c-operator-keycloak
-└── cert_manager.py        # from h2c-operator-cert-manager
+├── keycloak.py            # from h2c-provider-keycloak
+└── cert_manager.py        # from h2c-converter-cert-manager
 ```
 
 That's it. No package manager needed at this stage — [h2c-manager](h2c-manager.md) is for later, when you ship a `generate-compose.sh` to your users (see [Recommended workflow](#recommended-workflow)).
@@ -49,7 +63,7 @@ reflector:
 
 Everything else stays enabled — the tool needs to see your Deployments, Services, ConfigMaps, Secrets, and Ingress resources to do its job.
 
-If your stack uses CRDs that have an [h2c extension](../extensions.md) (Keycloak, cert-manager, trust-manager), keep those enabled — the extension will handle them.
+If your stack uses CRDs that have an [h2c extension](../catalogue.md) (Keycloak, cert-manager, trust-manager), keep those enabled — the extensions you should have previously acquired will handle them.
 
 ## First run
 
@@ -63,7 +77,7 @@ This renders the helmfile and converts in one step. Despite the name, **helmfile
 
 On first run, the tool creates `helmfile2compose.yaml` with sensible defaults:
 - All PVCs registered as host-path bind mounts under `./data/`
-- K8s-only workloads (cert-manager, ingress, reflector) auto-excluded
+- K8s-only workloads auto-excluded (any workload whose name contains `cert-manager`, `ingress`, or `reflector` — this targets controller Deployments, not Ingress resources)
 - Project name derived from the source directory
 
 **Stop here and review `helmfile2compose.yaml`.** You will almost certainly need to:
@@ -84,6 +98,8 @@ See [Configuration](../user/configuration.md) for the full reference.
 | `--compose-file` | Name of the generated compose file (default: `compose.yml`) |
 | `--extensions-dir` | Directory containing extension `.py` files |
 
+`--from-dir` and `--helmfile-dir` serve the same purpose (providing input manifests). If both are specified, `--from-dir` takes priority.
+
 ### Output files
 
 - `compose.yml` — services (incl. Caddy reverse proxy), volumes
@@ -99,7 +115,7 @@ See [Configuration](../user/configuration.md) for the full reference.
 - **Services** — network aliases (K8s FQDNs resolve natively via compose DNS), alias resolution, port remapping. If your K8s Service remaps port 80 to targetPort 8080, the tool rewrites URLs and env vars automatically.
 - **Ingress** — converted to a Caddy reverse proxy with automatic TLS. Path-based routing, host-based routing, catch-all backends. Backend SSL annotations supported.
 - **PVCs** — registered in config as bind mounts. `volumeClaimTemplates` (StatefulSets) included.
-- **CRDs** — with [extensions](../extensions.md), Keycloak, cert-manager, and trust-manager CRDs are fully converted.
+- **CRDs** — with [extensions](../catalogue.md), Keycloak, cert-manager, and trust-manager CRDs are fully converted.
 
 ## What needs manual help
 
@@ -110,15 +126,32 @@ See [Configuration](../user/configuration.md) for the full reference.
 
 See [Limitations](../limitations.md) for the complete list of what gets lost in translation.
 
-## Ingress annotations
+## Ingress controllers — details
 
-The tool translates Ingress annotations to Caddy directives. Supported annotation families:
+Compatibility was covered [above](#before-you-start-ingress-controller). This section documents annotation coverage and configuration.
 
-- **`haproxy.org/*`** — path rewrite (`haproxy.org/path-rewrite`) to `uri strip_prefix`, backend SSL (`haproxy.org/server-ssl`, `haproxy.org/server-ca`), server SNI
-- **`nginx.ingress.kubernetes.io/rewrite-target`** — path rewrite fallback
-- **`nginx.ingress.kubernetes.io/backend-protocol: HTTPS`** — backend SSL
+### Annotations handled
 
-Any other controller's annotations (Traefik, Contour, Ambassador, etc.) are **silently ignored**. The Ingress `host`, `path`, and `backend` fields are always processed regardless of annotations — you'll get working routing, just no path rewriting or other annotation-driven behavior.
+| Controller | Annotations |
+|------------|-------------|
+| **HAProxy** | `haproxy.org/path-rewrite` → strip prefix, `haproxy.org/server-ssl` + `server-ca` → backend TLS, `server-sni` |
+| **Nginx** | `rewrite-target`, `backend-protocol`, `enable-cors`, `proxy-body-size`, `configuration-snippet` (partial) |
+| **Traefik** | `router.tls`, standard Ingress path rules. No middleware CRD support. |
+
+HAProxy is built into h2c-core. Nginx and Traefik are extensions — install them with [h2c-manager](h2c-manager.md) or drop the `.py` file in your `extensions/` directory.
+
+### Custom ingress class names
+
+If your cluster uses custom `ingressClassName` values (e.g. `haproxy-internal`, `nginx-dmz`), add a mapping in `helmfile2compose.yaml`:
+
+```yaml
+ingressTypes:
+  haproxy-internal: haproxy
+  haproxy-external: haproxy
+  nginx-dmz: nginx
+```
+
+Without this, h2c won't recognize the class and the Ingress is skipped with a warning.
 
 ## Recommended workflow
 
@@ -151,4 +184,4 @@ This tool works. It has been tested on real helmfiles with real users. But it is
 
 > *The temple was not translated — it was dismantled, stone by stone, and rebuilt as a shed. The prayers still worked. The architect watched, powerless, as the faithful praised the shed.*
 >
-> — *De Vermis Mysteriis, On Unnecessary Simplifications (probably, again)*
+> — *De Vermis Mysteriis, On Unnecessary Simplifications (debatable)*

@@ -103,9 +103,9 @@ exclude:
   - cert-manager-*          # pattern
 ```
 
-Workloads with `replicas: 0` are also auto-skipped (with a warning).
-
 On first run, K8s-only workloads matching `cert-manager`, `ingress`, `reflector` are auto-excluded.
+
+Separately, workloads with `replicas: 0` are auto-skipped (with a warning), regardless of the `exclude` list. This check runs independently — a workload with `replicas: 0` is skipped even if it's not in `exclude`.
 
 ### `replacements`
 
@@ -181,7 +181,7 @@ core_version: v2.1.0
 
 ### `depends`
 
-List of [h2c extensions](../extensions.md) required by this project. h2c-manager reads this list and installs them automatically.
+List of [h2c extensions](../catalogue.md) required by this project. h2c-manager reads this list and installs them automatically.
 
 ```yaml
 depends:
@@ -191,6 +191,19 @@ depends:
 ```
 
 See [h2c-manager — declarative dependencies](../maintainer/h2c-manager.md#declarative-dependencies) for override behavior and details.
+
+### `ingressTypes`
+
+Maps custom `ingressClassName` values to canonical rewriter names. Without this, custom class names won't match any rewriter and the Ingress is skipped with a warning.
+
+```yaml
+ingressTypes:
+  haproxy-controller-internal: haproxy
+  haproxy-controller-external: haproxy
+  nginx-internal: nginx
+```
+
+The mapping is applied before rewriter dispatch. See [Ingress controllers](../maintainer/your-project.md#ingress-controllers) for details.
 
 ### `disableCaddy`
 

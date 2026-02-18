@@ -8,6 +8,22 @@
 
 ---
 
+## v2.3.0 — The gatekeepers are refactored
+
+*2026-02-18* · `1834 lines`
+
+The Ingress rewriters had been working since v2.0 — silently, competently, without anyone asking how they got there or what held them together. Turns out: not much. The dispatch was a list prepend, the imports were undocumented, and the contract was "look at HAProxyRewriter and do something similar." This worked until nginx and traefik showed up and started asking uncomfortable questions.
+
+`IngressRewriter` is now a proper base class. `get_ingress_class` and `resolve_backend` promoted to stable public imports. Priority attribute formalized. External rewriters prepend unconditionally — they always run before built-in ones, regardless of priority. The gatekeepers existed before; now they have a contract.
+
+> *The gatekeepers had always stood at their posts — yet none could say by what authority, for the edicts that bound them had never been inscribed. The high priest, weary of answering the same question at every threshold, carved the law into the stones themselves. The gatekeepers did not change. The pilgrims stopped asking.*
+>
+> — *Necronomicon, On the Codification of Ancient Wards (presumably)*
+
+Also: full documentation audit. The `h2c-operator-*` naming convention — a relic from when everything was called an "operator" because that's what it replaced — finally retired in favor of `h2c-provider-*` / `h2c-converter-*`. Fourteen semantic corrections across the docs, four deduplicated Necronomicon disclaimers (the running gag had started running in circles), and the repos tables now acknowledge that nginx and traefik exist. The line count barely moved. The documentation moved considerably.
+
+---
+
 ## v2.2.0 — The temple accepts post-processing
 
 *2026-02-17* · `1726 lines`

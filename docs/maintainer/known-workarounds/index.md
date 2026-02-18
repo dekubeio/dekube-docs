@@ -10,4 +10,5 @@ Here are at least some known sushi recipes.
 
 ## Workarounds
 
+- **[Common charts](common-charts.md)** — Bitnami PostgreSQL, Bitnami Redis, MinIO: the repeat offenders
 - **[kube-prometheus-stack](kube-prometheus-stack.md)** — Grafana sidecar containers, dashboard/datasource provisioning, what to exclude

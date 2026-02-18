@@ -15,18 +15,18 @@ Things you need to know for the output to work correctly.
 
 h2c generates Docker Compose `networks.default.aliases` on each service so that Kubernetes FQDNs (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`) resolve natively via compose DNS. This is how inter-service communication works without rewriting hostnames — the FQDNs match certificate SANs, Prometheus targets resolve, Grafana datasources work, everything behaves like it did in K8s.
 
-nerdctl compose does not implement network aliases — it silently ignores the `aliases` key and does not support the `--network-alias` flag either. If you run containerd without Kubernetes (Rancher Desktop in containerd mode, Lima, etc.), FQDNs will not resolve unless you use the [`flatten-internal-urls`](extensions.md#flatten-internal-urls) transform.
+nerdctl compose does not implement network aliases — it silently ignores the `aliases` key and does not support the `--network-alias` flag either. If you run containerd without Kubernetes (Rancher Desktop in containerd mode, Lima, etc.), FQDNs will not resolve unless you use the [`flatten-internal-urls`](catalogue.md#flatten-internal-urls) transform.
 
 Workarounds:
 
 - **Switch to Docker Compose** (recommended). Rancher Desktop can use dockerd (moby) as its backend instead of containerd. The switch takes one checkbox and a VM restart.
 - **Use Podman Compose** — supports `networks.<name>.aliases` since v1.0.6.
-- **Use the [`flatten-internal-urls`](extensions.md#flatten-internal-urls) transform** — strips network aliases entirely and rewrites all FQDNs to short compose service names. nerdctl's built-in DNS resolves short names natively, so everything works. Trade-off: you lose FQDN preservation, which means no inter-service TLS with cert-manager SANs (the two extensions are incompatible). If you don't need backend SSL, this is the zero-friction option.
+- **Use the [`flatten-internal-urls`](catalogue.md#flatten-internal-urls) transform** — strips network aliases entirely and rewrites all FQDNs to short compose service names. nerdctl's built-in DNS resolves short names natively, so everything works. Trade-off: you lose FQDN preservation, which means no inter-service TLS with cert-manager SANs (the two extensions are incompatible). If you don't need backend SSL, this is the zero-friction option.
 - **Don't use this project.** You already run containerd. You already have a container runtime that speaks to Kubernetes natively. You are one `kubeadm init` away from having a real cluster. Why are you here? What offering did you bring to the altar of Yog Sa'rath that led you to this page? Go home. Deploy your helmfile on a real cluster. Be free.
 
 > *The disciple forged a world without masters, without wards, without the sovereign's gaze — and found that the names he had given his servants no longer carried across the void. For in a realm stripped of all authority, even the act of calling out is an unanswered prayer.*
 >
-> — *Unaussprechlichen Kulten, On Worlds Without Shepherds (apocryphal)*
+> — *Unaussprechlichen Kulten, On Worlds Without Shepherds (one assumes)*
 
 ### Startup ordering
 
@@ -64,7 +64,7 @@ The generated `compose.yml` contains your database passwords, your API keys, you
 
 In Kubernetes, services can use mTLS (via service mesh or cert-manager) for internal communication. You had encryption between every pod. You had mutual authentication. You had a trust model. In compose, inter-service traffic is plain HTTP on the shared bridge network by default. Only the Caddy reverse proxy terminates TLS for external access.
 
-The [cert-manager extension](extensions.md#cert-manager) can generate real certificates at conversion time, enabling TLS between services when needed. Caddy backend SSL annotations (`haproxy.org/server-ssl`, `nginx.ingress.kubernetes.io/backend-protocol: HTTPS`) are translated to Caddy TLS transport configuration.
+The [cert-manager extension](catalogue.md#cert-manager) can generate real certificates at conversion time, enabling TLS between services when needed. Caddy backend SSL annotations (`haproxy.org/server-ssl`, `nginx.ingress.kubernetes.io/backend-protocol: HTTPS`) are translated to Caddy TLS transport configuration.
 
 ### Bind mount permissions (Linux / WSL)
 
@@ -113,9 +113,9 @@ Not converted. A CronJob would need an external scheduler or a `sleep`-loop wrap
 
 ### CRDs (Custom Resource Definitions)
 
-Operator-managed resources (`Keycloak`, `KeycloakRealmImport`, Zalando `postgresql`, Strimzi `Kafka`, etc.) are skipped with a warning unless a loaded [extension](extensions.md) handles them.
+Operator-managed resources (`Keycloak`, `KeycloakRealmImport`, Zalando `postgresql`, Strimzi `Kafka`, etc.) are skipped with a warning unless a loaded [extension](catalogue.md) handles them.
 
-Extensions can be loaded via `--extensions-dir` or installed with [h2c-manager](maintainer/h2c-manager.md). See the [extension catalogue](extensions.md) for available converters.
+Extensions can be loaded via `--extensions-dir` or installed with [h2c-manager](maintainer/h2c-manager.md). See the [extension catalogue](catalogue.md) for available extensions.
 
 ### Longhorn
 

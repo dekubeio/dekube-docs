@@ -12,25 +12,27 @@ All repos use the same toolchain:
 
 - **[pylint](https://pylint.readthedocs.io/)** — static analysis. Style warnings (too-many-locals, line-too-long, too-many-arguments) are accepted. Real issues (unused imports, actual bugs, f-strings without placeholders) are not.
 - **[pyflakes](https://github.com/PyCQA/pyflakes)** — fast, zero-config, no false positives. Must be clean.
-- **[radon](https://radon.readthedocs.io/)** — cyclomatic complexity. Target: no function rated D or worse. C-rated functions are tolerated. Current worst offenders: `main` and `convert` in h2c-core, both at 18 (C).
+- **[radon](https://radon.readthedocs.io/)** — cyclomatic complexity. Target: no function rated D or worse. C-rated functions are tolerated. Current worst offenders: `convert` (18), `_register_extensions` (17), and `_load_extensions` (16) in h2c-core, all C.
 
 ## Current scores
 
-*Last updated: 2026-02-17 — the day we released network aliases, accepted that the names would never die, then refactored the survivors.*
+*Last updated: 2026-02-18 — the day we taught the gateway to delegate, and the annotations learned new dialects.*
 
 ### Pylint
 
 | Repo | Score | Notes |
 |------|-------|-------|
-| h2c-manager | 9.89/10 | Style only (too-many-locals) |
+| h2c-manager | 9.90/10 | Style only (too-many-locals) |
 | h2c-transform-flatten-internal-urls | 9.85/10 | Style only |
-| h2c-operator-keycloak | 9.75/10 | Style + expected `import-error` (helmfile2compose not in path) |
-| h2c-core | 9.71/10 | Style only (too-many-args on converter internals) |
-| h2c-operator-cert-manager | 9.45/10 | Style + expected `import-error` |
-| h2c-operator-servicemonitor | 9.35/10 | Style + expected `import-error` |
-| h2c-operator-trust-manager | 9.18/10 | Style + expected `import-error` |
+| h2c-provider-keycloak | 9.75/10 | Style + expected `import-error` (helmfile2compose not in path) |
+| h2c-rewriter-nginx | 8.50/10 | Style + expected `import-error` (helmfile2compose not in path) |
+| h2c-rewriter-traefik | 7.33/10 | Style + expected `import-error` |
+| h2c-core | 9.70/10 | Style only (too-many-args on converter internals) |
+| h2c-converter-cert-manager | 9.45/10 | Style + expected `import-error` |
+| h2c-provider-servicemonitor | 9.35/10 | Style + expected `import-error` |
+| h2c-converter-trust-manager | 9.18/10 | Style + expected `import-error` |
 
-The `E0401: Unable to import 'helmfile2compose'` on operators is expected — they import from h2c-core at runtime, not at lint time. The `R0903: Too few public methods` on converter classes is by design — the contract is one class, one method, that's it.
+The `E0401: Unable to import 'helmfile2compose'` on extensions is expected — they import from h2c-core at runtime, not at lint time. The `R0903: Too few public methods` on converter classes is by design — the contract is one class, one method, that's it.
 
 ### Pyflakes
 
@@ -40,21 +42,21 @@ Zero warnings across all repos. We don't know how. We don't ask.
 
 | Repo | Worst function | CC | Rating |
 |------|---------------|---:|--------|
-| h2c-core | `main` | 18 | C |
 | h2c-core | `convert` | 18 | C |
-| h2c-core | `_convert_one_ingress` | 17 | C |
+| h2c-core | `_register_extensions` | 17 | C |
+| h2c-core | `_load_extensions` | 16 | C |
+| h2c-manager | `main` | 14 | C |
 | h2c-core | `_infer_namespaces` | 14 | C |
 | h2c-core | `_build_service_port_map` | 13 | C |
-| h2c-core | `_load_extensions` | 13 | C |
+| h2c-core | `_write_caddy_host_block` | 13 | C |
 | h2c-manager | `_read_yaml_config` | 13 | C |
-| h2c-operator-servicemonitor | `_resolve_port` | 13 | C |
-| h2c-manager | `main` | 12 | C |
-| h2c-operator-keycloak | `_build_pod_template_volumes` | 12 | C |
-| h2c-operator-trust-manager | `_collect_source` | 12 | C |
-| h2c-operator-servicemonitor | `_process_servicemonitors` | 12 | C |
-| h2c-core | `_write_caddy_host_block` | 11 | C |
+| h2c-rewriter-nginx | `NginxRewriter.rewrite` | 13 | C |
+| h2c-provider-servicemonitor | `_resolve_port` | 13 | C |
+| h2c-provider-keycloak | `_build_pod_template_volumes` | 12 | C |
+| h2c-converter-trust-manager | `_collect_source` | 12 | C |
+| h2c-provider-servicemonitor | `_process_servicemonitors` | 12 | C |
 | h2c-core | `WorkloadConverter._build_service` | 11 | C |
-| h2c-operator-keycloak | `_build_options_env` | 11 | C |
+| h2c-provider-keycloak | `_build_options_env` | 11 | C |
 
 No D/E/F rated functions.
 
@@ -62,15 +64,17 @@ No D/E/F rated functions.
 
 | Repo | Avg CC | CC rating | MI | MI rating |
 |------|-------:|-----------|---:|-----------|
-| h2c-operator-trust-manager | 7.8 | B | 64.66 | A |
-| h2c-core | 6.6 | B | 0.00 | C |
-| h2c-operator-servicemonitor | 5.3 | B | 40.86 | A |
-| h2c-operator-keycloak | 4.6 | A | 32.28 | A |
-| h2c-operator-cert-manager | 4.0 | A | 47.70 | A |
-| h2c-manager | 4.43 | A | 39.50 | A |
+| h2c-converter-trust-manager | 7.8 | B | 64.66 | A |
+| h2c-rewriter-nginx | 7.3 | B | 58.54 | A |
+| h2c-rewriter-traefik | 6.3 | B | 81.08 | A |
+| h2c-core | 6.1 | B | 0.00 | C |
+| h2c-provider-servicemonitor | 5.3 | B | 40.86 | A |
+| h2c-manager | 4.6 | A | 36.29 | A |
+| h2c-provider-keycloak | 4.6 | A | 32.28 | A |
+| h2c-converter-cert-manager | 4.0 | A | 47.70 | A |
 | h2c-transform-flatten-internal-urls | 3.6 | A | 65.52 | A |
 
-h2c-core MI is 0.00. MI is the only metric that sees through the cloud of desecration — alas, it is for the wrong reasons. Radon penalizes file size and volume of code heavily, so a 1700-line single-file converter with 50+ functions will bottom out regardless of internal structure. It condemned the temple not for the rituals performed within, but for the square footage.
+h2c-core MI is 0.00. MI is the only metric that sees through the cloud of desecration — alas, it is for the wrong reasons. Radon penalizes file size and volume of code heavily, so an 1800-line single-file converter with 50+ functions will bottom out regardless of internal structure. It condemned the temple not for the rituals performed within, but for the square footage.
 
 ## The uncomfortable truth
 

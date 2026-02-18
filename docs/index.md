@@ -40,15 +40,16 @@ The name is `helmfile2compose` because both helmfile and docker-compose share th
 
 - **[Concepts](developer/concepts.md)** — design philosophy, emulation boundary, K8s vs Compose differences
 - **[Architecture](developer/architecture.md)** — converter pipeline, what gets converted, dispatch loop
-- **[Writing operators](developer/writing-operators.md)** — develop your own CRD converter
-- **[Writing transforms](developer/writing-transforms.md)** — develop your own post-processing hook
 - **[Code quality](developer/code-quality.md)** — linter scores, complexity metrics, existential dread
+- **[Writing extensions](developer/extensions/index.md)** — converters, providers, transforms, rewriters
+
+### Extensions
+
+- **[Extension catalogue](catalogue.md)** — available providers, converters, transforms, rewriters
 
 - **[Troubleshooting](troubleshooting.md)** — when the cursed lands fight back
 
 ### Reference
-
-- **[Extension catalogue](extensions.md)** — available extensions
 - **[Limitations](limitations.md)** — what gets lost in translation
 - **[Roadmap](roadmap.md)** — future plans
 
@@ -70,8 +71,8 @@ Despite the name, **helmfile is not required** — the core accepts any director
 
 What started as a single script became an ecosystem of three components:
 
-- **[h2c-core](https://github.com/helmfile2compose/h2c-core)** — *the mad scribe.* A single Python script (~1700 lines) that reads K8s manifests and writes compose. Handles Deployments, StatefulSets, DaemonSets, Jobs, Services, Ingress, ConfigMaps, Secrets, PVCs, init containers, sidecars, and more things than anyone asked for.
-- **[Extensions](extensions.md)** — *the damned.* External modules that teach h2c new tricks. Two types: CRD operators (converters that emulate K8s controllers) and transforms (post-processing hooks that reshape the final output). Each extension is a single `.py` file. For the glory of Yog Sa'rath.
+- **[h2c-core](https://github.com/helmfile2compose/h2c-core)** — *the mad scribe.* A single Python script (~1800 lines) that reads K8s manifests and writes compose. Handles Deployments, StatefulSets, DaemonSets, Jobs, Services, Ingress, ConfigMaps, Secrets, PVCs, init containers, sidecars, and more things than anyone asked for.
+- **[Extensions](catalogue.md)** — *the damned.* External modules that teach h2c new tricks. Three types: providers (CRD converters that produce compose services), converters (CRD converters that produce synthetic resources), and transforms (post-processing hooks that reshape the final output). Each extension is a single `.py` file. For the glory of Yog Sa'rath.
 - **[h2c-manager](https://github.com/helmfile2compose/h2c-manager)** — *the dark priest.* Downloads h2c-core and extensions from GitHub releases, resolves dependencies, and provides a `run` shortcut. Reads `helmfile2compose.yaml` for declarative dependency management. Stdlib only, no dependencies.
 
 ## Repositories
@@ -81,16 +82,19 @@ What started as a single script became an ecosystem of three components:
 | [h2c-core](https://github.com/helmfile2compose/h2c-core) | Core converter script (`helmfile2compose.py`) |
 | [h2c-manager](https://github.com/helmfile2compose/h2c-manager) | Package manager + extension registry |
 | [helmfile2compose.github.io](https://github.com/helmfile2compose/helmfile2compose.github.io) | This documentation site |
-| [h2c-operator-keycloak](https://github.com/helmfile2compose/h2c-operator-keycloak) | Keycloak and KeycloakRealmImport CRDs |
-| [h2c-operator-cert-manager](https://github.com/helmfile2compose/h2c-operator-cert-manager) | Certificate, ClusterIssuer, Issuer CRDs |
-| [h2c-operator-trust-manager](https://github.com/helmfile2compose/h2c-operator-trust-manager) | Bundle CRD (trust-manager) |
-| [h2c-operator-servicemonitor](https://github.com/helmfile2compose/h2c-operator-servicemonitor) | Prometheus and ServiceMonitor CRDs |
+| [h2c-provider-keycloak](https://github.com/helmfile2compose/h2c-provider-keycloak) | Keycloak and KeycloakRealmImport CRDs |
+| [h2c-converter-cert-manager](https://github.com/helmfile2compose/h2c-converter-cert-manager) | Certificate, ClusterIssuer, Issuer CRDs |
+| [h2c-converter-trust-manager](https://github.com/helmfile2compose/h2c-converter-trust-manager) | Bundle CRD (trust-manager) |
+| [h2c-provider-servicemonitor](https://github.com/helmfile2compose/h2c-provider-servicemonitor) | Prometheus and ServiceMonitor CRDs |
 | [h2c-transform-flatten-internal-urls](https://github.com/helmfile2compose/h2c-transform-flatten-internal-urls) | Strip aliases, rewrite FQDNs to short names |
+| [h2c-rewriter-nginx](https://github.com/helmfile2compose/h2c-rewriter-nginx) | Nginx ingress annotation rewriter |
+| [h2c-rewriter-traefik](https://github.com/helmfile2compose/h2c-rewriter-traefik) | Traefik ingress annotation rewriter (POC) |
 
 ## Compatible projects
 
 - **[stoatchat-platform](https://github.com/baptisterajaut/stoatchat-platform)** — 15 services. Chat platform (Revolt rebranded).
 - **[lasuite-platform](https://github.com/baptisterajaut/lasuite-platform)** — 22 services + 11 init jobs. Collaborative suite (La Suite Num.).
+- **A proprietary, real production-grade helmfile** — Why do you think there are CRDs extension that aren't used in any public repo?
 
 ## License
 
@@ -99,3 +103,5 @@ Public domain.
 ---
 
 *Looking for the full record of what was done, and in what order? The [cursed journal](journal.md) remembers.*
+
+*Looking for why this exists, and why the documentation is complete? The [about page](about.md) has opinions.*

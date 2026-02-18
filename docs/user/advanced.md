@@ -16,7 +16,7 @@ By default, helmfile2compose generates a Caddy service claiming ports 80 and 443
 disableCaddy: true
 ```
 
-This skips the Caddy service in `compose.yml` and writes the Ingress rules to `Caddyfile-<project>` instead of `Caddyfile`.
+This skips the Caddy service in `compose.yml` and writes the Ingress rules to `Caddyfile-<project>` instead of `Caddyfile`. Note: any previously generated `Caddyfile` is **not** automatically deleted — remove it manually if present.
 
 2. Configure your reverse proxy.
 
