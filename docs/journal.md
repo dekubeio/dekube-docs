@@ -16,7 +16,7 @@ Three bugs found in one session by pointing h2c at [mijn-bureau-infra](https://g
 
 **Nested helmfiles.** `helmfile template --output-dir` with nested `helmfiles:` directives creates per-child `.helmfile-rendered` directories instead of consolidating into the target. h2c now detects and merges them after rendering. Without this fix, nested helmfile projects produce an empty manifest set — the script reads an empty directory and politely generates nothing.
 
-**Null-safe YAML access.** Helm charts with conditional `{{ if }}` blocks produce explicit `null` values for fields like `initContainers`, `containers`, `data`, `ports`, `annotations`. Python's `.get("key", {})` returns `None` when the key exists with value `None`. Systematic sweep: `or {}` / `or []` applied to every vulnerable `.get()` call. Twenty-eight fixes across the file.
+**Null-safe YAML access.** Helm charts with conditional `{{ if }}` blocks produce explicit `null` values for fields like `initContainers`, `containers`, `data`, `ports`, `annotations`. Python's `.get("key", {})` returns `None` when the key exists with value `None`. Systematic sweep: `or {}` / `or []` applied to every vulnerable `.get()` call. Twenty-eight fixes across the core, then the regression suite caught two more — one in HAProxyRewriter.match, and the same pattern in nginx (v0.1.1) and traefik (v0.1.1) rewriters. The null found passages we didn't know existed.
 
 **Named port resolution.** Ingress backends referencing ports by name (`http`) instead of number now fall back to a well-known port table when the Service doesn't exist in manifests. Warning emitted for truly unresolvable names.
 
