@@ -21,6 +21,7 @@ And yet:
 - It is not (too much) a security mess. (The extension system is a security mess, but it's not gonna be much worse than npm)
 - It is entirely in the public domain, as every ai-written software should be.
 - The extension system has a documented interface, versioned releases, and dependency resolution.
+- It's even somewhat maintainable since the core was split (granted, it's still a super complex program, but at least files are small)
 - IT HAS AN [EXECUTIONER](developer/testing.md), OH YOG SA'RATH. With CI. And a [torturer](developer/testing.md#the-torturer), because of course it does.
 
 ## The documentation
@@ -39,7 +40,7 @@ Everything is in a static documentation site. Everything is public. Served by Gi
 
 No "join our Discord for support." No "check the Slack channel." No "the real docs are in a Notion page behind a login." No "see the github wiki" where the wiki covers half the features and the other half is on Discord somewhere. No "it's on the roadmap" where the roadmap is a private Linear board. No "ask in Discussions" where Discussions is a graveyard of unanswered questions. 
 
-**All in all: not putting knowledge in a chat history that search engines will never be able to index.**
+**All in all: Please stop hiding knowledge in a chat history that search engines will never be able to index.**
 
 ## The question
 
@@ -63,9 +64,9 @@ And I even put the effort to make it funny. The tone emerged from genuine suffer
 
 ## The point
 
-I'm not saying vibe coding is good. I'm not saying it's a good idea in the long run.
+I'm not saying vibe coding is good nor ethical. I'm definitely not saying it's a good idea in the long run. I'm not even saying that paying 300$/month to still be able to maybe maintain this horrible ocotopod when the AI bubble finally bursts will ever be worth it.
 
-I'm saying a vibe-coded heresy about converting Kubernetes manifests to docker-compose ship complete documentation; your project should as well. You have probably more people. You have more reason. You probably care a lot more about your handcrafted nugget – And I get it, it's a nice nugget – than I do about this. But please, if you don't want to write it yourself, AI Slop documentation is probably still better than no documentation (unless it's blatantly wrong, but you can proofread it).
+I'm saying that a vibe-coded heresy about converting Kubernetes manifests to docker-compose ships complete documentation; your project should as well. You surely have more people. You have a more noble goal. You also probably care a lot more about your beautifully handcrafted nugget than I do about squishy abomination. But please, if you don't want to write it yourself, sloppy AI-written documentation will ALWAYS be better than no documentation (unless when it's blatantly wrong, but you can always proofread it).
 
 The templates are not sacred. PLEASE sit down and write it, in plain language, what the software does, how to use it, and what to do when it breaks. Then you need to put it where people can find it. Stop putting it in the deep web and burying the knowledge in the mass of discussion. You'll probably have fewer questions repeatedly asked if you had the answer already somewhere.
 
@@ -77,6 +78,6 @@ That's it. That's the whole ritual.
 
 ---
 
-*Built with anguish, tears and blood by [Baptiste Rajaut](https://github.com/baptisterajaut), and with the help of GenAI that was just trying to help. Hopefully that Macbook will end up in the trash, I've never been so happy to be handed an Ubuntu machine*
+*Built with anguish, tears, and blood by [Baptiste Rajaut](https://github.com/baptisterajaut) and GenAI. Hopefully that Macbook will end up in the trash, I've never been so happy to be handed an Ubuntu machine*
 
-*Public domain. No rights reserved. Tentacles are there to stay. No Discord server. No Slack. Just docs. Open an issue on Github if you want help. I may answer, but salvation will never come.*
+*Public domain. No rights are reserved. Tentacles are there to stay. No Discord server. No Slack. Just docs. Open an issue on GitHub if you want help. I may answer, but our salvation will never come.*
