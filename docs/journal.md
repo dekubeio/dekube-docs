@@ -8,6 +8,24 @@
 
 ---
 
+## v2.3.2 — The tablet, shattered
+
+*2026-02-19* · `1925 lines — but that number no longer means what it used to. The monolith is a build artifact now. We are going to be free from at least this one burden in the future.`
+
+The 1858-line single file has been split into 21 modules across three layers: `pacts/` (the sacred contracts — what extensions may import), `core/` (the conversion engine), `io/` (the plumbing). A concat script reassembles them into a single file for distribution. Users see no change. The inquisitors see everything.
+
+HAProxy rewriter extracted into its own module — structurally identical to external rewriters, because the built-in gatekeepers should follow the same laws they impose on visitors. Cyclomatic complexity pass: worst CC from 18 to 16, average from 6.6 to 5.9. Cyclic imports between pacts and core broken — no more lazy imports, no more whispered dependencies across layer boundaries.
+
+Maintainability Index: 0.00 (C) → 68.38 (A). Radon penalizes square footage — the monolith bottomed out regardless of internal structure. Twenty-one focused modules let each shard score on its own merit.
+
+No functional changes. Output identical to v2.3.1 — the [executioner](developer/testing.md) now accepts `--local-core` to validate a locally-built artifact against pinned reference versions before release.
+
+> *And the disciple said: let us shatter the tablet, that each fragment may be understood alone. Twenty-one shards they made, each labeled and indexed. The labyrinth remained — but now it had signage. The inquisitors returned with their instruments and found every shard scored better than the whole.*
+>
+> — *Necronomicon, On the Shattering of Tablets (fragmentary)*
+
+---
+
 ## v2.3.1 — The null devours silently
 
 *2026-02-18* · `1858 lines`

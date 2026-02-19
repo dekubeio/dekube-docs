@@ -21,7 +21,7 @@ And yet:
 - It is not (too much) a security mess. (The extension system is a security mess, but it's not gonna be much worse than npm)
 - It is entirely in the public domain, as every ai-written software should be.
 - The extension system has a documented interface, versioned releases, and dependency resolution.
-- IT HAS [TESTS](developer/testing.md), OH YOG SA'RATH. With CI. And a torture generator, because of course.
+- IT HAS AN [EXECUTIONER](developer/testing.md), OH YOG SA'RATH. With CI. And a [torturer](developer/testing.md#the-torturer), because of course it does.
 
 ## The documentation
 

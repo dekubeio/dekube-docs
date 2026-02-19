@@ -10,39 +10,29 @@ Before we begin: nothing on this page should surprise you. You converted a Kuber
 
 ## Installing Helm and Helmfile
 
-h2c needs `helm` and `helmfile` to render manifests. Neither is typically in your distribution's package manager — they are standalone binaries.
+h2c needs `helm` and `helmfile` to render manifests.
+
+!!! tip "Package manager"
+    Some package managers already have both: `brew install helm helmfile` on macOS, `pacman -S helm helmfile` on Arch. If that works, skip the manual install below.
+    
+    Debian/Ubuntu don't package them — install manually:
 
 **Helm:**
 
 ```bash
-# Official install script
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-
-# Or via package manager (if available)
-# macOS: brew install helm
-# Arch:  pacman -S helm
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash
 ```
 
-Verify: `helm version` should print v3.x.
+Auto-detects OS/arch, downloads, verifies checksum, installs to `/usr/local/bin`. Verify: `helm version` should print v4.x.
 
 **Helmfile:**
 
 ```bash
-# Download binary from GitHub releases
-# https://github.com/helmfile/helmfile/releases
-# Or via package manager (if available)
-# macOS: brew install helmfile
+curl -sL https://github.com/helmfile/helmfile/releases/download/v1.2.3/helmfile_1.2.3_linux_amd64.tar.gz | tar -xzf - helmfile
+sudo mv helmfile /usr/local/bin/
 ```
 
-Verify: `helmfile --version` should print v1.x.
-
-**helm-diff plugin** (required by helmfile):
-
-```bash
-helm plugin install https://github.com/databus23/helm-diff
-```
-
-If `helmfile template` fails with `Error: plugin "diff" not found`, this is why.
+Verify: `helmfile --version` should print v1.x. Other platforms: check the [release assets](https://github.com/helmfile/helmfile/releases/latest) for your OS/arch.
 
 ## nerdctl compose does not work
 
@@ -54,10 +44,7 @@ nerdctl compose silently ignores `networks.*.aliases` — the key that makes K8s
 python3 h2c-manager.py flatten-internal-urls
 ```
 
-!!! note "nerdctl + cert-manager"
-    `flatten-internal-urls` is incompatible with the `cert-manager` extension — certificate SANs reference FQDNs that flattening strips. If you start on nerdctl with flattening today and later need inter-service TLS, you will have to switch to Docker Compose (or Podman Compose) and drop this transform. Plan accordingly. See [limitations](limitations.md#network-aliases-nerdctl) for the full list of options.
-
-If you are running Rancher Desktop with containerd: switching to dockerd (moby) in Rancher Desktop settings avoids the problem entirely. One checkbox, one VM restart — and you keep full compatibility with cert-manager down the road.
+If you are running Rancher Desktop with containerd: switching to dockerd (moby) in Rancher Desktop settings avoids the problem entirely — one checkbox, one VM restart. See [limitations](limitations.md#network-aliases-nerdctl) for the full list of workarounds and caveats (including cert-manager compatibility).
 
 ## For maintainers: chart-specific issues
 

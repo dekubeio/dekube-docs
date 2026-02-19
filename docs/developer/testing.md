@@ -1,8 +1,8 @@
 # Testing
 
-It has tests. It has a test suite.
+It has tests. It has an executioner.
 
-A project that emulates a container orchestrator by flattening its output into a different container orchestrator, whose primary architectural document is a fake Lovecraftian grimoire, whose fake kube-apiserver lives on a personal GitHub account for plausible deniability — this project now has automated regression testing. With CI. And a torture test generator.
+A project that emulates a container orchestrator by flattening its output into a different container orchestrator, whose primary architectural document is a fake Lovecraftian grimoire, whose fake kube-apiserver lives on a personal GitHub account for plausible deniability — this project now has automated regression testing. With CI. And a torturer.
 
 > *And lo, the disciples returned to the temple carrying instruments of verification — not to prove the rituals false, but to ensure they failed in precisely the same way, every time, without exception. The high priest wept, for he understood: reproducible heresy is still heresy, but it is heresy you can ship.*
 >
@@ -20,7 +20,7 @@ The test runner (`run-tests.sh`) downloads both versions, generates a `helmfile2
 2. **Each extension individually** — isolation testing
 3. **All extensions together** — interaction testing
 
-A diff is not a failure. A diff is information. When you bump core from v2.2.0 to v2.3.0 and the caddy service disappears from the output, that's the test suite doing its job — it tells you the refactoring changed behavior, and you decide whether that's intentional.
+A diff is not a failure. A diff is information. When you bump core from v2.2.0 to v2.3.0 and the caddy service disappears from the output, that's the executioner doing its job — it tells you the refactoring changed behavior, and you decide whether that's intentional.
 
 ### Static manifests
 
@@ -37,7 +37,7 @@ The `manifests/` directory contains edge cases organized by kind:
 | `crds.yaml` | KeycloakRealmImport, Certificate, ClusterIssuer, Issuer, ServiceMonitor, Bundle |
 | `edge-cases.yaml` | Empty docs, 63/64-char names, missing namespace, no selector, empty containers, unknown kinds |
 
-### Torture test (`--perf N`)
+### The torturer (`--perf N`) {#the-torturer}
 
 The generator (`generate.py`) produces manifests at O(n³) scale:
 

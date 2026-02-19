@@ -111,11 +111,11 @@ Dependencies are resolved one level deep (no transitive chains). Duplicates are 
 
 ## Incompatibility checking
 
-Some extensions are fundamentally incompatible (e.g. `flatten-internal-urls` strips FQDNs that `cert-manager` certificates rely on). The registry declares these conflicts via `"incompatible"` in `extensions.json`, and h2c-manager blocks the combination before downloading anything:
+Some extensions are fundamentally incompatible (e.g. `cert-manager` generates certificates with FQDN SANs that `flatten-internal-urls` would strip). The registry declares these conflicts via `"incompatible"` in `extensions.json`, and h2c-manager blocks the combination before downloading anything:
 
 ```
-Error: extensions 'flatten-internal-urls' and 'cert-manager' are incompatible
-  Use --ignore-compatibility-errors flatten-internal-urls to override
+Error: extensions 'cert-manager' and 'flatten-internal-urls' are incompatible
+  Use --ignore-compatibility-errors cert-manager to override
 ```
 
 The check is bidirectional — if A declares incompatibility with B, installing both A+B or B+A triggers the error.
@@ -124,10 +124,10 @@ To override (you know what you're doing):
 
 ```bash
 # Install mode
-python3 h2c-manager.py cert-manager flatten-internal-urls --ignore-compatibility-errors flatten-internal-urls
+python3 h2c-manager.py cert-manager flatten-internal-urls --ignore-compatibility-errors cert-manager
 
 # Run mode
-python3 h2c-manager.py run -e compose --ignore-compatibility-errors flatten-internal-urls
+python3 h2c-manager.py run -e compose --ignore-compatibility-errors cert-manager
 ```
 
 ## Python dependency checking

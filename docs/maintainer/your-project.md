@@ -17,7 +17,7 @@ For the dark and twisted ritual underlying the conversion — what gets converte
 - Python 3.10+
 - `pyyaml`
 - `helmfile` + `helm` (only if rendering from helmfile directly)
-- **Docker Compose** (v2) — required for running the generated output. nerdctl compose is **not supported** (see [Network aliases limitation](../limitations.md#network-aliases-nerdctl)). Podman Compose works (v1.0.6+).
+- **Docker Compose** (v2) — recommended for running the generated output. nerdctl compose requires the `flatten-internal-urls` transform to work (see [Network aliases](../limitations.md#network-aliases-nerdctl)). Podman Compose works (v1.0.6+).
 
 ## Before you start: ingress controller
 
@@ -132,7 +132,7 @@ If your stack includes Bitnami charts (Redis, PostgreSQL, Keycloak), install the
 
 See [Limitations](../limitations.md) for the complete list of what gets lost in translation.
 
-## Ingress controllers — details
+## Ingress controllers — details {#ingress-controllers}
 
 Compatibility was covered [above](#before-you-start-ingress-controller). This section documents annotation coverage and configuration.
 

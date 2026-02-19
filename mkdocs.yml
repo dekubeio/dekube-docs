@@ -44,6 +44,7 @@ nav:
   - Developer guide:
       - Concepts: developer/concepts.md
       - Architecture: developer/architecture.md
+      - Core architecture: developer/core-architecture.md
       - Code quality: developer/code-quality.md
       - Testing: developer/testing.md
       - Writing extensions:

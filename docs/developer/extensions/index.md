@@ -16,6 +16,7 @@ Converters and providers share the same code interface. The naming convention si
 ## Available imports
 
 ```python
+from helmfile2compose import ConvertContext          # passed to convert() / rewrite()
 from helmfile2compose import ConvertResult           # return type
 from helmfile2compose import IngressRewriter         # base class for ingress rewriters
 from helmfile2compose import get_ingress_class       # resolve ingressClassName + ingressTypes
@@ -24,7 +25,12 @@ from helmfile2compose import apply_replacements      # apply user-defined string
 from helmfile2compose import resolve_env             # resolve env/envFrom into flat list
 ```
 
-These are part of the public interface and stable across minor versions.
+These are the **pacts** — the [sacred contracts](../core-architecture.md#pacts--the-sacred-contracts) — and are stable across minor versions. Both import paths work:
+
+```python
+from helmfile2compose import ConvertContext           # via re-export
+from helmfile2compose.pacts import ConvertContext     # explicit
+```
 
 - **`ConvertResult`** — return type for `convert()`. Two fields: `services` (dict) and `caddy_entries` (list).
 - **`IngressRewriter`** — base class for ingress rewriters. Subclass it or implement the same duck-typed contract.

@@ -35,7 +35,7 @@ Today, extension metadata (repo, file, depends) lives in a central `extensions.j
 
 New CRD extensions (providers and converters) and transforms as needed. The extension system exists — writing a new one is straightforward (see [Writing converters](developer/extensions/writing-converters.md) and [Writing transforms](developer/extensions/writing-transforms.md)).
 
-## v3.0 — contract split
+## v3.0 — contract split {#v30--contract-split}
 
 Today, converters and providers share one contract: `kinds` + `convert()` → `ConvertResult`, and a `ConvertResult` can contain services, synthetic resources, or both. The distinction between converters (`h2c-converter-*`, resources only) and providers (`h2c-provider-*`, compose services) is a naming convention — nothing in the code enforces it.
 

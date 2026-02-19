@@ -135,7 +135,7 @@ class AddWhoami:
         }
 ```
 
-## Self-contained — no core imports
+## Self-contained — no core imports {#self-contained--no-core-imports}
 
 Transforms should not import private functions from `helmfile2compose`. The core's `_`-prefixed functions (`_apply_port_remap`, `_K8S_DNS_RE`, etc.) are internal and may change between versions.
 

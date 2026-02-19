@@ -16,6 +16,8 @@ compose.yml + Caddyfile + configmaps/ + secrets/
 
 A dedicated helmfile environment (e.g. `compose`) typically disables K8s-only infrastructure (cert-manager, ingress controller, reflector) and adjusts defaults for compose.
 
+For the internal package structure, module layout, and build system, see [Core architecture](core-architecture.md).
+
 ## Converter dispatch
 
 Manifests are classified by `kind` and dispatched to converter classes. Each converter handles one or more K8s kinds and returns a `ConvertResult` (compose services, Caddy entries, or both).
@@ -93,7 +95,7 @@ See [Writing rewriters](extensions/writing-rewriters.md) for the full guide.
 1. **Parse manifests** — recursive `.yaml` scan, multi-doc YAML split, classify by kind. Malformed YAML files are skipped with a warning.
 2. **Index lookup data** — ConfigMaps, Secrets, Services indexed for resolution during conversion.
 3. **Build alias map** — K8s Service name -> workload name mapping. ExternalName services resolved through chain.
-4. **Build port map** — K8s Service port -> container port resolution (named ports resolved via container spec).
+4. **Build port map** — K8s Service port -> container port resolution (named ports resolved via container spec). When the Service is missing from manifests, named ports fall back to a well-known port table (`http` → 80, `https` → 443, `grpc` → 50051).
 5. **Pre-register PVCs** — from both regular volumes and `volumeClaimTemplates`.
 6. **First-run init** — auto-exclude K8s-only workloads, generate default config.
 7. **Dispatch to converters** — each converter receives its kind's manifests + a `ConvertContext`. Extensions run in priority order (lower first), then built-in converters. Within `IngressConverter`, each Ingress manifest is dispatched to the first matching `IngressRewriter` (by `ingressClassName` or annotation prefix).

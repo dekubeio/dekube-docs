@@ -53,7 +53,7 @@ replacements:
 
 The exact config key depends on your application (Django: `AWS_S3_ADDRESSING_STYLE: path`, Rails: `force_path_style: true`, etc.).
 
-**Seen in:** lasuite-platform, stoatchat-platform.
+**Seen in:** about everywhere. MinIO is sadly ubiquitous.
 
 ---
 
@@ -96,7 +96,7 @@ Replace `<release>` with your Helm release name (e.g. `lasuite`, `shared-databas
 - Mounts the generated secrets (passwords, TLS certs) where the entrypoint reads them
 - Mounts init scripts to the standard `docker-entrypoint-initdb.d/` path — these are the SQL scripts that create databases, users, and grants on first startup
 
-**Seen in:** lasuite-platform, my proprietary production helmfile.
+**Seen in:** lasuite-platform, my proprietary production helmfile, mijn-bureau-infra.
 
 ### Bitnami Redis
 
@@ -131,7 +131,7 @@ overrides:
 
 This is a full replacement, not a tweak. The Bitnami Redis chart's value proposition is operational tooling (sentinel, replication, metrics) — none of which applies in a single-machine compose stack. Stock Redis with a password is all you need.
 
-**Seen in:** lasuite-platform, stoatchat-platform.
+**Seen in:** lasuite-platform, stoatchat-platform, mijn-bureau-infra.
 
 ### Bitnami Keycloak
 

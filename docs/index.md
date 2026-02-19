@@ -85,15 +85,9 @@ What started as a single script became an ecosystem of three components:
 | [h2c-core](https://github.com/helmfile2compose/h2c-core) | Core converter script (`helmfile2compose.py`) |
 | [h2c-manager](https://github.com/helmfile2compose/h2c-manager) | Package manager + extension registry |
 | [helmfile2compose.github.io](https://github.com/helmfile2compose/helmfile2compose.github.io) | This documentation site |
-| [h2c-provider-keycloak](https://github.com/helmfile2compose/h2c-provider-keycloak) | Keycloak and KeycloakRealmImport CRDs |
-| [h2c-converter-cert-manager](https://github.com/helmfile2compose/h2c-converter-cert-manager) | Certificate, ClusterIssuer, Issuer CRDs |
-| [h2c-converter-trust-manager](https://github.com/helmfile2compose/h2c-converter-trust-manager) | Bundle CRD (trust-manager) |
-| [h2c-provider-servicemonitor](https://github.com/helmfile2compose/h2c-provider-servicemonitor) | Prometheus and ServiceMonitor CRDs |
-| [h2c-transform-flatten-internal-urls](https://github.com/helmfile2compose/h2c-transform-flatten-internal-urls) | Strip aliases, rewrite FQDNs to short names |
-| [h2c-transform-bitnami](https://github.com/helmfile2compose/h2c-transform-bitnami) | Bitnami Redis, PostgreSQL, Keycloak workarounds |
-| [h2c-rewriter-nginx](https://github.com/helmfile2compose/h2c-rewriter-nginx) | Nginx ingress annotation rewriter |
-| [h2c-rewriter-traefik](https://github.com/helmfile2compose/h2c-rewriter-traefik) | Traefik ingress annotation rewriter (POC) |
 | [h2c-testsuite](https://github.com/helmfile2compose/h2c-testsuite) | Regression & performance test suite |
+
+Extensions (providers, converters, transforms, rewriters) are listed in the [extension catalogue](catalogue.md).
 
 ## Compatible projects
 
