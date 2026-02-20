@@ -86,7 +86,7 @@ Defaults: `--helmfile-dir .`, `--extensions-dir .h2c/extensions` (if it exists),
 
 ### Core
 
-- No flag: latest GitHub release of `helmfile2compose/h2c-core`
+- No flag: latest GitHub release of `helmfile2compose/helmfile2compose`
 - `--core-version v2.3.0`: exact tag
 
 ### Extensions

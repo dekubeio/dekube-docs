@@ -35,7 +35,7 @@ CRDs (Keycloak, cert-manager, trust-manager, Prometheus) are a different story â
 
 ## Installation
 
-Download `helmfile2compose.py` from the [latest h2c-core release](https://github.com/helmfile2compose/h2c-core/releases/latest).
+Download `helmfile2compose.py` from the [latest h2c-core release](https://github.com/helmfile2compose/helmfile2compose/releases/latest).
 
 If your stack uses CRDs that have an [h2c extension](../catalogue.md) (Keycloak, cert-manager, trust-manager), grab the extension `.py` files from their repos too and drop them in an `extensions/` directory next to the script:
 
