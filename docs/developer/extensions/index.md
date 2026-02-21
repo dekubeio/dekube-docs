@@ -7,7 +7,7 @@ Before writing an extension, make sure you're familiar with [Concepts](../concep
 | Type | Interface | Page | Naming convention |
 |------|-----------|------|-------------------|
 | **Converter** | `kinds` + `convert()` | [Writing converters](writing-converters.md) | `h2c-converter-*` |
-| **Provider** | subclass of `Provider`, `kinds` + `convert()` | [Writing providers](writing-providers.md) | `h2c-provider-*` |
+| **Provider** | subclass of `Converter`, `kinds` + `convert()` | [Writing providers](writing-providers.md) | `h2c-provider-*` |
 | **Ingress provider** | subclass of `IngressProvider` | [Writing ingress providers](writing-ingressproviders.md) | distribution-level |
 | **Transform** | `transform()`, no `kinds` | [Writing transforms](writing-transforms.md) | `h2c-transform-*` |
 | **Indexer** | subclass of `IndexerConverter`, `kinds` + `convert()` | [Writing converters](writing-converters.md) | `h2c-indexer-*` |

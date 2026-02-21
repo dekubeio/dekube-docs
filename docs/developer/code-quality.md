@@ -16,20 +16,27 @@ All repos use the same toolchain:
 
 ## Current scores
 
-*Last updated: 2026-02-20 — the monolith shattered, and each shard scored better alone.*
+*Last updated: 2026-02-21 — the monolith shattered, and each shard scored better alone.*
 
 ### Pylint
 
 | Repo | Score | Notes |
 |------|-------|-------|
+| h2c-rewriter-haproxy | 10.00/10 | Built-in distribution extension |
 | h2c-manager | 9.91/10 | Style only (too-many-locals) |
+| h2c-provider-caddy | 9.87/10 | Built-in distribution extension |
 | h2c-transform-flatten-internal-urls | 9.86/10 | Style only |
 | h2c-provider-keycloak | 9.75/10 | Style + expected `import-error` (h2c not in path) |
 | h2c-transform-bitnami | 9.68/10 | Style only |
+| h2c-converter-workload | 9.64/10 | Built-in distribution extension |
 | h2c-core | 9.59/10 | Style only (too-many-args, too-many-locals, duplicate-code) |
+| h2c-indexer-pvc | 9.50/10 | Built-in distribution extension |
 | h2c-converter-cert-manager | 9.45/10 | Style + expected `import-error` |
 | h2c-provider-servicemonitor | 9.36/10 | Style + expected `import-error` |
+| h2c-indexer-service | 9.29/10 | Built-in distribution extension |
 | h2c-converter-trust-manager | 9.19/10 | Style + expected `import-error` |
+| h2c-indexer-configmap | 9.09/10 | Built-in distribution extension |
+| h2c-indexer-secret | 9.09/10 | Built-in distribution extension |
 | h2c-rewriter-nginx | 8.50/10 | Style + expected `import-error` (h2c not in path) |
 | h2c-rewriter-traefik | 7.33/10 | Style + expected `import-error` |
 
@@ -73,16 +80,23 @@ Zero warnings across all repos. We don't know how. We don't ask.
 |------|---:|-----------|-------:|-----------|
 | h2c-rewriter-traefik | 78.60 | A | 8.3 | B |
 | h2c-core | 74.07 | A | 5.2 | B |
+| h2c-indexer-pvc | 73.65 | A | 12.5 | C |
+| h2c-indexer-configmap | 70.29 | A | 4.5 | A |
+| h2c-indexer-secret | 70.29 | A | 4.5 | A |
 | h2c-converter-trust-manager | 64.45 | A | 7.8 | B |
 | h2c-transform-flatten-internal-urls | 63.89 | A | 3.7 | A |
 | h2c-transform-bitnami | 62.14 | A | 4.1 | A |
+| h2c-indexer-service | 61.15 | A | 6.5 | B |
 | h2c-rewriter-nginx | 56.75 | A | 8.8 | B |
+| h2c-provider-caddy | 50.30 | A | 8.2 | B |
 | h2c-converter-cert-manager | 47.61 | A | 4.0 | A |
+| h2c-rewriter-haproxy | 43.51 | A | 6.4 | B |
 | h2c-provider-servicemonitor | 40.78 | A | 5.3 | B |
 | h2c-manager | 35.84 | A | 4.5 | A |
+| h2c-converter-workload | 34.46 | A | 7.4 | B |
 | h2c-provider-keycloak | 32.23 | A | 4.6 | A |
 
-All repos are MI A-rated. h2c-core's MI improved from 68.38 to 74.07 after the v3.0 split — moving `workloads.py` and `haproxy.py` to the distribution left the core with smaller, more focused modules. The lowest individual core module (`extensions.py`, 37.75) still rates A.
+All repos and built-in extensions are MI A-rated. h2c-core's MI improved from 68.38 to 74.07 after the v3.0 split — moving `workloads.py` and `haproxy.py` to the distribution left the core with smaller, more focused modules. The lowest individual core module (`extensions.py`, 37.75) still rates A. Built-in distribution extensions use their future repo names (e.g. `h2c-converter-workload` for `workloads.py`, `h2c-provider-caddy` for `caddy.py`) — these will become the actual repo names when the distribution is externalized in v3.1.
 
 ## The uncomfortable truth
 

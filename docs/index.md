@@ -15,7 +15,7 @@ Here because this upmost abomination is causing issues? Here's the path to (part
 
 There are dozens of tools that go from Compose to Kubernetes ([Kompose](https://github.com/kubernetes/kompose), [Compose Bridge](https://docs.docker.com/compose/bridge/), [Move2Kube](https://move2kube.konveyor.io/), etc.) — that's the "normal" direction. Almost nothing goes the other way, because who would design their deployment in K8s first and then downgrade?
 
-Using Kubernetes manifests as an intermediate representation to generate a docker-compose is absolutely using an ICBM to kill flies — which is exactly why I find it satisfying. And then the ICBM grew an extension system, a package manager, a distribution model, and a regression suite — and at some point the architecture of the tool converged with the architecture of the thing it was converting. The ouroboros closed. There was nothing left to stop me.
+Using Kubernetes manifests as an intermediate representation to generate a docker-compose is absolutely using an ICBM to kill flies — which is exactly why I find it satisfying. And then the ICBM grew an extension system, a package manager, a distribution model, and a regression suite — and now it can reach Mars, even though there are no flies there.
 
 The name is `helmfile2compose` because both helmfile and docker-compose share the same purpose: deploying an entire self-contained platform at once. It is also, now, the name of the [distribution](https://github.com/helmfile2compose/helmfile2compose) — the assembled script that users actually run. If you're using this to convert something that isn't self-contained, you are further into the abyss than I ever ventured, and I am certain it will end terribly. Yog Sa'rath, stay away from me.
 

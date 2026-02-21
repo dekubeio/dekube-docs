@@ -10,6 +10,9 @@ If your converter targets CRD kinds (replacing a K8s controller), see [Writing p
 
 Note: the distinction between converters (`h2c-converter-*`) and providers (`h2c-provider-*`) is enforced — `Provider` is a base class in `h2c.pacts.types`. Providers produce compose services; converters produce synthetic resources. Both use `ConvertResult`, but subclassing `Provider` signals your intent to the framework.
 
+!!! warning "Services from non-Provider converters are discarded"
+    The dispatch loop silently drops `ConvertResult.services` returned by converters that don't subclass `Provider` (a warning is printed to stderr). If your converter produces compose services, subclass `Provider` — otherwise the services will be ignored. This is enforced by the dispatch, not by the type system: `ConvertResult` accepts `services` regardless of caller. A future version will enforce this at the contract level (see [Roadmap](../../roadmap.md#typed-return-contracts)).
+
 ## The contract
 
 A converter class must have:

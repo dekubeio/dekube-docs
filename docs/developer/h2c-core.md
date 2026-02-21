@@ -50,14 +50,16 @@ Everything extensions can import. This is the stable API:
 
 ```python
 from h2c import ConvertContext, ConvertResult
+from h2c import Converter, IndexerConverter, Provider
 from h2c import IngressRewriter, get_ingress_class, resolve_backend
-from h2c import apply_replacements, resolve_env
+from h2c import apply_replacements, resolve_env, _secret_value
 ```
 
 Or explicitly:
 
 ```python
 from h2c.pacts import ConvertContext, IngressRewriter
+from h2c.pacts.types import Provider
 ```
 
 Both paths work — `__init__.py` re-exports the pacts API. These are the only imports extensions should use. If it's not in `pacts/`, it's internal and may change.

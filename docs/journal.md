@@ -8,13 +8,13 @@
 
 ---
 
-## v3.0.0 — The Separation of Worlds
+## v3.0.0 — The Ouroboros
 
 *2026-02-20* · `core: 1594 lines · distribution: 2098 lines — two files where there was one, and the sum is greater than the whole`
 
-The monolith is dead. Long live the monolith(s).
+We just wanted to separate the worlds — split a monolith into a bare engine and a distribution. Improve the architecture. Clean up the layers. Somewhere along the way, the architecture of the tool converged with the architecture of the thing it was converting: a bare API with empty registries, a distribution model, an extension system, priority-based dispatch. We didn't set out to close the ouroboros. We just turned the wheel, and the wheel remembered.
 
-`h2c-core` has been split into two repos following the Kubernetes distribution model: a **bare engine** ([h2c-core](https://github.com/helmfile2compose/h2c-core)) that produces `h2c.py` — pure potential with empty registries — and a **full distribution** ([helmfile2compose](https://github.com/helmfile2compose/helmfile2compose)) that bundles the 7 built-in extensions and produces `helmfile2compose.py`.
+`h2c-core` has been split into two repos: a **bare engine** ([h2c-core](https://github.com/helmfile2compose/h2c-core)) that produces `h2c.py` — pure potential with empty registries — and a **full distribution** ([helmfile2compose](https://github.com/helmfile2compose/helmfile2compose)) that bundles the 7 built-in extensions and produces `helmfile2compose.py`.
 
 The bare core has `_CONVERTERS = []`, `_REWRITERS = []`, `CONVERTED_KINDS = set()`. Feed it manifests and it will parse them, warn that every kind is unknown, and produce nothing. A temple with no priests. The distribution wires in ConfigMap, Secret, Service, PVC indexers, the Workloads converter, HAProxy rewriter, and Caddy provider — the default priesthood.
 
