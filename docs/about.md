@@ -6,27 +6,23 @@ Architect here. This project is an aberration. I am unreasonably proud of it.
 >
 > — *Necronomicon, On Forbidden Craftsmanship (for the record)*
 
+## TL;DR
+
+Using Kubernetes manifests as an intermediate representation to generate a docker-compose is absolutely using an ICBM to kill flies. And then the ICBM grew an extension system, a package manager, a distribution model, and a regression suite — and now it can reach Mars, even though there are no flies there.
+
+It was entirely vibe-coded. It reinvented Kubernetes. It has tentacles. It has complete documentation. It scores well on every linter. It should not exist, and yet it does, and it works oh so well.
+
+What follows is the complete and unhinged explanation of how a single autistic engineer with a Claude Teams plan rebuilt the world in ten days. You have been warned.
+
 ## The aberration
 
-helmfile2compose converts Kubernetes manifests to docker-compose. It emulates CRD controllers. It generates TLS certificates from nothing. It fakes a kube-apiserver. It carries the full FQDN of a cluster that does not exist, because the certificates were signed for a world it dismantled.
+helmfile2compose is a suite of tools that converts Kubernetes manifests to docker-compose. It emulates CRD controllers. It generates TLS certificates from nothing. It fakes a kube-apiserver. It carries the full FQDN of a cluster that does not exist, because the certificates were signed for a world it dismantled.
 
 Despite the dark jokes everywhere — despite the desecration, the heresy, the Necronomicon quotes that started writing themselves around session three — it works. It works *well*. It is architected. It is pluggable. It handles real-world helmfiles with dozens of services, init containers, sidecars, CRDs, cross-namespace secrets, backend TLS, and ingress annotations from controllers it has never met. And it might be genuinely useful to someone who isn't me.
 
-It was entirely vibe-coded. And then it became Kubernetes.
+v3.0.0 split the project into a bare engine with empty registries, and a distribution that bundles extensions and populates those registries via auto-discovery. A core that parses everything and converts nothing. A distribution that wires in the converters, the rewriters, the providers — the opinions. Third-party extensions plug into the core's contracts, comprising a full ecosystem as defined by scope creep. If this sounds familiar, it's because it's the Kubernetes distribution model. A bare apiserver. k3s. The CNI plugin interface. The CSI driver interface. The admission webhook framework. The goal was never to escape Kubernetes — it was to bring its power to the uninitiated, people who just need `docker compose up`. Nobody planned to reinvent its architecture in ~3000 lines of Python along the way. The convergence wasn't forced — it was discovered. Each split solved a real problem. The patterns emerged because the problems were the same problems.
 
-Every line of this project was written across Claude Code sessions on a single MacBook. No team. No company. No funding. No roadmap committee. No sprint planning. No Jira ticket. One autistic engineer with an AI agent that didn't know what it was building until it was too late.
-
-v3.0.0 split the project into a bare engine with empty registries, and a distribution that bundles extensions and populates those registries via auto-discovery. A core that parses everything and converts nothing. A distribution that wires in the converters, the rewriters, the providers — the opinions. Third-party extensions plug into the core's contracts. If this sounds familiar, it's because it's the Kubernetes distribution model. A bare apiserver. k3s. The CNI plugin interface. The CSI driver interface. The admission webhook framework.
-
-The goal was never to escape Kubernetes — it was to bring its power to the uninitiated, people who just need `docker compose up`. Nobody planned to reinvent its architecture in ~3000 lines of Python along the way. The wheel doesn't just turn — it turns *specifically to face you*.
-
-And yet:
-
-- The code makes sense. Not "it works despite itself" — it makes *architectural* sense. The separation of concerns is clean. The extension contracts are stable. The modules are small, the complexity is low, the dependency graph is acyclic. It is a well-structured program that happens to do something absurd.
-- It reinvented Kubernetes. A bare engine with empty registries, a distribution model, a plugin interface, a package manager with dependency resolution. The tool that converts K8s manifests converged on the architecture of K8s itself — and the convergence wasn't forced, it was discovered. Each split solved a real problem. The patterns emerged because the problems were the same problems.
-- It is entirely in the public domain, as every AI-written software should be.
-- It is not (too much) a security mess. (The extension system is a security mess, but it's not gonna be much worse than npm.)
-- IT HAS AN [EXECUTIONER](developer/testing.md), OH YOG SA'RATH. With CI. And a [torturer](developer/testing.md#the-torturer), because of course it does.
+It is entirely in the public domain, as every AI-written software should be. It is not (too much) a security mess — the extension system is, but it's not gonna be much worse than npm. And IT HAS AN [EXECUTIONER](developer/testing.md), OH YOG SA'RATH. With CI. And a [torturer](developer/testing.md#the-torturer), because of course it does.
 
 ## The arms race
 

@@ -31,20 +31,22 @@ Every extension currently bundled in the helmfile2compose distribution (`workloa
 
 ### The distribution family
 
-Three distributions that stack on top of each other.
+Two distributions stacked on top of each other. A bare engine without reverse proxy has no real use case outside extension development — h2c-core fills that role already. The intermediate layer ("helmfile2basic") was dropped.
 
 ```
-h2c-core (bare engine, ~1265 lines)
-  └─ helmfile2basic (+ indexers, workloads)
-       └─ helmfile2compose (+ caddy, haproxy)
-            └─ helmfile2easy (+ every official extension)
+h2c-core (bare engine — for extension devs, not a distribution)
+  └─ helmfile2compose (the OG — core + indexers + workloads + Caddy + HAProxy)
+       └─ kube2easy (turnkey — everything + bootstrap script)
 ```
 
 | Distribution | What's in it | What it is |
 |---|---|---|
-| **helmfile2basic** | h2c-core + indexers + WorkloadConverter | A shiv. Services, ConfigMaps, Secrets, PVCs. No reverse proxy, no opinions. BYOE. |
-| **helmfile2compose** | helmfile2basic + Caddy + HAProxy rewriter | A revolver. The OG. Ingress → Caddy, h2c-manager for the rest. |
-| **helmfile2easy** | helmfile2compose + all official extensions | A rocket launcher. One script, one page of docs, zero configuration. |
+| **helmfile2compose** | h2c-core + indexers + WorkloadConverter + Caddy + HAProxy rewriter | The OG. Patient zero, fully armed. Ingress → Caddy, h2c-manager for the rest. |
+| **kube2easy** | helmfile2compose + all official extensions + bootstrap script | *Kubernetes made easy by removing Kubernetes. Regrets optional.* |
+
+**kube2easy** drops "helmfile" from the name — it's the turnkey entry point, and naming it after a dependency contradicts the zero-friction promise. The bootstrap script checks the environment, installs helm and helmfile if needed, and runs. Zero external dependencies beyond Python. The `*2*` pattern echoes helmfile2compose; the double reading ("kube to easy" / "kube too easy") is intentional.
+
+Name `dekube` is reserved (verified free on GitHub) — no immediate use, but too good to let go. Future alias, subproject, or rename candidate.
 
 Requires: stacking support in `build-distribution.py` (build on top of a parent distribution, not just bare h2c-core). Blocked by v3.1 (extensions must be externalized first).
 

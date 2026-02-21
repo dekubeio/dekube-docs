@@ -1,6 +1,6 @@
 site_name: helmfile2compose
 site_url: https://helmfile2compose.github.io/
-site_description: Convert Kubernetes manifests to compose.yml + Caddyfile
+site_description: Convert Kubernetes manifests to compose.yml + Caddyfile. Sanity may or may not be included.
 repo_url: https://github.com/helmfile2compose/helmfile2compose
 repo_name: helmfile2compose/helmfile2compose
 
@@ -74,4 +74,4 @@ markdown_extensions:
   - toc:
       permalink: true
 
-copyright: Made with despair and dark rituals (and <a href="https://squidfunk.github.io/mkdocs-material/">MkDocs Material</a>)
+copyright: Public domain. No rights reserved. No tentacle returns. (Built with <a href="https://squidfunk.github.io/mkdocs-material/">MkDocs Material</a>)
