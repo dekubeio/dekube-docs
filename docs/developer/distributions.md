@@ -13,7 +13,12 @@ If you're reading this and thinking "this is the Kubernetes distribution model" 
 ```
 h2c-core (engine)  +  extensions  =  distribution
     h2c.py                              helmfile2compose.py
+
+                 stacking
+helmfile2compose  +  more extensions  =  kubernetes2simple.py
 ```
+
+Distributions can be **stacked**: built on top of another distribution instead of bare h2c-core. `kubernetes2simple` stacks on `helmfile2compose`, adding all official extensions. The build script strips the tail (registries, `sys.modules` hack, `__main__` guard) from the base, appends new extensions, and re-appends the tail.
 
 ## Why
 
@@ -69,13 +74,35 @@ After all code (core + extensions) is concatenated, the build script appends a c
 
 This means you just define classes in your extension files — no manual registration, no registry boilerplate.
 
+## Stacking distributions
+
+A distribution can be built on top of another distribution instead of bare h2c-core. The `--base-distribution` flag tells `build-distribution.py` to fetch the parent from GitHub releases (resolved via h2c-manager's `distributions.json`), strip its tail blocks, and use it as the base instead of `h2c.py`.
+
+```bash
+# Build kubernetes2simple on top of helmfile2compose
+python build-distribution.py kubernetes2simple \
+  --extensions-dir .h2c/extensions \
+  --base-distribution helmfile2compose
+
+# Or use a local .py file as base
+python build-distribution.py kubernetes2simple \
+  --extensions-dir .h2c/extensions \
+  --base ../helmfile2compose/helmfile2compose.py
+```
+
+The `--base-distribution` flag defaults to `core` (bare h2c-core). When set to another distribution name, `build-distribution.py` looks it up in h2c-manager's `distributions.json`, downloads the `.py` release artifact, and uses it as the base. `--base-version` pins a specific version (default: `latest`).
+
+`--base` takes a local `.py` file path directly — useful for local dev when you have the parent distribution already built.
+
 ## CI workflow example
+
+### Standard distribution (against h2c-core)
 
 ```yaml
 name: Release
 on:
-  push:
-    tags: ['v*']
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -91,10 +118,20 @@ jobs:
       - name: Build distribution
         run: python3 build-distribution.py helmfile2compose --extensions-dir extensions
 
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: helmfile2compose.py
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" helmfile2compose.py
+```
+
+### Stacked distribution (against another distribution)
+
+```yaml
+- name: Build kubernetes2simple.py
+  run: |
+    python build-distribution.py kubernetes2simple \
+      --extensions-dir .h2c/extensions \
+      --base-distribution helmfile2compose
 ```
 
 ## Dev workflow
@@ -105,6 +142,13 @@ cd my-distribution
 python ../h2c-core/build-distribution.py helmfile2compose \
   --extensions-dir extensions --core-dir ../h2c-core
 # → helmfile2compose.py
+
+# Build stacked distribution locally
+cd kubernetes2simple
+python ../h2c-core/build-distribution.py kubernetes2simple \
+  --extensions-dir .h2c/extensions \
+  --base ../helmfile2compose/helmfile2compose.py
+# → kubernetes2simple.py
 
 # Test it
 python helmfile2compose.py --from-dir /tmp/rendered --output-dir /tmp/out

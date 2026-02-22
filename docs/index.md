@@ -7,6 +7,7 @@
 
 Translates k8s manifests into a docker compose.yml. Kubernetes reinvented almost by accident.
 
+**Just want it to work?** → **[kubernetes2simple](kubernetes2simple.md)** — one script, zero configuration, no questions asked.
 
 ## Documentation
 
@@ -72,8 +73,9 @@ More details and ramblings on the [about page](about.md).
 
 | Repo | What it is |
 |------|------------|
+| [kubernetes2simple](https://github.com/helmfile2compose/kubernetes2simple) | Turnkey distribution — helmfile2compose + all extensions + automagic bootstrap script. |
 | [h2c-core](https://github.com/helmfile2compose/h2c-core) | Bare conversion engine — empty registries, no opinions. Produces `h2c.py`. |
-| [helmfile2compose](https://github.com/helmfile2compose/helmfile2compose) | The distribution — core + 7 built-in extensions → single `helmfile2compose.py`. This is what users run. |
+| [helmfile2compose](https://github.com/helmfile2compose/helmfile2compose) | The distribution — core + 7 built-in extensions → single `helmfile2compose.py`. |
 | [h2c-manager](https://github.com/helmfile2compose/h2c-manager) | Package manager — downloads distribution + extensions, resolves dependencies. |
 | [Extensions](catalogue.md) | Single-file modules: providers, converters, transforms, rewriters. |
 | [h2c-testsuite](https://github.com/helmfile2compose/h2c-testsuite) | Regression suite + torture generator. |

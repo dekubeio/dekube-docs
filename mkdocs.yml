@@ -30,6 +30,7 @@ theme:
 
 nav:
   - Home: index.md
+  - kubernetes2simple: kubernetes2simple.md
   - User guide:
       - Operations: user/operations.md
       - Advanced: user/advanced.md

@@ -8,6 +8,28 @@
 
 ---
 
+## h2c-core v1.1.0 + kubernetes2simple v0.1.0 — The tower rises
+
+*2026-02-22* · `kubernetes2simple: 3706 lines + 358-line bootstrap`
+
+`build-distribution.py` gained stacking support — distributions can now be built on top of other distributions, not just bare h2c-core. New flags: `--base` (local `.py` path), `--base-distribution` (fetch from registry, default: `core`), `--base-version` (default: `latest`). The build script resolves distribution names via h2c-manager's `distributions.json`, downloads the parent artifact, strips its tail (`_auto_register()`, `sys.modules` hack, `__main__` guard), appends extensions, and re-generates the tail. Also fixed: indented imports (inside `try/except`) no longer hoisted to top-level, `from __future__ import annotations` stripped from concatenated output, line count reporting corrected.
+
+The first thing stacked on top: [kubernetes2simple](https://github.com/helmfile2compose/kubernetes2simple). The friendly face of the abyss. Built on helmfile2compose, bundling all official extensions (keycloak, cert-manager, trust-manager, servicemonitor, nginx, traefik, bitnami) into a single `kubernetes2simple.py`.
+
+The `.py` distribution is half the product. The other half is `kubernetes2simple.sh` — a bash script that detects your source format (helmfile, Helm chart, or flat manifests), bootstraps everything it needs (Python venv, helm, helmfile — all scoped to `.kubernetes2simple/`, never touches the system), downloads `kubernetes2simple.py` from releases, and converts. One command. Zero configuration. Zero questions asked.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/helmfile2compose/kubernetes2simple/main/kubernetes2simple.sh -o k2s.sh
+chmod +x k2s.sh && ./k2s.sh
+docker compose up -d
+```
+
+The name drops "helmfile" — the turnkey entry point shouldn't be named after a dependency. Also known as k2s (lowercase), not to be confused with [K2s](https://github.com/Siemens-Healthineers/K2s) (uppercase, Siemens Healthineers' Kubernetes distribution for Windows). The name works on three levels: *kubernetes → simple* ("we convert Kubernetes into something simple"), *kubernetes, too simple* ("Kubernetes? Too simple." — cosmic arrogance), and *k2s* (the ghost of a real K8s distribution haunting the abbreviation). The `*2*` pattern echoes helmfile2compose. The name was revealed to the maintainer at the edge of sleep — consistent with the project's Lovecraftian lore. Yog Sa'rath communicates through dreams.
+
+The roadmap said "blocked by v3.1" — turns out stacking was a 50-line addition, not a v3.1 prerequisite. The tower was built in one session. Not the tower that reaches heaven — the tower that stacks temples on top of temples, each one containing the previous, each one slightly more cursed than the last.
+
+---
+
 ## v3.0.1 — The one who lived at home
 
 *2026-02-22* · `distribution: 2102 lines`

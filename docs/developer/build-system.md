@@ -48,10 +48,11 @@ Both scripts follow the same core pattern:
 
 ## `build-distribution.py` specifics
 
-### Two modes
+### Three modes
 
 - **`--core-dir` (local dev)**: Reads core sources from a local h2c-core checkout. Processes each module in `CORE_MODULES` order, exactly like `build.py`.
-- **CI (no `--core-dir`)**: Fetches the flat `h2c.py` from the latest (or pinned) h2c-core GitHub release. Strips its `__main__` guard, parses the already-concatenated imports + body, then appends extensions on top.
+- **CI against core (default)**: Fetches the flat `h2c.py` from the latest (or pinned) h2c-core GitHub release. Strips its `__main__` guard, parses the already-concatenated imports + body, then appends extensions on top.
+- **Stacking (`--base` or `--base-distribution`)**: Builds on top of another distribution instead of bare h2c-core. `strip_tail()` removes the three tail blocks (`_auto_register()`, `sys.modules` hack, `__main__` guard) from the base before parsing. Extensions are appended, then the tail is re-generated. `--base` takes a local `.py` file; `--base-distribution` fetches from GitHub releases via h2c-manager's `distributions.json`.
 
 ### Extension discovery
 
@@ -128,4 +129,13 @@ cd helmfile2compose && python ../h2c-core/build-distribution.py helmfile2compose
 
 # Build distribution (CI mode, fetches from release)
 python build-distribution.py helmfile2compose --extensions-dir extensions
+
+# Build stacked distribution (local base)
+cd kubernetes2simple && python ../h2c-core/build-distribution.py kubernetes2simple \
+  --extensions-dir .h2c/extensions --base ../helmfile2compose/helmfile2compose.py
+# → kubernetes2simple.py
+
+# Build stacked distribution (CI mode, fetches base from release)
+python build-distribution.py kubernetes2simple \
+  --extensions-dir .h2c/extensions --base-distribution helmfile2compose
 ```
