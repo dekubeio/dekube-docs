@@ -15,7 +15,7 @@ cd h2c-core && python build.py
 # → h2c.py
 ```
 
-### `build-distribution.py` (in h2c-core, shipped as release asset)
+### `build-distribution.py` (in h2c-core, fetched from repo at build time)
 
 Builds a distribution from core + extensions directory. Used by distribution repos (e.g. [helmfile2compose](https://github.com/helmfile2compose/helmfile2compose)) to produce a single-file script with built-in extensions.
 

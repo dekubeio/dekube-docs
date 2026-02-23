@@ -112,7 +112,7 @@ jobs:
 
       - name: Fetch build-distribution.py
         run: |
-          curl -fsSL https://github.com/helmfile2compose/h2c-core/releases/latest/download/build-distribution.py \
+          curl -fsSL https://raw.githubusercontent.com/helmfile2compose/h2c-core/main/build-distribution.py \
             -o build-distribution.py
 
       - name: Build distribution

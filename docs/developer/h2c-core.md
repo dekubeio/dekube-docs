@@ -89,7 +89,7 @@ Parsing, config, and output writing. No conversion logic — just plumbing betwe
 Two build scripts produce two different outputs:
 
 - **`build.py`** — concatenates `src/h2c/` into a single `h2c.py`. Bare engine, no extensions. This is the h2c-core release artifact.
-- **`build-distribution.py`** — builds a distribution from core + extensions dir. Used by distribution repos. Published as a release asset so distributions can fetch it in CI.
+- **`build-distribution.py`** — builds a distribution from core + extensions dir. Used by distribution repos. Fetched directly from the repo (`main` branch) — not a release asset.
 
 ```bash
 # Bare core
