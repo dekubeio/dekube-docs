@@ -30,14 +30,15 @@ K8s manifests
 compose.yml + Caddyfile
 ```
 
-### Built-in converters (distribution)
+### The Eight Monks (distribution)
 
-The bare h2c-core has **no** built-in converters — all registries are empty. The [helmfile2compose](https://github.com/helmfile2compose/helmfile2compose) distribution bundles 7 built-in extensions via `_auto_register()`:
+The bare h2c-core has **no** built-in converters — all registries are empty. The [helmfile2compose](https://github.com/helmfile2compose/helmfile2compose) distribution bundles 8 bundled extensions via `_auto_register()`:
 
 - **`ConfigMapIndexer`** / **`SecretIndexer`** / **`PvcIndexer`** / **`ServiceIndexer`** — index resources into `ctx` ([h2c-indexer-*](https://github.com/helmfile2compose))
-- **`WorkloadConverter`** — kinds: DaemonSet, Deployment, Job, StatefulSet ([h2c-converter-workload](https://github.com/helmfile2compose/h2c-converter-workload))
+- **`SimpleWorkloadProvider`** — kinds: DaemonSet, Deployment, Job, StatefulSet ([h2c-provider-simple-workload](https://github.com/helmfile2compose/h2c-provider-simple-workload))
 - **`HAProxyRewriter`** — built-in ingress rewriter, haproxy + default fallback ([h2c-rewriter-haproxy](https://github.com/helmfile2compose/h2c-rewriter-haproxy))
 - **`CaddyProvider`** — IngressProvider, produces a Caddy service + Caddyfile ([h2c-provider-caddy](https://github.com/helmfile2compose/h2c-provider-caddy))
+- **`FixPermissions`** — transform, generates fix-permissions service for non-root bind mounts ([h2c-transform-fix-permissions](https://github.com/helmfile2compose/h2c-transform-fix-permissions))
 
 Each lives in its own repo, referenced in `distribution.json`. The distribution assembles them at build time via h2c-manager.
 
@@ -82,8 +83,8 @@ See [Writing rewriters](extensions/writing-rewriters.md) for the full guide.
 | Service (ExternalName) | Resolved through alias chain (e.g. `docs-media` -> minio) |
 | Service (NodePort / LoadBalancer) | `ports:` mapping |
 | Ingress | Caddy service + Caddyfile `reverse_proxy` blocks, dispatched to ingress rewriters by `ingressClassName`. Path-rewrite annotations -> `uri strip_prefix`. Backend SSL -> Caddy TLS transport. Rewriters can inject `extra_directives` for rate-limit, auth, headers, etc. |
-| PVC / volumeClaimTemplates | Host-path bind mounts (auto-registered in `helmfile2compose.yaml`) |
-| securityContext (runAsUser) | Auto-generated `fix-permissions` service (`chown -R <uid>`) for non-root bind mounts |
+| PVC / volumeClaimTemplates | Host-path bind mounts (auto-registered in `helmfile2compose.yaml` on first run only) |
+| securityContext (runAsUser) | Auto-generated `fix-permissions` service (`chown -R <uid>`) for non-root bind mounts (via the [fix-permissions](https://github.com/helmfile2compose/h2c-transform-fix-permissions) transform) |
 
 ### Not converted (warning emitted)
 
@@ -98,19 +99,21 @@ See [Writing rewriters](extensions/writing-rewriters.md) for the full guide.
 
 ## Processing pipeline
 
+Thirteen steps. Each one locally reasonable. Together, they flatten a distributed system into a YAML file and a prayer.
+
 1. **Parse manifests** — recursive `.yaml` scan, multi-doc YAML split, classify by kind. Malformed YAML files are skipped with a warning.
 2. **Index lookup data** — ConfigMaps, Secrets, Services indexed for resolution during conversion.
 3. **Build alias map** — K8s Service name -> workload name mapping. ExternalName services resolved through chain.
 4. **Build port map** — K8s Service port -> container port resolution (named ports resolved via container spec). When the Service is missing from manifests, named ports fall back to a well-known port table (`http` → 80, `https` → 443, `grpc` → 50051).
-5. **Pre-register PVCs** — from both regular volumes and `volumeClaimTemplates`.
-6. **First-run init** — auto-exclude K8s-only workloads, generate default config.
+5. **Track PVCs** — from both regular volumes and `volumeClaimTemplates`. On first run, auto-register in config for host_path mapping. On subsequent runs, track only (config is read-only after creation).
+6. **First-run init** — auto-exclude K8s-only workloads, generate default config, write `helmfile2compose.yaml`. On subsequent runs: detect stale volume entries (config volumes not referenced by any PVC).
 7. **Dispatch to converters** — each converter receives its kind's manifests + a `ConvertContext`. Extensions run in priority order (lower first), then built-in converters. Within `IngressProvider`, each Ingress manifest is dispatched to the first matching `IngressRewriter` (by `ingressClassName` or annotation prefix).
 8. **Post-process env** — port remapping and replacements applied to all service environments (idempotent — catches extension-produced services).
 9. **Build network aliases** — for each K8s Service, add FQDN aliases (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`) + short alias to the compose service's `networks.default.aliases`. FQDNs resolve natively via compose DNS — no hostname rewriting needed.
 10. **Apply overrides** — deep merge from config `overrides:` and `services:` sections.
 11. **Hostname truncation** — services with names >63 chars get explicit `hostname:`.
-12. **Run transforms** — external post-processing hooks (if loaded). Transforms mutate `compose_services` and `ingress_entries` in place.
-13. **Write output** — `compose.yml`, `Caddyfile`, config/secret files.
+12. **Run transforms** — post-processing hooks (if loaded). Transforms mutate `compose_services` and `ingress_entries` in place.
+13. **Write output** — `compose.yml`, `Caddyfile`, config/secret files. The temple is rendered. The architect goes to sleep. The architect does not sleep well.
 
 ## Automatic rewrites
 

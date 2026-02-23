@@ -12,35 +12,30 @@ All repos use the same toolchain:
 
 - **[pylint](https://pylint.readthedocs.io/)** — static analysis. Style warnings (too-many-locals, line-too-long, too-many-arguments) are accepted. Real issues (unused imports, actual bugs, f-strings without placeholders) are not.
 - **[pyflakes](https://github.com/PyCQA/pyflakes)** — fast, zero-config, no false positives. Must be clean.
-- **[radon](https://radon.readthedocs.io/)** — cyclomatic complexity. Target: no function rated D or worse. C-rated functions are tolerated when they're natural dispatchers or sequential logic that wouldn't benefit from splitting. Current worst: `_build_service_port_map` (16) and `NginxRewriter.rewrite` (16), both C.
+- **[radon](https://radon.readthedocs.io/)** — cyclomatic complexity. Target: no function rated D or worse. C-rated functions are tolerated when they're natural dispatchers or sequential logic that wouldn't benefit from splitting. Current worst: `_read_yaml_config` (20) and `_collect_uids` (18), both C.
 
 ## Current scores
 
-*Last updated: 2026-02-21 — the monolith shattered, and each shard scored better alone.*
+*Last updated: 2026-02-23 — the monolith shattered, and each shard scored better alone.*
+
+This page covers h2c-core, h2c-manager, and the built-in distribution extensions (the Eight Monks). Third-party extensions track their own scores in their respective READMEs.
 
 ### Pylint
 
 | Repo | Score | Notes |
 |------|-------|-------|
+| h2c-indexer-configmap | 10.00/10 | Built-in distribution extension |
+| h2c-indexer-secret | 10.00/10 | Built-in distribution extension |
+| h2c-indexer-pvc | 10.00/10 | Built-in distribution extension |
+| h2c-indexer-service | 10.00/10 | Built-in distribution extension |
 | h2c-rewriter-haproxy | 10.00/10 | Built-in distribution extension |
-| h2c-manager | 9.91/10 | Style only (too-many-locals) |
+| h2c-transform-fix-permissions | 9.86/10 | Built-in distribution extension |
 | h2c-provider-caddy | 9.87/10 | Built-in distribution extension |
-| h2c-transform-flatten-internal-urls | 9.86/10 | Style only |
-| h2c-provider-keycloak | 9.75/10 | Style + expected `import-error` (h2c not in path) |
-| h2c-transform-bitnami | 9.68/10 | Style only |
-| h2c-converter-workload | 9.64/10 | Built-in distribution extension |
-| h2c-core | 9.59/10 | Style only (too-many-args, too-many-locals, duplicate-code) |
-| h2c-indexer-pvc | 9.50/10 | Built-in distribution extension |
-| h2c-converter-cert-manager | 9.45/10 | Style + expected `import-error` |
-| h2c-provider-servicemonitor | 9.36/10 | Style + expected `import-error` |
-| h2c-indexer-service | 9.29/10 | Built-in distribution extension |
-| h2c-converter-trust-manager | 9.19/10 | Style + expected `import-error` |
-| h2c-indexer-configmap | 9.09/10 | Built-in distribution extension |
-| h2c-indexer-secret | 9.09/10 | Built-in distribution extension |
-| h2c-rewriter-nginx | 8.50/10 | Style + expected `import-error` (h2c not in path) |
-| h2c-rewriter-traefik | 7.33/10 | Style + expected `import-error` |
+| h2c-manager | 9.78/10 | Style only (too-many-locals) |
+| h2c-provider-simple-workload | 9.66/10 | Built-in distribution extension |
+| h2c-core | 9.55/10 | Style only (too-many-args, too-many-locals) |
 
-The `E0401: Unable to import 'h2c'` on extensions is expected — they import from h2c-core at runtime, not at lint time. The `R0903: Too few public methods` on converter classes is by design — the contract is one class, one method, that's it.
+Remaining warnings are accepted style issues (`R0914` too-many-locals, `R0913` too-many-arguments). `E0401` (import-error) and `R0903` (too-few-public-methods) are suppressed inline — the import resolves at runtime, and the one-class-one-method contract is by design.
 
 ### Pyflakes
 
@@ -50,53 +45,44 @@ Zero warnings across all repos. We don't know how. We don't ask.
 
 | Repo | Worst function | CC | Rating |
 |------|---------------|---:|--------|
+| h2c-manager | `_read_yaml_config` | 20 | C |
+| h2c-transform-fix-permissions | `_collect_uids` | 18 | C |
+| h2c-manager | `main` | 17 | C |
 | h2c-core | `_build_service_port_map` | 16 | C |
-| h2c-rewriter-nginx | `NginxRewriter.rewrite` | 16 | C |
-| h2c-manager | `main` | 15 | C |
 | h2c-provider-caddy | `_write_caddy_host_block` | 13 | C |
-| h2c-converter-workload | `WorkloadConverter._build_service` | 13 | C |
-| h2c-indexer-pvc | `PVCIndexer.convert` | 13 | C |
+| h2c-provider-simple-workload | `SimpleWorkloadProvider._build_service` | 13 | C |
 | h2c-core | `_auto_register` | 13 | C |
-| h2c-manager | `_read_yaml_config` | 13 | C |
-| h2c-provider-servicemonitor | `ServiceMonitorProvider._resolve_port` | 13 | C |
+| h2c-indexer-pvc | `PVCIndexer.convert` | 12 | C |
+| h2c-rewriter-haproxy | `HAProxyRewriter.rewrite` | 12 | C |
+| h2c-transform-fix-permissions | `FixPermissions` (class) | 12 | C |
 | h2c-core | `main` (cli) | 12 | C |
-| h2c-rewriter-traefik | `TraefikRewriter.rewrite` | 12 | C |
-| h2c-provider-keycloak | `_build_pod_template_volumes` | 12 | C |
-| h2c-converter-trust-manager | `_collect_source` | 12 | C |
-| h2c-provider-servicemonitor | `_process_servicemonitors` | 12 | C |
 | h2c-core | `_resolve_env_entry` | 11 | C |
-| h2c-converter-workload | `_get_exposed_ports` | 11 | C |
-| h2c-converter-workload | `WorkloadConverter._convert_one` | 11 | C |
+| h2c-provider-simple-workload | `_get_exposed_ports` | 11 | C |
+| h2c-provider-simple-workload | `SimpleWorkloadProvider._convert_one` | 11 | C |
 | h2c-core | `_resolve_secret_keys` | 11 | C |
 | h2c-core | `_convert_volume_mounts` | 11 | C |
-| h2c-provider-keycloak | `_build_options_env` | 11 | C |
-| h2c-rewriter-nginx | `NginxRewriter` (class) | 11 | C |
+| h2c-core | `convert` | 11 | C |
+| h2c-transform-fix-permissions | `FixPermissions.transform` | 11 | C |
+| h2c-manager | `_install` | 11 | C |
 
-`h2c-converter-workload`, `h2c-provider-caddy`, `h2c-indexer-pvc` are the future repo names for extensions currently bundled in `helmfile2compose/extensions/` as `workloads.py`, `caddy.py`, and `pvc_indexer.py` respectively. No D/E/F rated functions. The v2.3.2 refactor reduced h2c-core's worst CC from 18 to 16; v3.0 moved several C-rated functions out of the core into distribution extensions (`WorkloadConverter`, `_write_caddy_host_block`, `HAProxyRewriter`). The remaining C-rated functions are natural dispatchers (if/elif chains, type switches) or sequential steps — splitting them would move complexity without improving readability.
+No D/E/F rated functions. The v2.3.2 refactor reduced h2c-core's worst CC from 18 to 16; v3.0 moved several C-rated functions out of the core into distribution extensions (`SimpleWorkloadProvider`, `_write_caddy_host_block`, `HAProxyRewriter`). The remaining C-rated functions are natural dispatchers (if/elif chains, type switches) or sequential steps — splitting them would move complexity without improving readability.
 
 ### Average complexity & maintainability
 
 | Repo | MI | MI rating | Avg CC | CC rating |
 |------|---:|-----------|-------:|-----------|
-| h2c-rewriter-traefik | 78.60 | A | 8.3 | B |
-| h2c-core | 74.07 | A | 5.2 | B |
-| h2c-indexer-pvc | 73.65 | A | 12.5 | C |
+| h2c-core | 74.14 | A | 5.2 | B |
 | h2c-indexer-configmap | 70.29 | A | 4.5 | A |
 | h2c-indexer-secret | 70.29 | A | 4.5 | A |
-| h2c-converter-trust-manager | 64.45 | A | 7.8 | B |
-| h2c-transform-flatten-internal-urls | 63.89 | A | 3.7 | A |
-| h2c-transform-bitnami | 62.14 | A | 4.1 | A |
-| h2c-indexer-service | 61.15 | A | 6.5 | B |
-| h2c-rewriter-nginx | 56.75 | A | 8.8 | B |
-| h2c-provider-caddy | 50.30 | A | 8.2 | B |
-| h2c-converter-cert-manager | 47.61 | A | 4.0 | A |
-| h2c-rewriter-haproxy | 43.51 | A | 6.4 | B |
-| h2c-provider-servicemonitor | 40.78 | A | 5.3 | B |
-| h2c-manager | 35.84 | A | 4.5 | A |
-| h2c-converter-workload | 34.46 | A | 7.4 | B |
-| h2c-provider-keycloak | 32.23 | A | 4.6 | A |
+| h2c-indexer-pvc | 67.76 | A | 9.7 | B |
+| h2c-indexer-service | 61.73 | A | 6.5 | B |
+| h2c-transform-fix-permissions | 60.33 | A | 8.0 | B |
+| h2c-provider-caddy | 51.64 | A | 7.6 | B |
+| h2c-rewriter-haproxy | 41.75 | A | 7.2 | B |
+| h2c-provider-simple-workload | 39.31 | A | 7.6 | B |
+| h2c-manager | 31.51 | A | 4.8 | A |
 
-All repos and built-in extensions are MI A-rated. h2c-core's MI improved from 68.38 to 74.07 after the v3.0 split — moving `workloads.py` and `haproxy.py` to the distribution left the core with smaller, more focused modules. The lowest individual core module (`extensions.py`, 37.75) still rates A. Built-in distribution extensions use their future repo names (e.g. `h2c-converter-workload` for `workloads.py`, `h2c-provider-caddy` for `caddy.py`) — these will become the actual repo names when the distribution is externalized in v3.1.
+All repos and bundled extensions are MI A-rated. h2c-core's MI improved from 68.38 to 74.14 after the v3.0 split — moving `workloads.py` and `haproxy.py` to the distribution left the core with smaller, more focused modules. The lowest individual core module (`extensions.py`, 37.56) still rates A.
 
 ## The uncomfortable truth
 
@@ -104,13 +90,13 @@ This project is, by every objective metric, well-structured code. The functions 
 
 This is deeply unsettling.
 
-The expectation — the *hope*, even — was that a tool this conceptually wrong would at least have the decency to be poorly written. That the code quality would serve as a warning label: "abandon all hope, ye who read this." Instead, the temple stands. The prayers work. The linters nod approvingly. And somewhere, a developer who understands what this project actually *does* stares at a pylint score of 9.68 and feels nothing but existential dread.
+The expectation — the *hope*, even — was that a tool this conceptually wrong would at least have the decency to be poorly written. That the code quality would serve as a warning label: "abandon all hope, ye who read this." Instead, the temple stands. The prayers work. The linters nod approvingly. And somewhere, a developer who understands what this project actually *does* stares at a pylint score of 9.55 and feels nothing but existential dread.
 
 The code is clean. The architecture is sound. The concept remains an abomination. These things are not in conflict — they are in conspiracy.
 
 > *The final horror is not that the ritual failed — it is that it succeeded, was reproducible, and scored well on peer review.*
 >
-> — *Cultes des Goules, On Accidental Rigor (regrettably)*
+> — *Cultes des Goules, On Accidental Rigor (lamentably)*
 
 ## And then it got refactored
 

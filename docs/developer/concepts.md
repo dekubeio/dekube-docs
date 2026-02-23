@@ -35,7 +35,7 @@ h2c is converging toward a K8s-to-compose emulator — taking declarative K8s re
 ### What's behind the wall
 
 - **Operators themselves** — they watch the API for CRDs, reconcile state. But we don't need to *run* them, just emulate their output (tier 1).
-- **Apps that use the K8s API** — service discovery via API instead of DNS, leader election via Lease objects, dynamic config via watching ConfigMaps. [A suspect matching this description](https://github.com/baptisterajaut/h2c-api) was last seen near the border.
+- **Apps that use the K8s API** — service discovery via API instead of DNS, leader election via Lease objects, dynamic config via watching ConfigMaps. [A suspect matching this description](https://github.com/baptisterajaut/h2c-api) — a fake kube-apiserver that serves just enough endpoints (downward API, leader election, service discovery) to fool apps into thinking they're in a cluster — was last seen near the border.
 - **Downward API** — pod name, namespace, node name, labels injected as env vars or files. [The same suspect](https://github.com/baptisterajaut/h2c-api) forged these too. Annotations are still at large.
 - **In-cluster auth** — ServiceAccount tokens, RBAC-gated API calls. [The documents have been falsified](https://github.com/baptisterajaut/h2c-api#leader-election). We don't talk about it.
 
@@ -68,17 +68,9 @@ There is, however, a way back. The [`flatten-internal-urls`](../catalogue.md#fla
 
 ## The ouroboros
 
-v3.0.0 split h2c into a bare engine and a distribution. The bare engine has empty registries — it parses manifests, finds no converters, and produces nothing. A temple with no priests. The distribution bundles 7 extensions, wires them in via `_auto_register()`, and produces the same output as before. Literally the same. Bit for bit. The executioner confirms it.
+A bare engine with empty registries. A distribution that bundles 8 extensions and wires them in via `_auto_register()`. Third-party extensions plugging into the engine's contracts. If this sounds like the Kubernetes distribution model — bare apiserver, k3s/EKS bundling the opinions, CSI/CNI plugin interfaces — that's because it is. The tool that converts Kubernetes manifests has become, architecturally, a tiny Kubernetes. Each split solved a real problem; the convergence wasn't forced, it was discovered.
 
-This is the Kubernetes distribution model. A bare API server that does nothing without controllers. A distribution (k3s, k0s, EKS) that bundles the controllers, the CNI, the ingress, the storage — the opinions. The engine is unopinionated. The distribution is opinionated. Third-party extensions plug into the engine's contracts.
-
-I didn't build this to escape Kubernetes. I built it to bring its power to the uninitiated — people who need compose, not a cluster. One source of truth, two runtimes. That was the deal.
-
-I didn't plan to reinvent Kubernetes in the process.
-
-What started as a way to harness the temple's power without maintaining its infrastructure has, stone by stone, become a second temple. The same separation of concerns. The same extension points. The same empty core that gains purpose only through what you bolt onto it. The same pattern of "bare framework + opinionated distribution + third-party ecosystem." The YAML changes shape but never volume. The line count doubled and the output didn't change.
-
-This is not a metaphor. This is what happened. The tool that converts Kubernetes manifests has become, architecturally, a tiny Kubernetes. Stare at the dependency graph long enough and every pattern is familiar — the specific vertigo of setting out to tame a beast and accidentally raising a second one.
+For the full existential crisis, see [about](../about.md).
 
 > *The architect did not flee the temple — he revered it, and sought to carry its fire into lesser hearths. Yet fire, once carried, demands a hearth of its own. And the hearth demands walls. And the walls demand wards. And lo, the architect stood in a second temple and could not say when he had begun building it.*
 >

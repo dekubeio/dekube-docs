@@ -12,19 +12,21 @@ All persistent configuration lives in `helmfile2compose.yaml` (volume paths, exc
 
 **Pull regularly.** The compose deployment piggybacks on the same Helm charts used for Kubernetes. When charts are updated (version bumps, config fixes, new features), `git pull` and regenerating picks them up — no manual compose.yml editing.
 
-After your maintainer updates the helmfile (chart versions, config changes), pull and regenerate:
+After your maintainer updates the helmfile (chart versions, config changes), pull and regenerate.
 
-```bash
-git pull
-python3 h2c-manager.py run -e compose
-docker compose up -d
-```
-
-Or if your project ships a `generate-compose.sh` (a wrapper script that runs h2c-manager for you — check your project's README):
+If your project ships a `generate-compose.sh` (a wrapper script — check your project's README):
 
 ```bash
 git pull
 ./generate-compose.sh
+docker compose up -d
+```
+
+Or if your project uses [h2c-manager](../maintainer/h2c-manager.md) directly (the package manager that downloads and runs helmfile2compose):
+
+```bash
+git pull
+python3 h2c-manager.py run -e compose
 docker compose up -d
 ```
 

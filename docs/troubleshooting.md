@@ -10,7 +10,7 @@ Before we begin: nothing on this page should surprise you. You converted a Kuber
 
 ## Installing Helm and Helmfile
 
-helmfile2compose needs `helm` and `helmfile` to render manifests.
+helmfile2compose needs `helm` and `helmfile` to render manifests. Yes, you need the thing you're trying to escape from. The irony is not lost on anyone.
 
 !!! tip "Package manager"
     Some package managers already have both: `brew install helm helmfile` on macOS, `pacman -S helm helmfile` on Arch. If that works, skip the manual install below.
@@ -20,10 +20,10 @@ helmfile2compose needs `helm` and `helmfile` to render manifests.
 **Helm:**
 
 ```bash
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 ```
 
-Auto-detects OS/arch, downloads, verifies checksum, installs to `/usr/local/bin`. Verify: `helm version` should print v4.x.
+Auto-detects OS/arch, downloads, verifies checksum, installs to `/usr/local/bin`. Verify: `helm version` should print v3.x.
 
 **Helmfile:**
 

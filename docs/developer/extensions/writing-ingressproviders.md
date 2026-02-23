@@ -79,7 +79,7 @@ Each Ingress manifest is matched against loaded `IngressRewriter` classes. The r
 
 ## Reference: CaddyProvider
 
-The built-in `CaddyProvider` (in the helmfile2compose distribution's `extensions/caddy.py`) is the reference implementation:
+The built-in `CaddyProvider` (in [h2c-provider-caddy](https://github.com/helmfile2compose/h2c-provider-caddy)) is the reference implementation:
 
 ```python
 from h2c import IngressProvider

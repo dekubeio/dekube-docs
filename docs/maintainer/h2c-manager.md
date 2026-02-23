@@ -23,10 +23,10 @@ python3 h2c-manager.py keycloak
 python3 h2c-manager.py keycloak cert-manager trust-manager
 
 # Pin distribution version
-python3 h2c-manager.py --distribution-version v3.0.0 keycloak
+python3 h2c-manager.py --distribution-version v3.1.0 keycloak
 
 # Pin extension version
-python3 h2c-manager.py keycloak==0.2.0
+python3 h2c-manager.py keycloak==0.4.0
 
 # Custom install directory (default: .h2c/)
 python3 h2c-manager.py -d ./tools keycloak
@@ -87,12 +87,12 @@ Defaults: `--helmfile-dir .`, `--extensions-dir .h2c/extensions` (if it exists),
 ### Distribution
 
 - No flag: latest GitHub release of `helmfile2compose/helmfile2compose`
-- `--distribution-version v3.0.0`: exact tag. The `v` prefix is added automatically if missing.
+- `--distribution-version v3.1.0`: exact tag. The `v` prefix is added automatically if missing.
 
 ### Extensions
 
 - Bare name (`keycloak`): latest GitHub release
-- Pinned (`keycloak==0.2.0`): exact version. The `v` prefix is added automatically if missing (`0.1.0` -> `v0.1.0`).
+- Pinned (`keycloak==0.4.0`): exact version. The `v` prefix is added automatically if missing (`0.1.0` -> `v0.1.0`).
 
 No version ranges. Just `latest` and `==exact`.
 
@@ -174,10 +174,10 @@ If `helmfile2compose.yaml` exists, h2c-manager reads `distribution`, `distributi
 ```yaml
 # helmfile2compose.yaml
 distribution: helmfile2compose    # optional — default is helmfile2compose
-distribution_version: v3.0.0
+distribution_version: v3.1.0
 depends:
   - keycloak
-  - cert-manager==0.1.0
+  - cert-manager==0.3.0
   - trust-manager
 ```
 
@@ -185,10 +185,10 @@ The `distribution` key selects which distribution to install. Available distribu
 
 ```bash
 python3 h2c-manager.py
-# Distribution version from helmfile2compose.yaml: v3.0.0
-# Fetching helmfile2compose v3.0.0...
-# Reading extensions from helmfile2compose.yaml: keycloak, cert-manager==0.1.0, trust-manager
-# Fetching extension keycloak v0.2.0...
+# Distribution version from helmfile2compose.yaml: v3.1.0
+# Fetching helmfile2compose v3.1.0...
+# Reading extensions from helmfile2compose.yaml: keycloak, cert-manager==0.3.0, trust-manager
+# Fetching extension keycloak v0.4.0...
 # ...
 ```
 

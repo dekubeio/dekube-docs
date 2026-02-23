@@ -13,7 +13,7 @@ Things you need to know for the output to work correctly.
 !!! warning "nerdctl requires the flatten-internal-urls transform"
     Without it, nerdctl compose will silently ignore network aliases and services will fail to reach each other. Add `flatten-internal-urls` to your `depends` list — see workarounds below.
 
-helmfile2compose generates Docker Compose `networks.default.aliases` on each service so that Kubernetes FQDNs (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`) resolve natively via compose DNS. This is how inter-service communication works without rewriting hostnames — the FQDNs match certificate SANs, Prometheus targets resolve, Grafana datasources work, everything behaves like it did in K8s.
+helmfile2compose generates Docker Compose `networks.default.aliases` on each service so that Kubernetes FQDNs (Fully Qualified Domain Names — e.g. `svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`) resolve natively via compose DNS. This is how inter-service communication works without rewriting hostnames — the FQDNs match certificate SANs, Prometheus targets resolve, Grafana datasources work, everything behaves like it did in K8s.
 
 nerdctl compose does not implement network aliases — it silently ignores the `aliases` key and does not support the `--network-alias` flag either. If you run containerd without Kubernetes (Rancher Desktop in containerd mode, Lima, etc.), FQDNs will not resolve unless you use the [`flatten-internal-urls`](catalogue.md#flatten-internal-urls) transform.
 
@@ -52,6 +52,10 @@ K8s `emptyDir` volumes are shared between containers in the same pod. When init 
 
 If an init container needs to prepare data for the main container via a shared volume, the `emptyDir` must be mapped to a named volume in `helmfile2compose.yaml` manually.
 
+### PVC (PersistentVolumeClaim) conversion
+
+Kubernetes PVCs request dynamic storage from a provisioner (Longhorn, Ceph, etc.). helmfile2compose converts them to bind mounts — host directories mapped into the container. Each PVC claim name is registered in `helmfile2compose.yaml` on first run with a default host path under `./data/`. `volumeClaimTemplates` (StatefulSets) are handled the same way.
+
 ### Secrets
 
 Kubernetes Secrets exist because serious people built a serious system for serious production workloads. RBAC-gated access. Base64 encoding (yes, it's encoding, not encryption — but at least it's *something*). Encryption at rest in etcd. Audit logs. Pod-level access control. A whole security model designed by people who think about threat vectors for a living.
@@ -70,7 +74,7 @@ The [cert-manager extension](catalogue.md#cert-manager) can generate real certif
 
 Bitnami images (PostgreSQL, Redis, MongoDB) run as non-root (UID 1001) and expect Unix permissions on their data directories. The host directory is typically owned by your user (UID 1000), so the container can't write to it. This causes `mkdir: cannot create directory: Permission denied`.
 
-This is handled automatically: helmfile2compose detects non-root containers (`securityContext.runAsUser`) with PVC bind mounts and generates a `fix-permissions` service that runs `chown -R <uid>` as root on first startup. No manual intervention needed.
+This is handled automatically: the built-in [fix-permissions](https://github.com/helmfile2compose/h2c-transform-fix-permissions) transform detects non-root containers (`securityContext.runAsUser`) with bind-mounted volumes and generates a `fix-permissions` service that runs `chown -R <uid>` as root on first startup. No manual intervention needed.
 
 ### Hostname length
 

@@ -5,7 +5,7 @@ I'm sorry you're here. Truly. If you're reading this, it means you maintain a he
 I've been there. Twice. This tool is the scar tissue.
 
 !!! note "helmfile2compose vs h2c"
-    **h2c** (or h2c-core) is the bare conversion engine — an empty pipeline with no built-in converters. **helmfile2compose** is the distribution: h2c-core bundled with 7 extensions (workloads, indexers, HAProxy, Caddy) into a single `helmfile2compose.py`. This is what you download, run, and ship. When this page says "helmfile2compose", it means the distribution — the thing you actually use.
+    **h2c** (or h2c-core) is the bare conversion engine — an empty pipeline with no built-in converters. **helmfile2compose** is the distribution: h2c-core bundled with 8 extensions (workloads, indexers, HAProxy, Caddy) into a single `helmfile2compose.py`. This is what you download, run, and ship. When this page says "helmfile2compose", it means the distribution — the thing you actually use.
 
 > *He who renders the celestial into the mundane does not ascend — he merely ensures that both realms now share his suffering equally.*
 >
@@ -22,17 +22,32 @@ For the dark and twisted ritual underlying the conversion — what gets converte
 
 ## Before you start: ingress controller
 
-Your helmfile already uses an ingress controller. That choice is baked into your Ingress manifests — annotations, `ingressClassName` — and you're not going to change it for a compose migration. helmfile2compose needs a **rewriter** that speaks your controller's annotation dialect and translates it to Caddy. If your controller isn't supported, your Ingress manifests will be silently skipped and you'll have no reverse proxy — which is the single most visible thing that breaks.
+Your helmfile already uses an ingress controller. That choice is baked into your Ingress manifests — annotations, `ingressClassName` — and you're not going to change it for a compose migration. helmfile2compose needs a **rewriter** that speaks your controller's annotation dialect and translates it into reverse proxy configuration. If your controller isn't supported, your Ingress manifests will be silently skipped and you'll have no reverse proxy — which is the single most visible thing that breaks.
+
+The default reverse proxy is **Caddy**, bundled with the distribution. The entire ingress system is pluggable — rewriters can be installed or [written](../developer/extensions/writing-rewriters.md), and Caddy itself can be [replaced](../developer/extensions/writing-ingressproviders.md).
 
 | Controller | Rewriter | Status |
 |------------|----------|--------|
-| **HAProxy** | built-in | stable |
+| **HAProxy** | bundled | stable |
 | **Nginx** | [h2c-rewriter-nginx](https://github.com/helmfile2compose/h2c-rewriter-nginx) (extension) | stable |
 | **Traefik** | [h2c-rewriter-traefik](https://github.com/helmfile2compose/h2c-rewriter-traefik) (extension) | POC |
 
-If you use something else (Contour, Ambassador, Istio, AWS ALB, etc.) — standard Ingress `host`/`path`/`backend` fields are always read, so basic routing works, but controller-specific annotations won't translate. You'll either need to [write a rewriter](../developer/extensions/writing-rewriters.md) or configure the reverse proxy manually. Check this *before* investing time in the rest of the setup.
+If you use something else (Contour, Ambassador, Istio, AWS ALB, etc.) — standard Ingress `host`/`path`/`backend` fields are always read, so basic routing works, but controller-specific annotations won't translate. Check this *before* investing time in the rest of the setup.
 
 CRDs (Keycloak, cert-manager, trust-manager, Prometheus) are a different story — they're optional, and unsupported CRDs are simply skipped with a warning. Your stack works without them; you just lose the resources they would have produced. Ingress is not optional.
+
+!!! note "kubernetes2simple"
+    [kubernetes2simple](../kubernetes2simple.md) exists as an all-inclusive distribution — helmfile2compose + every extension, one script, zero config. It's convenient for a quick test, but probably not what you want long-term: it enables transforms like `bitnami` that silently replace images, which may not be desired for your stack. As a maintainer, you'll want to pick your extensions deliberately.
+
+**fix-permissions** is bundled with the distribution and active by default. It generates a busybox init service that fixes bind mount ownership for non-root containers — in most cases a net gain. If you don't want it: bundled extensions can't be individually disabled yet (it's on the [roadmap](../roadmap.md#per-extension-enabled-false)). In the meantime, use a `compose.override.yml` to neutralize it:
+
+```yaml
+services:
+  fix-permissions:
+    entrypoint: ["true"]
+```
+
+`compose.override.yml` is automatically merged by Docker Compose, never overwritten by helmfile2compose, and yours to maintain.
 
 ## Installation
 
@@ -104,7 +119,7 @@ See [Configuration](configuration.md) for the full reference.
 ### Output files
 
 - `compose.yml` — services (incl. Caddy reverse proxy), volumes
-- `Caddyfile` (or `Caddyfile-<project>` when `disableCaddy: true`) — reverse proxy config from Ingress manifests
+- `Caddyfile` (or `Caddyfile-<project>` when `disable_ingress: true`) — reverse proxy config from Ingress manifests
 - `helmfile2compose.yaml` — persistent config (see [Configuration](configuration.md))
 - `configmaps/` — generated files from ConfigMap volume mounts
 - `secrets/` — generated files from Secret volume mounts
@@ -149,10 +164,10 @@ HAProxy is built into the helmfile2compose distribution. Nginx and Traefik are e
 
 ### Custom ingress class names
 
-If your cluster uses custom `ingressClassName` values (e.g. `haproxy-internal`, `nginx-dmz`), add a mapping in `helmfile2compose.yaml`:
+If your cluster uses custom `ingressClassName` values (e.g. `haproxy-internal`, `nginx-dmz`), add a mapping in `helmfile2compose.yaml` (see [Configuration — ingress_types](configuration.md#ingress_types)):
 
 ```yaml
-ingressTypes:
+ingress_types:
   haproxy-internal: haproxy
   haproxy-external: haproxy
   nginx-dmz: nginx

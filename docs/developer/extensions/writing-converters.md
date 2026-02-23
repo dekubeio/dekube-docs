@@ -8,7 +8,7 @@ A converter is an extension that teaches h2c how to handle specific Kubernetes r
 
 If your converter targets CRD kinds (replacing a K8s controller), see [Writing providers](writing-providers.md) for additional patterns (synthetic resources, network alias registration, cross-converter dependencies). For Ingress-specific reverse proxy backends, see [Writing ingress providers](writing-ingressproviders.md).
 
-Note: the distinction between converters (`h2c-converter-*`) and providers (`h2c-provider-*`) is enforced — `Provider` is a base class in `h2c.pacts.types`. Providers produce compose services; converters produce synthetic resources. Both use `ConvertResult`, but subclassing `Provider` signals your intent to the framework.
+Note: the distinction between converters (`h2c-converter-*`) and providers (`h2c-provider-*`) is enforced — `Provider` is a base class in `h2c.pacts.types`. Providers produce compose services; converters produce synthetic resources. Both use typed return contracts (`ConverterResult` / `ProviderResult`), but subclassing `Provider` signals your intent to the framework.
 
 !!! warning "Services from non-Provider converters are discarded"
     The dispatch loop ignores `services` returned by converters that don't subclass `Provider`. If your converter produces compose services, subclass `Provider` and return `ProviderResult`. Non-provider converters should return `ConverterResult` (which has no `services` field). The typed contracts enforce this at the API level.
@@ -67,14 +67,14 @@ The conversion context passed to every converter. Key attributes:
 | `ctx.replacements` | `list[dict]` | User-defined string replacements |
 | `ctx.alias_map` | `dict` | Service alias map (K8s Service name -> workload name) |
 | `ctx.service_port_map` | `dict` | Service port map ((svc_name, port) -> container_port) |
-| `ctx.fix_permissions` | `dict[str, int]` | Map of volume path -> UID. Entries generate a `fix-permissions` service that runs `chown -R <uid>` on the path. **Writable** — converters can register paths for non-root containers with bind mounts. |
+| `ctx.fix_permissions` | `dict[str, int]` | Legacy field (kept for backwards compatibility). The built-in [fix-permissions](https://github.com/helmfile2compose/h2c-transform-fix-permissions) transform now handles permission fixing by scanning K8s manifests and final compose volumes directly. |
 | `ctx.services_by_selector` | `dict` | Index of K8s Services by name. Each entry has `name`, `namespace`, `selector`, `type`, `ports`. Used to resolve Services to compose names, generate network aliases, and build port maps. **Writable** — converters should register runtime-created Services here. |
 | `ctx.pvc_names` | `set[str]` | Names of PersistentVolumeClaims discovered in manifests. Used to distinguish PVC mounts from other volume types during conversion. |
 | `ctx.extension_config` | `dict` | Per-converter config section from `helmfile2compose.yaml`. Set automatically before each `convert()` call, keyed by the converter's `name` attribute (e.g. `caddy` → `extensions.caddy` in config). Empty dict if not configured. |
 
 ### Priority
 
-Set `priority` as a class attribute to control execution order. Lower = earlier. Default: 100.
+Set `priority` as a class attribute to control execution order. Lower = earlier. Default: 1000 for `Converter`, 50 for `IndexerConverter`, 500 for `Provider`.
 
 ```python
 class CertManagerConverter:
@@ -101,7 +101,7 @@ class MyConverter:
             for m in manifests:
                 name = m.get("metadata", {}).get("name", "")
                 self._indexed[name] = m.get("spec", {})
-            return ConvertResult()
+            return ConverterResult()
         # kind == "MainKind" — use indexed data
         return self._process_main(manifests, ctx)
 ```

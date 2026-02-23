@@ -17,7 +17,7 @@ cd h2c-core && python build.py
 
 ### `build-distribution.py` (in h2c-core, fetched from repo at build time)
 
-Builds a distribution from core + extensions directory. Used by distribution repos (e.g. [helmfile2compose](https://github.com/helmfile2compose/helmfile2compose)) to produce a single-file script with built-in extensions.
+Builds a distribution from core + extensions directory. Used by distribution repos (e.g. [helmfile2compose](https://github.com/helmfile2compose/helmfile2compose)) to produce a single-file script with bundled extensions.
 
 ```bash
 # Local dev mode
@@ -60,7 +60,7 @@ Extensions are discovered from `--extensions-dir`: all `.py` files except `__ini
 
 ### Post-concatenation steps
 
-After all code (core + extensions):
+After all code (core + extensions), three incantations are appended. They must appear in this exact order, or the scroll is inert:
 
 1. **`_auto_register()` call** — appended to populate converter/rewriter/transform registries from all classes in globals
 2. **`sys.modules` hack** — registers the flat file as the `h2c` module so runtime-loaded extensions can `from h2c import ...`

@@ -14,20 +14,33 @@ There are five extension types, all loaded from the same `--extensions-dir`:
 | **Converter** | `kinds` + `convert()` | Handle K8s resource kinds, produce synthetic resources (Secrets, ConfigMaps) | `h2c-converter-*` |
 | **Provider** | `kinds` + `convert()` | Handle K8s resource kinds, produce compose services (and possibly resources) | `h2c-provider-*` |
 | **Transform** | `transform()`, no `kinds` | Post-process the final compose output after converters | `h2c-transform-*` |
+| **IngressProvider** | subclass of `IngressProvider`, `build_service()` + `write_config()` | Produce the reverse proxy service and config file from ingress entries | distribution-level |
 | **Ingress rewriter** | `name` + `match()` + `rewrite()` | Translate ingress controller annotations into ingress entries | `h2c-rewriter-*` |
 
-All converters share the same code interface (`kinds` + `convert()` → `ConverterResult`/`ProviderResult`), but the repo naming convention signals what they produce:
+See [Writing extensions](developer/extensions/index.md) to build your own.
 
-- **`h2c-converter-*`** — produces synthetic resources (Secrets, ConfigMaps, files on disk) without adding compose services. The extension *converts* K8s resources into other resources. Examples: cert-manager generates PEM certificates as Secrets, trust-manager assembles CA bundles as ConfigMaps.
-- **`h2c-provider-*`** — produces compose services (and possibly resources too). The extension *provides* running containers that emulate what a K8s controller would have created. Examples: keycloak turns a CR into a compose service, servicemonitor produces a Prometheus service with baked-in scrape config.
+## The Eight Monks — bundled in helmfile2compose
 
-The distinction is enforced: `Provider` is a base class in `h2c.pacts.types`. Subclassing it signals that the extension produces compose services.
+These are the eight extensions bundled in the [helmfile2compose distribution](developer/distributions.md). Together they form the reference distribution: everything you need to convert standard K8s manifests into a working compose stack, nothing you don't. No CRD magic, no vendor-specific annotations, no opinions about your monitoring stack — just Deployments, StatefulSets, Jobs, Services, Ingresses, ConfigMaps, Secrets, PVCs, and the plumbing to wire them together.
 
-See [Writing converters](developer/extensions/writing-converters.md) for the generic interface. For providers (CRD extensions that produce compose services), see [Writing providers](developer/extensions/writing-providers.md). For reverse proxy providers, see [Writing ingress providers](developer/extensions/writing-ingressproviders.md).
+If your helmfile only uses standard Kubernetes resources, the monks are all you need. The moment you introduce CRDs (cert-manager Certificates, Keycloak CRs, ServiceMonitors…) or vendor-specific ingress annotations (nginx, traefik), you install extensions from the sections below.
+
+| Monk | Type | Kinds | Priority |
+|------|------|-------|----------|
+| [The Librarian](https://github.com/helmfile2compose/h2c-indexer-configmap) | IndexerConverter | `ConfigMap` | 50 |
+| [The Guardian](https://github.com/helmfile2compose/h2c-indexer-secret) | IndexerConverter | `Secret` | 50 |
+| [The Binder](https://github.com/helmfile2compose/h2c-indexer-pvc) | IndexerConverter | `PersistentVolumeClaim` | 50 |
+| [The Weaver](https://github.com/helmfile2compose/h2c-indexer-service) | IndexerConverter | `Service` | 50 |
+| [The Builder](https://github.com/helmfile2compose/h2c-provider-simple-workload) | Provider | `Deployment`, `StatefulSet`, `DaemonSet`, `Job` | 500 |
+| [The Herald](https://github.com/helmfile2compose/h2c-rewriter-haproxy) | IngressRewriter | — | — |
+| [The Gatekeeper](https://github.com/helmfile2compose/h2c-provider-caddy) | IngressProvider | `Ingress` | 900 |
+| [The Custodian](https://github.com/helmfile2compose/h2c-transform-fix-permissions) | Transform | — | 8000 |
+
+The four indexers populate `ConvertContext` lookups so that later stages can resolve ConfigMap keys, Secret references, PVC claims, and Service ports. The Builder turns workloads into compose services. The Herald translates HAProxy ingress annotations, the Gatekeeper assembles them into a Caddy reverse proxy. The Custodian runs last — it scans for non-root containers and generates a busybox init service that fixes bind mount permissions.
 
 ## Providers
 
-Providers produce compose services — they emulate what a K8s controller would have created as running workloads.
+Providers produce compose services — they emulate what a K8s controller would have created as running workloads. Install them via [h2c-manager](maintainer/h2c-manager.md).
 
 ### keycloak
 
@@ -166,9 +179,18 @@ Detects Bitnami images by name, then: replaces Redis entirely with stock `redis:
 python3 h2c-manager.py bitnami
 ```
 
+## Ingress providers
+
+Ingress providers consume ingress entries (produced by rewriters) and generate the actual reverse proxy service + configuration file. Caddy is the only built-in provider — it ships with the distribution and handles all ingress entries by default. There are no third-party ingress providers yet.
+
+If Caddy doesn't fit your setup (you already run nginx/Traefik/envoy as your local proxy, or you need features Caddy doesn't expose), you can [write your own ingress provider](developer/extensions/writing-ingressproviders.md). The contract is straightforward: receive a list of ingress entries, return a compose service dict and write your config file.
+
 ## Ingress rewriters
 
-Ingress rewriters translate controller-specific annotations into Caddy configuration. Unlike converters, they don't claim K8s kinds — they intercept individual Ingress manifests based on `ingressClassName` or annotation prefix, read whatever vendor-specific incantations the chart author scattered across the annotations, and produce Caddy config that does the same thing. The annotations were never meant to be portable. That's the point.
+!!! note "Rewriter vs provider — two sides of the same gate"
+    An **ingress rewriter** reads controller-specific annotations on each Ingress manifest and produces *ingress entries* (abstract routing rules: hostname, path, upstream, TLS). An **ingress provider** consumes those entries and builds the actual reverse proxy service + config file (e.g. Caddy). The rewriter answers *"what does `nginx.ingress.kubernetes.io/rewrite-target` mean?"* — the provider answers *"how do I generate a Caddyfile from these rules?"* They're orthogonal: you can swap the rewriter (nginx → traefik) without touching the provider, or swap the provider (Caddy → something else) without touching the rewriters.
+
+Ingress rewriters translate controller-specific annotations into ingress entries consumed by the ingress provider. Unlike converters, they don't claim K8s kinds — they intercept individual Ingress manifests based on `ingressClassName` or annotation prefix, read whatever vendor-specific incantations the chart author scattered across the annotations, and produce routing rules that the provider assembles. The annotations were never meant to be portable. That's the point.
 
 The built-in `HAProxyRewriter` handles `haproxy` and empty/absent ingress classes. If your cluster uses something else — and statistically, it does, because nobody agrees on ingress controllers — you need a rewriter for it. External rewriters with the same `name` replace the built-in one. Remember to map them in `helmfile2compose.yaml`.
 
@@ -205,25 +227,6 @@ Warning: untested. May or may not work. Can't tell. Use HAProxy.
 ```bash
 python3 h2c-manager.py traefik
 ```
-
-## Ingress providers
-
-Ingress providers are a special kind of provider — they handle Ingress manifests and produce a reverse proxy service + config file. Unlike rewriters (which translate annotations), ingress providers own the entire reverse proxy lifecycle: service creation, config generation, rewriter dispatch.
-
-### caddy (built-in)
-
-| | |
-|---|---|
-| **Repo** | [h2c-provider-caddy](https://github.com/helmfile2compose/h2c-provider-caddy) |
-| **Type** | distribution built-in |
-| **Kinds** | `Ingress` |
-| **Priority** | 900 |
-| **Produces** | Caddy compose service + Caddyfile |
-| **Status** | stable |
-
-The default ingress provider bundled with the helmfile2compose distribution. Dispatches each Ingress manifest to the first matching rewriter, collects entries, builds a Caddy service with CA cert mounts, and writes a Caddyfile with host blocks. Supports `disable_ingress` mode, `tls internal`, backend SSL via trust pools, `extra_directives`, and `strip_prefix`.
-
-This is the reference implementation for `IngressProvider`. See [Writing ingress providers](developer/extensions/writing-ingressproviders.md) to build your own.
 
 ## Writing your own
 

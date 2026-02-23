@@ -5,17 +5,16 @@ All persistent configuration lives in `helmfile2compose.yaml`. This file is crea
 ## Full example
 
 ```yaml
-helmfile2ComposeVersion: v1
 name: my-platform
 volume_root: ./data
 extensions:
   caddy:
     email: admin@example.com
 
-distribution_version: v3.0.0
+distribution_version: v3.1.0
 depends:
   - keycloak
-  - cert-manager==0.1.0
+  - cert-manager==0.3.0
   - trust-manager
 
 volumes:
@@ -53,10 +52,6 @@ services:
 
 ## Sections
 
-### `helmfile2ComposeVersion`
-
-Config file format version. Currently the only valid value is `v1`. Auto-set on first run.
-
 ### `name`
 
 Compose project name. Auto-set to the source directory basename on first run.
@@ -77,7 +72,7 @@ volumes:
     host_path: ./custom   # used as-is (starts with ./)
 ```
 
-Auto-discovered PVCs default to `host_path: <pvc_name>` (e.g. `host_path: data-postgresql` -> `./data/data-postgresql`).
+On first run, discovered PVCs are auto-registered with `host_path: <pvc_name>` (e.g. `host_path: data-postgresql` -> `./data/data-postgresql`). On subsequent runs, PVCs not mapped in the config emit a warning but are still usable as named Docker volumes.
 
 ### `volumes`
 
@@ -182,7 +177,7 @@ Previously `caddy_tls_internal` (top-level). Migrated automatically on first run
 Pin the distribution version for [h2c-manager](h2c-manager.md). Ignored by helmfile2compose itself.
 
 ```yaml
-distribution_version: v3.0.0
+distribution_version: v3.1.0
 ```
 
 `core_version` is accepted as a backwards-compatible alias.
@@ -202,7 +197,7 @@ List of [h2c extensions](../catalogue.md) required by this project. h2c-manager 
 ```yaml
 depends:
   - keycloak
-  - cert-manager==0.1.0
+  - cert-manager==0.3.0
   - trust-manager
 ```
 
@@ -264,7 +259,7 @@ v3.1.0 normalized config keys to snake_case. On first run, old keys are automati
 | `caddy_tls_internal` | `extensions.caddy.tls_internal` |
 | `helmfile2ComposeVersion` | removed (silently ignored) |
 
-A stderr notice is printed if migration occurred. Old keys vanish from the file on next save. No manual action needed.
+A stderr notice is printed if migration occurred. Migration happens in memory — to persist the new key names, edit your `helmfile2compose.yaml` manually (or delete it and re-run to regenerate from scratch).
 
 ## Placeholders
 

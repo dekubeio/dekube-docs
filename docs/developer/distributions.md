@@ -22,23 +22,24 @@ Distributions can be **stacked**: built on top of another distribution instead o
 
 ## Why
 
-Different organizations want different defaults. The helmfile2compose distribution bundles Caddy as the reverse proxy, HAProxy as the default rewriter, and WorkloadConverter for standard K8s kinds. A corporate distribution might bundle Traefik instead, add custom CRD handlers, or remove features that don't apply.
+Because apparently one temple wasn't enough. Different organizations want different defaults. The helmfile2compose distribution bundles Caddy as the reverse proxy, HAProxy as the default rewriter, and SimpleWorkloadProvider for standard K8s kinds. A corporate distribution might bundle Traefik instead, add custom CRD handlers, or remove features that don't apply.
 
 The distribution model avoids forking the core — everyone shares the same engine, just with different extensions wired in.
 
 ## helmfile2compose — the reference distribution
 
-[helmfile2compose](https://github.com/helmfile2compose/helmfile2compose) is the default distribution. It bundles 7 extensions:
+[helmfile2compose](https://github.com/helmfile2compose/helmfile2compose) is the default distribution. It bundles 8 extensions:
 
 | Repo | Type | File | Purpose |
 |------|------|------|---------|
 | [h2c-indexer-configmap](https://github.com/helmfile2compose/h2c-indexer-configmap) | IndexerConverter | `configmap_indexer.py` | Populates `ctx.configmaps` |
 | [h2c-indexer-secret](https://github.com/helmfile2compose/h2c-indexer-secret) | IndexerConverter | `secret_indexer.py` | Populates `ctx.secrets` |
 | [h2c-indexer-pvc](https://github.com/helmfile2compose/h2c-indexer-pvc) | IndexerConverter | `pvc_indexer.py` | Populates `ctx.pvc_names` |
-| [h2c-indexer-simple-service](https://github.com/helmfile2compose/h2c-indexer-simple-service) | IndexerConverter | `service_indexer.py` | Populates `ctx.services_by_selector` |
-| [h2c-converter-workload](https://github.com/helmfile2compose/h2c-converter-workload) | Provider | `workloads.py` | DaemonSet, Deployment, Job, StatefulSet → compose services |
+| [h2c-indexer-service](https://github.com/helmfile2compose/h2c-indexer-service) | IndexerConverter | `service_indexer.py` | Populates `ctx.services_by_selector` |
+| [h2c-provider-simple-workload](https://github.com/helmfile2compose/h2c-provider-simple-workload) | Provider | `workloads.py` | DaemonSet, Deployment, Job, StatefulSet → compose services |
 | [h2c-rewriter-haproxy](https://github.com/helmfile2compose/h2c-rewriter-haproxy) | IngressRewriter | `haproxy.py` | HAProxy annotations + default fallback |
 | [h2c-provider-caddy](https://github.com/helmfile2compose/h2c-provider-caddy) | IngressProvider | `caddy.py` | Caddy service + Caddyfile generation |
+| [h2c-transform-fix-permissions](https://github.com/helmfile2compose/h2c-transform-fix-permissions) | Transform | `fix_permissions.py` | Fix bind mount permissions for non-root containers |
 
 External extensions (loaded via `--extensions-dir` at runtime) work on top of whatever a distribution bundles.
 
@@ -58,8 +59,8 @@ my-distribution/
 {
   "base": "core",
   "extensions": [
-    "configmap-indexer", "secret-indexer", "pvc-indexer", "simple-service-indexer",
-    "workload", "haproxy", "caddy"
+    "configmap-indexer", "secret-indexer", "pvc-indexer", "service-indexer",
+    "workload", "haproxy", "caddy", "fix-permissions"
   ]
 }
 ```

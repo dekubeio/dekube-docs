@@ -17,7 +17,7 @@ A transform class must have:
 
 ```python
 class MyTransform:
-    priority = 100  # optional, default 100, lower = earlier
+    priority = 1000  # optional, default 1000, lower = earlier
 
     def transform(self, compose_services, ingress_entries, ctx):
         for svc_name, svc in compose_services.items():
@@ -41,22 +41,21 @@ Transforms execute at the end of `convert()`, after:
 
 1. All converters have produced services
 2. Network aliases have been injected (`networks.default.aliases`)
-3. `_generate_fix_permissions` has run
-4. Overrides from `helmfile2compose.yaml` have been applied
-5. Hostname truncation (>63 chars) has been applied
+3. Overrides from `helmfile2compose.yaml` have been applied
+4. Hostname truncation (>63 chars) has been applied
 
-This means transforms see the *final* compose output — aliases, overrides, fix-permissions services, everything. They are the last step before the output is written to disk.
+This means transforms see the *final* compose output — aliases, overrides, everything. They are the last step before the output is written to disk. Transforms are sorted by priority — lower runs first. The built-in `fix-permissions` transform runs at priority 8000 (after all other transforms).
 
 ### Priority
 
-Same system as converters. Set `priority` as a class attribute. Lower = earlier. Default: 100.
+Same system as converters. Set `priority` as a class attribute. Lower = earlier. Default: 1000 (no base class for transforms — the fallback applies).
 
 ```python
 class EarlyTransform:
-    priority = 50   # runs before default transforms
+    priority = 500   # runs before default (1000)
 
 class LateTransform:
-    priority = 200  # runs after default transforms
+    priority = 2000  # runs after default (1000)
 ```
 
 Priority matters when multiple transforms are loaded and one depends on another's mutations.
@@ -90,7 +89,7 @@ def _rewrite_text(text, alias_map):
     return text
 
 class FlattenInternalUrls:
-    priority = 200
+    priority = 2000
 
     def transform(self, compose_services, ingress_entries, ctx):
         # Strip aliases

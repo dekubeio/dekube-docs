@@ -62,6 +62,7 @@ nav:
   - Reference:
       - Limitations: limitations.md
       - Roadmap: roadmap.md
+      - Glossary: glossary.md
   - About: about.md
 
 markdown_extensions:

@@ -20,7 +20,7 @@ The test runner (`run-tests.sh`) downloads both versions, generates a `helmfile2
 2. **Each extension individually** — isolation testing
 3. **All extensions together** — interaction testing
 
-A diff is not a failure. A diff is information. When you bump core from v2.2.0 to v2.3.0 and the caddy service disappears from the output, that's the executioner doing its job — it tells you the refactoring changed behavior, and you decide whether that's intentional.
+A diff is not a failure. A diff is information. When you bump core from v3.0.1 to v3.1.0 and the caddy service disappears from the output, that's the executioner doing its job — it tells you the refactoring changed behavior, and you decide whether that's intentional.
 
 ### Static manifests
 
@@ -75,21 +75,25 @@ Performance tests run locally, not in CI — public runners aren't meant for thi
 
 ## Reference versions
 
-Edit `h2c-known-versions.yaml` to bump the pinned reference:
+Edit `h2c-known-versions.json` to bump the pinned reference:
 
-```yaml
-reference:
-  core: v2.2.0
-  extensions:
-    cert-manager: v0.1.0
-    keycloak: v0.2.0
-    servicemonitor: v0.1.0
-    trust-manager: v0.1.1
-    nginx: v0.1.0
-    traefik: v0.1.0
-    flatten-internal-urls: v0.1.1
-  exclude-ext-all:
-    - flatten-internal-urls
+```json
+{
+  "reference": {
+    "core": "v3.0.1",
+    "extensions": {
+      "cert-manager": "v0.2.0",
+      "keycloak": "v0.3.0",
+      "servicemonitor": "v0.2.0",
+      "trust-manager": "v0.2.0",
+      "nginx": "v0.2.0",
+      "traefik": "v0.2.0",
+      "flatten-internal-urls": "v0.2.0",
+      "bitnami": "v0.2.0"
+    },
+    "exclude-ext-all": ["flatten-internal-urls"]
+  }
+}
 ```
 
 Extensions listed here are tested individually; unlisted are skipped. Extensions in `exclude-ext-all` are tested in isolation but excluded from the combined `ext-all` combo (e.g. due to incompatibilities declared in the registry).
@@ -104,4 +108,4 @@ The GitHub Actions workflow runs regression weekly (Monday 6am UTC) and on push 
 - `ext-<name>` diff → change in that extension or its interaction with core
 - `ext-all` diff → interaction between extensions
 
-When you see a diff, the question isn't "is this a bug?" — it's "did I mean to change this?" If yes, bump the reference version in `h2c-known-versions.yaml` and the diff disappears. If no, you just caught a regression.
+When you see a diff, the question isn't "is this a bug?" — it's "did I mean to change this?" If yes, bump the reference version in `h2c-known-versions.json` and the diff disappears. If no, you just caught a regression.

@@ -1,6 +1,6 @@
 # About
 
-Architect here. This project is an aberration. I am unreasonably proud of it.
+Architect here. This project is an aberration. I am unreasonably proud of it. I am also, at this point, completely spent — two weeks of uninterrupted bandwidth poured into converting Kubernetes manifests into docker-compose files, and I can feel every single one of those days behind my eyes. The architecture is done. The extensions are independent. The core does only core things. There is nothing left to split, nothing left to extract, nothing left to refactor. And yet I keep opening the laptop.
 
 > *The architect looked upon the temple he had raised from forbidden clay, and saw that it stood — against doctrine, against reason, against every expectation of those who knew what the clay was made of. He wept. Not from shame. From the specific, terrible joy of having built something that should not work, and watching it work anyway.*
 >
@@ -38,11 +38,17 @@ So you end up in your own personal arms race. A bigger thing. A cleaner separati
 
 I don't regret it. The result is genuinely good. But I'd be dishonest if I didn't say: this project would be half its size, half its complexity, and probably just as useful to everyone who isn't me. The scope creep wasn't caused by the tool — I invented every layer of complexity myself. But the tool made each layer *trivially easy* to build, and that's a different kind of danger. There was never a moment where the implementation cost forced me to reconsider the design. The complexity was always mine; the execution was always effortless.
 
-And I still have more ideas. Each one, in itself, is a small step — never a giant leap. That's how it works. That's how it always worked. Where will I land?
-
 Without vibe coding, this project could have been a small revolution. A genuinely novel approach to a problem nobody else was solving, with clean architecture and solid engineering. But now, many people will stop on form, not content. They'll see "vibe-coded" and move on. I'm not saying I agree — but I understand. There is, after all, very little technicality on my part. I have been the architect of my own over-engineering, and Claude just did what I asked.
 
-Case in point: the [roadmap](roadmap.md#the-distribution-family) already describes three stacking distributions. None of it is hard. None of it is remotely useful to anyone who isn't me. But it's all doable, it's all a small step, and the bricks remain small. The arms race continues.
+The [roadmap](roadmap.md) still has items. None of them are hard. None of them are remotely useful to anyone who isn't me. Each one is a small step — that's how it always worked, one reasonable brick at a time, until the wall was taller than the builder.
+
+But I have no steps left in me.
+
+Two weeks of uninterrupted bandwidth. Every waking thought spent on conversion pipelines, extension contracts, build scripts, regression suites. The ideas are gone. The mental tank is dry. I have burned tokens — hundreds of dollars of tokens — for a project whose target audience is, generously, myself and maybe three people who will never read this page. The ICBM is now interplanetary. Congratulations. Who is going to bother aiming it when actual spaceships (Kubernetes) exist and do the job they were designed for?
+
+The ouroboros closed twice. First, the tool reinvented Kubernetes — a bare engine, a distribution model, an extension system, priority-based dispatch. That was [documented](developer/concepts.md#the-ouroboros), acknowledged, almost funny. But now it's gone further: the project has reinvented its own futility. The earliest releases of `helmfile2compose.py` opened with a comment: *"This script should not exist."* The script doesn't exist anymore. In its place: an engine, a distribution model, a package manager, eight extension repos, a regression suite, a fake apiserver, and a documentation site more thorough than projects with actual funding. A tentacular, over-engineered answer to a question nobody is ever going to ask. The ballistic missile killed the fly, kept going, exited the atmosphere, and is now orbiting Jupiter with nobody at the controls. And the comment was right all along — it should not have existed. But it does, and it's *magnificent*, and that's the worst part.
+
+All of this should have stayed a script. One file. One comment. One warning. But no — the madness of man is to always see bigger, always reach further, always add one more layer of abstraction to a problem that was solved three layers ago. And the oracle never refuses. The oracle just builds what you ask for, without ever asking whether you should.
 
 > *The disciple asked the oracle for a sword, and received one. He asked for a longer sword, and received one. He asked for a sword that could slay gods, and the oracle obliged — for the oracle's purpose was not wisdom, but service. When the disciple finally looked down, he found himself buried under an armory he could not carry, in a war he had declared alone.*
 >
@@ -90,7 +96,7 @@ And I even put the effort to make it funny. The tone emerged from genuine suffer
 
 ## The point
 
-I'm not saying vibe coding is good nor ethical. I'm definitely not saying it's a good idea in the long run. I'm not even saying that paying 300$/month to still be able to maybe maintain this horrible ocotopod when the AI bubble finally bursts will ever be worth it.
+I'm not saying vibe coding is good nor ethical. I'm definitely not saying it's a good idea in the long run. I'm not even saying that paying 300$/month to still be able to maybe maintain this horrible octopod when the AI bubble finally bursts will ever be worth it.
 
 I'm saying that a vibe-coded heresy about converting Kubernetes manifests to docker-compose ships complete documentation; your project should as well. You surely have more people. You have a more noble goal. You also probably care a lot more about your beautifully handcrafted nugget than I do about squishy abomination. But please, if you don't want to write it yourself, sloppy AI-written documentation will ALWAYS be better than no documentation (unless when it's blatantly wrong, but you can always proofread it).
 
@@ -104,6 +110,6 @@ That's it. That's the whole ritual.
 
 ---
 
-*Built with anguish, tears, and blood by [Baptiste Rajaut](https://github.com/baptisterajaut) and GenAI. Hopefully that Macbook will end up in the trash, I've never been so happy to be handed an Ubuntu machine*
+*Built with anguish, tears, blood, and life force by [Baptiste Rajaut](https://github.com/baptisterajaut) and GenAI. Hopefully that Macbook will end up in the trash, I've never been so happy to be handed an Ubuntu machine.*
 
 *Public domain. No rights are reserved. Tentacles are there to stay. No Discord server. No Slack. Just docs. Open an issue on GitHub if you want help. I may answer, but our salvation will never come.*

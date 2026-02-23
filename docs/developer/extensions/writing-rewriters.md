@@ -11,9 +11,9 @@ An ingress rewriter translates controller-specific Ingress annotations into ingr
 A rewriter class must have:
 
 1. **`name`** — a string identifying the rewriter (e.g. `"haproxy"`, `"nginx"`). Used for override matching: an external rewriter with the same `name` as a built-in one replaces it.
-2. **`match(manifest, ctx)`** — return `True` if this rewriter handles this Ingress manifest. Typically checks `ingressClassName` (resolved through `ingressTypes` config) or annotation prefixes.
+2. **`match(manifest, ctx)`** — return `True` if this rewriter handles this Ingress manifest. Typically checks `ingressClassName` (resolved through `ingress_types` config) or annotation prefixes.
 3. **`rewrite(manifest, ctx)`** — convert one Ingress manifest to a list of entry dicts (see [entry format](#entry-format) below).
-4. **`priority`** *(optional)* — integer, default `100`. Lower = checked earlier. External rewriters are always checked before built-in ones, regardless of priority. Priority only orders rewriters within the same pool (external or built-in).
+4. **`priority`** *(optional)* — integer, default `1000`. Lower = checked earlier. External rewriters are always checked before built-in ones, regardless of priority. Priority only orders rewriters within the same pool (external or built-in).
 
 ```python
 from h2c import IngressRewriter, get_ingress_class, resolve_backend
@@ -91,12 +91,12 @@ The built-in `HAProxyRewriter` matches:
 - `ingressClassName: haproxy` or empty/absent class (acts as default fallback)
 - Any manifest with `haproxy.org/*` annotations
 
-### Custom ingress class names (`ingressTypes`)
+### Custom ingress class names (`ingress_types`)
 
-When clusters use custom `ingressClassName` values (e.g. `haproxy-controller-internal`, `nginx-external`), add an `ingressTypes` mapping in `helmfile2compose.yaml` to resolve them to canonical rewriter names:
+When clusters use custom `ingressClassName` values (e.g. `haproxy-controller-internal`, `nginx-external`), add an `ingress_types` mapping in `helmfile2compose.yaml` to resolve them to canonical rewriter names:
 
 ```yaml
-ingressTypes:
+ingress_types:
   haproxy-controller-internal: haproxy
   haproxy-controller-external: haproxy
   nginx-internal: nginx

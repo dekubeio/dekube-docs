@@ -26,7 +26,7 @@ from h2c import Converter               # base class for converters
 from h2c import IndexerConverter        # base class for indexers (populate ctx, no output)
 from h2c import Provider                # base class for providers (produce compose services)
 from h2c import IngressRewriter         # base class for ingress rewriters
-from h2c import get_ingress_class       # resolve ingressClassName + ingressTypes
+from h2c import get_ingress_class       # resolve ingressClassName + ingress_types
 from h2c import resolve_backend         # v1/v1beta1 backend → upstream dict
 from h2c import apply_replacements      # apply user-defined string replacements
 from h2c import resolve_env             # resolve env/envFrom into flat list
@@ -47,7 +47,7 @@ from h2c.pacts import ConvertContext     # explicit
 - **`IndexerConverter`** — base class for indexers that populate `ConvertContext` lookups (e.g. `ctx.configmaps`, `ctx.secrets`) without producing output. Default priority 50.
 - **`Provider`** — base class for converters that produce compose services (default priority 500). CRD extensions that return `ProviderResult` with non-empty `services` should subclass this. See [Writing providers](writing-providers.md#provider-vs-converter).
 - **`IngressRewriter`** — base class for ingress rewriters. Subclass it or implement the same duck-typed contract.
-- **`get_ingress_class(manifest, ingress_types)`** — resolves `ingressClassName` from spec or annotation, then through the `ingressTypes` config mapping.
+- **`get_ingress_class(manifest, ingress_types)`** — resolves `ingressClassName` from spec or annotation, then through the `ingress_types` config mapping.
 - **`resolve_backend(path_entry, manifest, ctx)`** — resolves a v1/v1beta1 Ingress backend to `{svc_name, compose_name, container_port, upstream, ns}`.
 - **`apply_replacements(text, replacements)`** — applies user-defined `replacements` (from `ctx.replacements`) to a string.
 - **`resolve_env(container, configmaps, secrets, workload_name, warnings, replacements=None, service_port_map=None)`** — resolves a container's `env` and `envFrom` into a flat `list[dict]` of `{name, value}` pairs.

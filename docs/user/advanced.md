@@ -13,16 +13,20 @@ By default, helmfile2compose generates a Caddy service claiming ports 80 and 443
 1. Disable Caddy generation. In `helmfile2compose.yaml`, add:
 
 ```yaml
-disableCaddy: true
+disable_ingress: true
 ```
 
 This skips the Caddy service in `compose.yml` and writes the Ingress rules to `Caddyfile-<project>` instead of `Caddyfile`. Note: any previously generated `Caddyfile` is **not** automatically deleted — remove it manually if present.
 
 2. Configure your reverse proxy.
 
+   The default reverse proxy is **Caddy**, bundled with the distribution. But the system is pluggable — three options depending on your situation:
+
    - **If you already use Caddy** — you're in luck. Merge the contents of `Caddyfile-<project>` into your existing Caddyfile. When the project regenerates, diff the new fragment against your merged version and update accordingly. This will break on upgrades. At some point, actions have consequences.
 
-   - **If you use something else** (nginx, Traefik, HAProxy, ...) — you have chosen poorly (by coming here in the first place), and you'll have to configure your reverse proxy by hand. The `Caddyfile-<project>` is still generated as a reference for which hosts and paths map to which upstream services.
+   - **If you use something else** (nginx, Traefik, HAProxy, ...) — the `Caddyfile-<project>` is still generated as a reference for which hosts and paths map to which upstream services. Translate it to your proxy's config format manually. If you'd rather have helmfile2compose generate your proxy's config natively, you can install an [ingress provider extension](../catalogue.md#ingress-providers) if one exists for your proxy, or [write your own](../developer/extensions/writing-ingressproviders.md).
+
+   - **If you don't need a reverse proxy at all** — `disable_ingress: true` skips both the proxy service and the config file. Services are still reachable directly by their exposed ports. This is the simplest option for local dev when you don't care about host-based routing.
 
 3. Your existing compose projects and the helmfile2compose-generated one must share a Docker network so the reverse proxy can reach every service. In `helmfile2compose.yaml`, add:
 
@@ -32,12 +36,12 @@ network: shared-infra
 
 This overrides the default compose network with an external one. Create it once with `docker network create shared-infra` and reference the same network in your other compose files. Host port collisions from services that bind directly (livekit UDP ranges, game servers, etc.) are your problem — disable or exclude duplicates.
 
-Note: the `generate-compose.sh` scripts shipped with stoatchat-platform and lasuite-platform check for drift between expected and actual output. Adding `disableCaddy` and `network` to `helmfile2compose.yaml` will trigger drift warnings on every run. This is expected — and deserved.
+Note: the `generate-compose.sh` scripts shipped with stoatchat-platform and lasuite-platform check for drift between expected and actual output. Adding `disable_ingress` and `network` to `helmfile2compose.yaml` will trigger drift warnings on every run. This is expected — and deserved.
 
 
 ### Multiple helmfile2compose projects
 
-Good news: running two (or more) helmfile2compose-generated stacks on the same host is no harder than running one alongside existing infrastructure. Apply the same recipe to each project — `disableCaddy: true`, same `network:`, merge the `Caddyfile-*` fragments — and you're done. Each project gets its own `compose.yml` and its own `helmfile2compose.yaml`, completely independent. The desecration scales linearly.
+Good news: running two (or more) helmfile2compose-generated stacks on the same host is no harder than running one alongside existing infrastructure. Apply the same recipe to each project — `disable_ingress: true`, same `network:`, merge the `Caddyfile-*` fragments — and you're done. Each project gets its own `compose.yml` and its own `helmfile2compose.yaml`, completely independent. The desecration scales linearly.
 
 Watch out for **collisions**: host port conflicts (two projects binding the same port — only one wins, exclude the duplicate) and network alias conflicts (short aliases coexist on the same DNS namespace — FQDNs are safe, but short names can round-robin between projects). If something works half the time and breaks the other half, see [Troubleshooting — network alias collisions](../troubleshooting.md#network-alias-collisions-multi-project).
 
@@ -62,7 +66,7 @@ If you want to use `docker compose -p` because it's convenient and you don't nee
 ~/my-platform/
   compose.yml              <- no caddy service, external network
   Caddyfile-my-platform    <- ingress rules fragment
-  helmfile2compose.yaml    <- disableCaddy: true, network: shared-infra
+  helmfile2compose.yaml    <- disable_ingress: true, network: shared-infra
 
 ~/other-stuff/             <- your existing compose projects
   compose.yml              <- same external network

@@ -2,13 +2,13 @@
 
 > *The disciple gazed upon the monolith and saw that it was vast — a single tablet bearing every law, every rite, every contradiction. And he said: let us shatter the tablet, that each fragment may be understood alone. But when the pieces lay scattered, each fragment still whispered the name of the whole.*
 >
-> — *Necronomicon, On the Shattering of Tablets (fragmentary)*
+> — *Necronomicon, On the Shattering of Tablets (partial)*
 
 ## What it is
 
 h2c-core is the conversion engine — the pipeline, the extension loader, the CLI, and nothing else. No built-in converters. No built-in rewriters. All registries empty. Feed it manifests and it will parse them, warn that every kind is unknown, and produce nothing. A temple with no priests.
 
-It exists so that [distributions](distributions.md) can bundle different sets of extensions on top of the same engine. The [helmfile2compose](https://github.com/helmfile2compose/helmfile2compose) distribution is the default — h2c-core + 7 built-in extensions, concatenated into a single `helmfile2compose.py`. But h2c-core can also be used standalone with `--extensions-dir`, or as the foundation for custom distributions.
+It exists so that [distributions](distributions.md) can bundle different sets of extensions on top of the same engine. The [helmfile2compose](https://github.com/helmfile2compose/helmfile2compose) distribution is the default — h2c-core + 8 bundled extensions, concatenated into a single `helmfile2compose.py`. But h2c-core can also be used standalone with `--extensions-dir`, or as the foundation for custom distributions.
 
 **Users never interact with h2c-core directly.** They use a distribution. h2c-core is for extension developers, distribution builders, and people who want to understand how the engine works.
 
@@ -31,7 +31,7 @@ h2c-core/
 │   │   ├── services.py      # K8s Service indexing, alias maps, port maps
 │   │   ├── ingress.py       # IngressProvider, rewriter dispatch, _NullRewriter
 │   │   ├── extensions.py    # extension discovery and loading
-│   │   └── convert.py       # convert() orchestration, overrides, fix-permissions, _auto_register()
+│   │   └── convert.py       # convert() orchestration, overrides, _auto_register()
 │   └── io/                  # input/output
 │       ├── parsing.py       # helmfile template, YAML loading, namespace inference
 │       ├── config.py        # helmfile2compose.yaml load/save
