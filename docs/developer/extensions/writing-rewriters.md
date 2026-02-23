@@ -22,7 +22,7 @@ class NginxRewriter(IngressRewriter):
     name = "nginx"
 
     def match(self, manifest, ctx):
-        ingress_types = ctx.config.get("ingressTypes", {})
+        ingress_types = ctx.config.get("ingress_types") or {}
         cls = get_ingress_class(manifest, ingress_types)
         if cls == "nginx":
             return True
@@ -104,7 +104,7 @@ ingressTypes:
 
 The mapping is applied before rewriter dispatch — rewriters see the canonical name. Without it, custom class names won't match any rewriter and the Ingress is skipped with a warning.
 
-Inside your rewriter, use `get_ingress_class(manifest, ctx.config.get("ingressTypes", {}))` to get the resolved class name. Both `get_ingress_class` and `resolve_backend` are part of the public interface — import them from `h2c`.
+Inside your rewriter, use `get_ingress_class(manifest, ctx.config.get("ingress_types") or {})` to get the resolved class name. Both `get_ingress_class` and `resolve_backend` are part of the public interface — import them from `h2c`.
 
 For building a complete reverse proxy backend (not just an annotation translator), see [Writing ingress providers](writing-ingressproviders.md).
 

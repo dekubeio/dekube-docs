@@ -8,7 +8,9 @@ All persistent configuration lives in `helmfile2compose.yaml`. This file is crea
 helmfile2ComposeVersion: v1
 name: my-platform
 volume_root: ./data
-caddy_email: admin@example.com
+extensions:
+  caddy:
+    email: admin@example.com
 
 distribution_version: v3.0.0
 depends:
@@ -157,7 +159,7 @@ Combined with `restart: on-failure`, this is the brute-force retry pattern for o
 
 If a custom service name conflicts with a generated service, the custom one overwrites it (with a warning).
 
-### `caddy_email`
+### `extensions.caddy.email`
 
 If set, generates a global Caddy block for automatic HTTPS certificate provisioning:
 
@@ -167,9 +169,13 @@ If set, generates a global Caddy block for automatic HTTPS certificate provision
 }
 ```
 
-### `caddy_tls_internal`
+Previously `caddy_email` (top-level). Migrated automatically on first run — see [Config migration](#config-migration).
+
+### `extensions.caddy.tls_internal`
 
 If `true`, adds `tls internal` to all Caddyfile host blocks. Forces Caddy to use its internal CA for all domains (useful for `.local` development domains).
+
+Previously `caddy_tls_internal` (top-level). Migrated automatically on first run.
 
 ### `distribution_version`
 
@@ -204,12 +210,12 @@ Bare names pull the latest release. Pin with `==version` for reproducibility (re
 
 See [h2c-manager — declarative dependencies](h2c-manager.md#declarative-dependencies) for override behavior and details.
 
-### `ingressTypes`
+### `ingress_types`
 
 Maps custom `ingressClassName` values to canonical rewriter names. Without this, custom class names won't match any rewriter and the Ingress is skipped with a warning.
 
 ```yaml
-ingressTypes:
+ingress_types:
   haproxy-controller-internal: haproxy
   haproxy-controller-external: haproxy
   nginx-internal: nginx
@@ -217,11 +223,15 @@ ingressTypes:
 
 The mapping is applied before rewriter dispatch. See [Ingress controllers](your-project.md#ingress-controllers) for details.
 
-### `disableCaddy`
+Previously `ingressTypes` (camelCase). Migrated automatically on first run.
 
-If `true`, skips the Caddy service in `compose.yml`. Ingress rules are still written to `Caddyfile-<project>` for manual merging with your existing reverse proxy.
+### `disable_ingress`
+
+If `true`, skips the ingress provider service in `compose.yml`. Ingress rules are still written to `Caddyfile-<project>` for manual merging with your existing reverse proxy.
 
 **Manual only** — never auto-generated. See [Advanced](../user/advanced.md) for the full cohabitation guide.
+
+Previously `disableCaddy`. Migrated automatically on first run.
 
 ### `network`
 
@@ -241,6 +251,20 @@ networks:
 ```
 
 Required when sharing a network across multiple compose projects. See [Advanced](../user/advanced.md).
+
+### Config migration {#config-migration}
+
+v3.1.0 normalized config keys to snake_case. On first run, old keys are automatically migrated:
+
+| Old key | New key |
+|---------|---------|
+| `disableCaddy` | `disable_ingress` |
+| `ingressTypes` | `ingress_types` |
+| `caddy_email` | `extensions.caddy.email` |
+| `caddy_tls_internal` | `extensions.caddy.tls_internal` |
+| `helmfile2ComposeVersion` | removed (silently ignored) |
+
+A stderr notice is printed if migration occurred. Old keys vanish from the file on next save. No manual action needed.
 
 ## Placeholders
 

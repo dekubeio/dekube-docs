@@ -66,24 +66,20 @@ After all code (core + extensions):
 2. **`sys.modules` hack** — registers the flat file as the `h2c` module so runtime-loaded extensions can `from h2c import ...`
 3. **`__main__` guard** — `if __name__ == "__main__": main()`
 
-## The `sys.modules` hack
+## The `sys.modules` fix
 
 Why it exists:
 
 - When the output file is `h2c.py`, Python finds it natively as the `h2c` module. No hack needed. That's `build.py`.
 - When the output file is `helmfile2compose.py` (or any other name), `from h2c import ...` fails because no `h2c` module exists on the import path.
 
-The hack creates a fake module in `sys.modules`:
+The fix registers the running module as `h2c` in `sys.modules` before any extension can import:
 
 ```python
-import types as _types
-sys.modules.setdefault("h2c", _types.ModuleType("h2c"))
-sys.modules["h2c"].__dict__.update(
-    {k: v for k, v in globals().items() if not k.startswith("_")}
-)
+sys.modules.setdefault("h2c", sys.modules[__name__])
 ```
 
-This only matters for **runtime-loaded** extensions (via `--extensions-dir`). Built-in extensions (concatenated at build time) don't import at all — they're already in the same namespace.
+This matters for **both** runtime-loaded extensions (via `--extensions-dir`) and the `__main__` vs module identity problem. Without it, `isinstance` checks and mutable state (`_REWRITERS`, `_CONVERTERS`) break because `__main__.ProviderResult` ≠ `h2c.ProviderResult`. The `setdefault` ensures extensions always resolve to the running module instance — no snapshot, no copy, no split identity.
 
 ## Gotchas
 

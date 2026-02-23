@@ -10,10 +10,10 @@ Read [Writing converters](writing-converters.md) first for the base interface (`
 
 ## Provider vs Converter
 
-CRD extensions that **produce compose services** (i.e. return non-empty `ConvertResult.services`) should subclass `Provider`:
+CRD extensions that **produce compose services** (i.e. return non-empty `ProviderResult.services`) should subclass `Provider`:
 
 ```python
-from h2c import Provider, ConvertResult
+from h2c import Provider, ProviderResult
 
 class KeycloakProvider(Provider):
     kinds = ["Keycloak", "KeycloakRealmImport"]
@@ -24,7 +24,7 @@ class KeycloakProvider(Provider):
 CRD extensions that only **inject synthetic resources** (Secrets, ConfigMaps) without producing services should remain plain converters:
 
 ```python
-from h2c import ConvertResult
+from h2c import ConverterResult
 
 class CertManagerConverter:
     kinds = ["Certificate", "ClusterIssuer", "Issuer"]

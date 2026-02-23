@@ -20,7 +20,7 @@ For the internal package structure, module layout, and build system, see [h2c-co
 
 ## Converter dispatch
 
-Manifests are classified by `kind` and dispatched to converter classes. Each converter handles one or more K8s kinds and returns a `ConvertResult` (compose services, ingress entries, or both).
+Manifests are classified by `kind` and dispatched to converter classes. Each converter handles one or more K8s kinds and returns a `ConverterResult` (ingress entries only) or `ProviderResult` (compose services + ingress entries).
 
 ```
 K8s manifests
@@ -34,12 +34,12 @@ compose.yml + Caddyfile
 
 The bare h2c-core has **no** built-in converters — all registries are empty. The [helmfile2compose](https://github.com/helmfile2compose/helmfile2compose) distribution bundles 7 built-in extensions via `_auto_register()`:
 
-- **`ConfigMapIndexer`** / **`SecretIndexer`** / **`PvcIndexer`** / **`ServiceIndexer`** — index resources into `ctx` (future: `h2c-indexer-*`)
-- **`WorkloadConverter`** — kinds: DaemonSet, Deployment, Job, StatefulSet (future: `h2c-converter-workload`)
-- **`HAProxyRewriter`** — built-in ingress rewriter, haproxy + default fallback (future: `h2c-rewriter-haproxy`)
-- **`CaddyProvider`** — IngressProvider, produces a Caddy service + Caddyfile (future: `h2c-provider-caddy`)
+- **`ConfigMapIndexer`** / **`SecretIndexer`** / **`PvcIndexer`** / **`ServiceIndexer`** — index resources into `ctx` ([h2c-indexer-*](https://github.com/helmfile2compose))
+- **`WorkloadConverter`** — kinds: DaemonSet, Deployment, Job, StatefulSet ([h2c-converter-workload](https://github.com/helmfile2compose/h2c-converter-workload))
+- **`HAProxyRewriter`** — built-in ingress rewriter, haproxy + default fallback ([h2c-rewriter-haproxy](https://github.com/helmfile2compose/h2c-rewriter-haproxy))
+- **`CaddyProvider`** — IngressProvider, produces a Caddy service + Caddyfile ([h2c-provider-caddy](https://github.com/helmfile2compose/h2c-provider-caddy))
 
-These are currently bundled in the distribution's `extensions/` directory; each will eventually become its own repo (see [Roadmap](../roadmap.md#the-distribution-becomes-a-manifest)).
+Each lives in its own repo, referenced in `distribution.json`. The distribution assembles them at build time via h2c-manager.
 
 ### External extensions (providers and converters)
 
@@ -109,7 +109,7 @@ See [Writing rewriters](extensions/writing-rewriters.md) for the full guide.
 9. **Build network aliases** — for each K8s Service, add FQDN aliases (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`) + short alias to the compose service's `networks.default.aliases`. FQDNs resolve natively via compose DNS — no hostname rewriting needed.
 10. **Apply overrides** — deep merge from config `overrides:` and `services:` sections.
 11. **Hostname truncation** — services with names >63 chars get explicit `hostname:`.
-12. **Run transforms** — external post-processing hooks (if loaded). Transforms mutate `compose_services` and `caddy_entries` in place.
+12. **Run transforms** — external post-processing hooks (if loaded). Transforms mutate `compose_services` and `ingress_entries` in place.
 13. **Write output** — `compose.yml`, `Caddyfile`, config/secret files.
 
 ## Automatic rewrites

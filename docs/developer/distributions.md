@@ -30,15 +30,15 @@ The distribution model avoids forking the core — everyone shares the same engi
 
 [helmfile2compose](https://github.com/helmfile2compose/helmfile2compose) is the default distribution. It bundles 7 extensions:
 
-| Future repo | Type | File in `extensions/` | Purpose |
-|-------------|------|-----------------------|---------|
-| h2c-indexer-configmap | IndexerConverter | `configmap_indexer.py` | Populates `ctx.configmaps` |
-| h2c-indexer-secret | IndexerConverter | `secret_indexer.py` | Populates `ctx.secrets` |
-| h2c-indexer-pvc | IndexerConverter | `pvc_indexer.py` | Populates `ctx.pvc_names` |
-| h2c-indexer-service | IndexerConverter | `service_indexer.py` | Populates `ctx.services_by_selector` |
-| h2c-converter-workload | Provider | `workloads.py` | DaemonSet, Deployment, Job, StatefulSet → compose services |
-| h2c-rewriter-haproxy | IngressRewriter | `haproxy.py` | HAProxy annotations + default fallback |
-| h2c-provider-caddy | IngressProvider | `caddy.py` | Caddy service + Caddyfile generation |
+| Repo | Type | File | Purpose |
+|------|------|------|---------|
+| [h2c-indexer-configmap](https://github.com/helmfile2compose/h2c-indexer-configmap) | IndexerConverter | `configmap_indexer.py` | Populates `ctx.configmaps` |
+| [h2c-indexer-secret](https://github.com/helmfile2compose/h2c-indexer-secret) | IndexerConverter | `secret_indexer.py` | Populates `ctx.secrets` |
+| [h2c-indexer-pvc](https://github.com/helmfile2compose/h2c-indexer-pvc) | IndexerConverter | `pvc_indexer.py` | Populates `ctx.pvc_names` |
+| [h2c-indexer-simple-service](https://github.com/helmfile2compose/h2c-indexer-simple-service) | IndexerConverter | `service_indexer.py` | Populates `ctx.services_by_selector` |
+| [h2c-converter-workload](https://github.com/helmfile2compose/h2c-converter-workload) | Provider | `workloads.py` | DaemonSet, Deployment, Job, StatefulSet → compose services |
+| [h2c-rewriter-haproxy](https://github.com/helmfile2compose/h2c-rewriter-haproxy) | IngressRewriter | `haproxy.py` | HAProxy annotations + default fallback |
+| [h2c-provider-caddy](https://github.com/helmfile2compose/h2c-provider-caddy) | IngressProvider | `caddy.py` | Caddy service + Caddyfile generation |
 
 External extensions (loaded via `--extensions-dir` at runtime) work on top of whatever a distribution bundles.
 
@@ -46,21 +46,25 @@ External extensions (loaded via `--extensions-dir` at runtime) work on top of wh
 
 ```
 my-distribution/
-├── extensions/
-│   ├── __init__.py           # empty (required for discovery to skip)
-│   ├── workloads.py          # WorkloadConverter
-│   ├── haproxy.py            # HAProxyRewriter
-│   ├── caddy.py              # CaddyProvider
-│   ├── configmap_indexer.py   # IndexerConverter
-│   ├── secret_indexer.py      # IndexerConverter
-│   ├── pvc_indexer.py         # IndexerConverter
-│   └── service_indexer.py     # IndexerConverter
+├── distribution.json          # manifest: base + extension names
 ├── .github/workflows/
-│   └── release.yml           # CI: fetch h2c.py + build distribution
+│   └── release.yml           # CI: h2c-manager fetch + build-distribution.py
 └── README.md
 ```
 
-Extensions in `extensions/` are `.py` files — each discovered automatically by `build-distribution.py`. `__init__.py` and hidden files are skipped.
+`distribution.json` declares the base distribution and the list of extensions to bundle:
+
+```json
+{
+  "base": "core",
+  "extensions": [
+    "configmap-indexer", "secret-indexer", "pvc-indexer", "simple-service-indexer",
+    "workload", "haproxy", "caddy"
+  ]
+}
+```
+
+CI fetches h2c-manager and `build-distribution.py`, downloads extensions from their individual repos, and assembles the single-file script.
 
 ## `_auto_register()` — how it works
 

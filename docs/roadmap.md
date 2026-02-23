@@ -5,39 +5,26 @@ Ideas that are too good (or too cursed) to forget but not urgent enough to imple
 For the emulation boundary — what can cross the bridge and what can't — see [Concepts](developer/concepts.md#the-emulation-boundary).
 
 
-## v3.1.0 — the deconstruction {#v31--the-deconstruction}
+## v3.1.0 — the deconstruction ✓ {#v31--the-deconstruction}
 
-v3.0 split the engine from the distribution. v3.1 finishes the job: every built-in extension becomes its own repo, and the distribution becomes a manifest. Also the right time to clean up the API debt accumulated during the vibe-coded era.
+*Released 2026-02-23.* See the [journal entry](journal.md#v310--the-unlucky-seven) for details.
 
-### The distribution becomes a manifest
+v3.0 split the engine from the distribution. v3.1 finished the job:
 
-Every extension currently bundled in the helmfile2compose distribution becomes its own repo, its own extension referenced in `extensions.json`. The `helmfile2compose` repo shrinks to a single `distribution.yaml` — a manifest that `build-distribution.py` reads, calls h2c-manager with a new `--fetch-extensions-only` flag to download everything, and assembles the single-file script.
+- **The distribution is a manifest.** Every built-in extension now lives in its own repo. The `helmfile2compose` repo is a `distribution.json` + CI workflow — a shopping list, not code.
+- **`caddy_entries` → `ingress_entries`**, `disableCaddy` → `disable_ingress`, config keys normalized to snake_case with automatic migration.
+- **Typed return contracts.** `ConvertResult` split into `ConverterResult` (no services) and `ProviderResult` (with services). `ConvertResult` kept as deprecated alias.
+- **The Seven Bishops** — the founding extensions — each released as their own repo:
 
-The Lucky Seven, released into the wild:
-
-| Title | Extension | What it does |
-|-------|-----------|--------------|
-| **The Builder** | WorkloadConverter | Deployments, StatefulSets, DaemonSets, Jobs → compose services |
-| **The Librarian** | ConfigMapIndexer | Catalogs the scrolls of configuration |
-| **The Guardian** | SecretIndexer | Protects the sacred secrets |
-| **The Binder** | PVCIndexer | Binds storage to the mortal plane |
-| **The Weaver** | ServiceIndexer | Weaves the threads between services |
-| **The Gatekeeper** | CaddyProvider | Controls who enters the temple |
-| **The Herald** | HAProxyRewriter | Announces the routes to the gatekeeper |
-
-`helmfile2compose` stops being code and becomes a shopping list. It will forever carry the short but horrifying history of a project that started from a simple need and became far, *far* too complicated for what it was supposed to be.
-
-### Rename `caddy_entries` to `ingress_entries`
-
-`ConvertResult.caddy_entries`, `disableCaddy`, `caddy_email`, `caddy_tls_internal` — these names leak the default provider into the core API and config schema. Now that `IngressProvider` is an abstract base class and the system is provider-agnostic, rename to generic terms (`ingress_entries`, `disable_ingress`, `ingress_email`, `ingress_tls_internal` or similar). Breaking change for extensions that reference `caddy_entries` directly.
-
-### Config key naming consistency
-
-`helmfile2compose.yaml` mixes camelCase (`disableCaddy`, `ingressTypes`, `helmfile2ComposeVersion`) and snake_case (`volume_root`, `caddy_email`, `caddy_tls_internal`, `core_version`). Normalize to one convention (snake_case, with camelCase aliases for backwards compatibility during a transition period). Overlaps with the `caddy_entries` rename above — do both at once.
-
-### Typed return contracts {#typed-return-contracts}
-
-`ConvertResult` is shared by all extension types, but the dispatch silently discards `services` from non-`Provider` converters (with a stderr warning). The contract doesn't enforce this — a `Converter` can build services, return them, and only discover they were ignored by reading the warning. Split `ConvertResult` into typed variants (`ConverterResult` without `services`, `ProviderResult` with) or add runtime validation in the base classes so the contract itself guarantees what the dispatch already enforces.
+| Title | Repo | Heresy |
+|-------|------|--------|
+| **The Builder** | [h2c-converter-workload](https://github.com/helmfile2compose/h2c-converter-workload) | 7/10 |
+| **The Gatekeeper** | [h2c-provider-caddy](https://github.com/helmfile2compose/h2c-provider-caddy) | 3/10 |
+| **The Herald** | [h2c-rewriter-haproxy](https://github.com/helmfile2compose/h2c-rewriter-haproxy) | 2/10 |
+| **The Weaver** | [h2c-indexer-simple-service](https://github.com/helmfile2compose/h2c-indexer-simple-service) | 2/10 |
+| **The Binder** | [h2c-indexer-pvc](https://github.com/helmfile2compose/h2c-indexer-pvc) | 1/10 |
+| **The Librarian** | [h2c-indexer-configmap](https://github.com/helmfile2compose/h2c-indexer-configmap) | 0/10 |
+| **The Guardian** | [h2c-indexer-secret](https://github.com/helmfile2compose/h2c-indexer-secret) | 0/10 |
 
 ## Later
 

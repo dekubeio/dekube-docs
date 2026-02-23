@@ -19,7 +19,9 @@ Converters, providers, and indexers share the same code interface — but the di
 
 ```python
 from h2c import ConvertContext          # passed to convert() / rewrite()
-from h2c import ConvertResult           # return type
+from h2c import ConverterResult        # return type for converters/indexers (no services)
+from h2c import ProviderResult         # return type for providers (with services)
+from h2c import ConvertResult           # deprecated alias for ProviderResult
 from h2c import Converter               # base class for converters
 from h2c import IndexerConverter        # base class for indexers (populate ctx, no output)
 from h2c import Provider                # base class for providers (produce compose services)
@@ -38,10 +40,12 @@ from h2c import ConvertContext           # via re-export
 from h2c.pacts import ConvertContext     # explicit
 ```
 
-- **`ConvertResult`** — return type for `convert()`. Two fields: `services` (dict) and `caddy_entries` (list). The `caddy_entries` name is historical — entries are consumed by whichever `IngressProvider` is configured.
+- **`ConverterResult`** — return type for converters and indexers. One field: `ingress_entries` (list). Use when your extension doesn't produce compose services.
+- **`ProviderResult`** — return type for providers. Two fields: `services` (dict) and `ingress_entries` (list, inherited from `ConverterResult`).
+- **`ConvertResult`** — deprecated alias for `ProviderResult`. Still works, but prefer the typed variants.
 - **`Converter`** — base class for all converters (default priority 1000). Optional — duck typing works, but subclassing provides defaults.
 - **`IndexerConverter`** — base class for indexers that populate `ConvertContext` lookups (e.g. `ctx.configmaps`, `ctx.secrets`) without producing output. Default priority 50.
-- **`Provider`** — base class for converters that produce compose services (default priority 500). CRD extensions that return non-empty `ConvertResult.services` should subclass this. See [Writing providers](writing-providers.md#provider-vs-converter).
+- **`Provider`** — base class for converters that produce compose services (default priority 500). CRD extensions that return `ProviderResult` with non-empty `services` should subclass this. See [Writing providers](writing-providers.md#provider-vs-converter).
 - **`IngressRewriter`** — base class for ingress rewriters. Subclass it or implement the same duck-typed contract.
 - **`get_ingress_class(manifest, ingress_types)`** — resolves `ingressClassName` from spec or annotation, then through the `ingressTypes` config mapping.
 - **`resolve_backend(path_entry, manifest, ctx)`** — resolves a v1/v1beta1 Ingress backend to `{svc_name, compose_name, container_port, upstream, ns}`.

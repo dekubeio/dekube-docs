@@ -11,7 +11,7 @@ If your converter targets CRD kinds (replacing a K8s controller), see [Writing p
 Note: the distinction between converters (`h2c-converter-*`) and providers (`h2c-provider-*`) is enforced — `Provider` is a base class in `h2c.pacts.types`. Providers produce compose services; converters produce synthetic resources. Both use `ConvertResult`, but subclassing `Provider` signals your intent to the framework.
 
 !!! warning "Services from non-Provider converters are discarded"
-    The dispatch loop silently drops `ConvertResult.services` returned by converters that don't subclass `Provider` (a warning is printed to stderr). If your converter produces compose services, subclass `Provider` — otherwise the services will be ignored. This is enforced by the dispatch, not by the type system: `ConvertResult` accepts `services` regardless of caller. A future version will enforce this at the contract level (see [Roadmap](../../roadmap.md#typed-return-contracts)).
+    The dispatch loop ignores `services` returned by converters that don't subclass `Provider`. If your converter produces compose services, subclass `Provider` and return `ProviderResult`. Non-provider converters should return `ConverterResult` (which has no `services` field). The typed contracts enforce this at the API level.
 
 ## The contract
 
@@ -21,9 +21,9 @@ A converter class must have:
 2. **`convert(kind, manifests, ctx)`** — called once per kind, returns a `ConvertResult`
 
 ```python
-from h2c import ConvertResult
+from h2c import ProviderResult, Provider
 
-class MyConverter:
+class MyConverter(Provider):
     kinds = ["MyCustomResource"]
 
     def convert(self, kind, manifests, ctx):
@@ -36,17 +36,20 @@ class MyConverter:
                 "restart": "always",
                 "environment": {"MY_VAR": spec.get("myField", "default")},
             }
-        return ConvertResult(services=services)
+        return ProviderResult(services=services)
 ```
 
-### `ConvertResult`
+### Return types
 
-A dataclass with two fields:
+Two return types, depending on whether your converter produces compose services:
 
-- **`services`** — `dict[str, dict]`: compose service definitions to add. Keyed by service name.
-- **`caddy_entries`** — `list[dict]`: ingress entries consumed by the configured `IngressProvider`. The field name is historical (Caddy is the default provider). Each entry has `host`, `path`, `upstream`, `scheme`, and optional `server_ca_secret`, `server_sni`, `strip_prefix`, `extra_directives`. Ingress rewriters are the primary producers of `caddy_entries`; converters rarely need to produce them directly.
+- **`ConverterResult`** — one field: `ingress_entries` (list of dicts). For converters and indexers that don't produce services. Default: empty list.
+- **`ProviderResult`** — two fields: `services` (dict) and `ingress_entries` (list, inherited). For providers that produce compose services. Both default to empty.
+- **`ConvertResult`** — deprecated alias for `ProviderResult`. Still accepted.
 
-Both default to empty. Most converters only produce `services`.
+Each ingress entry has `host`, `path`, `upstream`, `scheme`, and optional `server_ca_secret`, `server_sni`, `strip_prefix`, `extra_directives`. Ingress rewriters are the primary producers; converters rarely need to produce them directly.
+
+Most converters return `ConverterResult()` (empty). Providers return `ProviderResult(services=services)`.
 
 ### `ConvertContext` (`ctx`)
 

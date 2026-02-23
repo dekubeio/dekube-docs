@@ -21,7 +21,7 @@ h2c-core/
 │   ├── __main__.py          # python -m h2c entry point
 │   ├── cli.py               # argument parsing, orchestration
 │   ├── pacts/               # public contracts for extensions
-│   │   ├── types.py         # ConvertContext, ConvertResult, Converter, Provider
+│   │   ├── types.py         # ConvertContext, ConverterResult, ProviderResult, Converter, Provider
 │   │   ├── ingress.py       # IngressRewriter, get_ingress_class(), resolve_backend()
 │   │   └── helpers.py       # apply_replacements(), _secret_value()
 │   ├── core/                # internal conversion engine
@@ -49,7 +49,8 @@ h2c-core/
 Everything extensions can import. This is the stable API:
 
 ```python
-from h2c import ConvertContext, ConvertResult
+from h2c import ConvertContext, ConverterResult, ProviderResult
+from h2c import ConvertResult  # deprecated alias for ProviderResult
 from h2c import Converter, IndexerConverter, Provider
 from h2c import IngressRewriter, get_ingress_class, resolve_backend
 from h2c import apply_replacements, resolve_env, _secret_value

@@ -70,9 +70,9 @@ def convert(self, _kind, manifests, ctx):
         rewriter = self._find_rewriter(m, ctx)
         entries.extend(rewriter.rewrite(m, ctx))
     services = {}
-    if entries and not ctx.config.get("disableCaddy"):
+    if entries and not ctx.config.get("disable_ingress"):
         services = self.build_service(entries, ctx)
-    return ConvertResult(services=services, caddy_entries=entries)
+    return ProviderResult(services=services, ingress_entries=entries)
 ```
 
 Each Ingress manifest is matched against loaded `IngressRewriter` classes. The rewriter translates controller-specific annotations into a list of entry dicts (see [Writing rewriters](writing-rewriters.md) for the entry format). Your provider then consumes those entries to build the service and config.

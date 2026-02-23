@@ -12,27 +12,27 @@ Converters answer the question "what does this K8s manifest become in compose?" 
 
 A transform class must have:
 
-1. **`transform(compose_services, caddy_entries, ctx)`** — called once after all converters, mutates in place
+1. **`transform(compose_services, ingress_entries, ctx)`** — called once after all converters, mutates in place
 2. **No `kinds` attribute** — this is what the loader uses to distinguish transforms from converters
 
 ```python
 class MyTransform:
     priority = 100  # optional, default 100, lower = earlier
 
-    def transform(self, compose_services, caddy_entries, ctx):
+    def transform(self, compose_services, ingress_entries, ctx):
         for svc_name, svc in compose_services.items():
             env = svc.get("environment", {})
             # ... post-processing logic
 ```
 
-That's it. No return value — transforms mutate `compose_services` and `caddy_entries` in place. This time, in a controlled manner. In theory. Hopefully.
+That's it. No return value — transforms mutate `compose_services` and `ingress_entries` in place. This time, in a controlled manner. In theory. Hopefully.
 
 ### Arguments
 
 | Argument | Type | Description |
 |----------|------|-------------|
 | `compose_services` | `dict[str, dict]` | All compose service definitions. Keyed by service name. Mutable. |
-| `caddy_entries` | `list[dict]` | Ingress entries consumed by the configured `IngressProvider` (field name is historical). Each has `host`, `path`, `upstream`, `scheme`, optionally `server_ca_secret`, `server_sni`, `strip_prefix`, `extra_directives`. Mutable. |
+| `ingress_entries` | `list[dict]` | Ingress entries consumed by the configured `IngressProvider`. Each has `host`, `path`, `upstream`, `scheme`, optionally `server_ca_secret`, `server_sni`, `strip_prefix`, `extra_directives`. Mutable. |
 | `ctx` | `ConvertContext` | Same context as converters. See [ConvertContext](writing-converters.md#convertcontext-ctx) for all attributes. |
 
 ### When transforms run
@@ -63,7 +63,7 @@ Priority matters when multiple transforms are loaded and one depends on another'
 
 ## What transforms can do
 
-Transforms have full access to `compose_services`, `caddy_entries`, and `ctx`. They can:
+Transforms have full access to `compose_services`, `ingress_entries`, and `ctx`. They can:
 
 - **Add, remove, or modify services** — inject a monitoring sidecar, strip debug services, rewrite images
 - **Rewrite environment variables** — search-and-replace across all services
@@ -92,7 +92,7 @@ def _rewrite_text(text, alias_map):
 class FlattenInternalUrls:
     priority = 200
 
-    def transform(self, compose_services, caddy_entries, ctx):
+    def transform(self, compose_services, ingress_entries, ctx):
         # Strip aliases
         for svc in compose_services.values():
             networks = svc.get("networks")
@@ -114,8 +114,8 @@ class FlattenInternalUrls:
         # Rewrite configmap files on disk
         # (walks ctx.output_dir/configmaps/ and rewrites file contents)
 
-        # Rewrite Caddy upstreams
-        for entry in caddy_entries:
+        # Rewrite ingress upstreams
+        for entry in ingress_entries:
             entry["upstream"] = _rewrite_text(
                 entry["upstream"], ctx.alias_map)
 ```
@@ -128,7 +128,7 @@ Note the three rewrite targets: environment variables, configmap files on disk (
 class AddWhoami:
     """Add a whoami debug service to every compose output."""
 
-    def transform(self, compose_services, caddy_entries, ctx):
+    def transform(self, compose_services, ingress_entries, ctx):
         compose_services["whoami"] = {
             "image": "traefik/whoami:latest",
             "restart": "always",

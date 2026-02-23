@@ -16,7 +16,7 @@ There are five extension types, all loaded from the same `--extensions-dir`:
 | **Transform** | `transform()`, no `kinds` | Post-process the final compose output after converters | `h2c-transform-*` |
 | **Ingress rewriter** | `name` + `match()` + `rewrite()` | Translate ingress controller annotations into ingress entries | `h2c-rewriter-*` |
 
-All converters share the same code interface (`kinds` + `convert()` → `ConvertResult`), but the repo naming convention signals what they produce:
+All converters share the same code interface (`kinds` + `convert()` → `ConverterResult`/`ProviderResult`), but the repo naming convention signals what they produce:
 
 - **`h2c-converter-*`** — produces synthetic resources (Secrets, ConfigMaps, files on disk) without adding compose services. The extension *converts* K8s resources into other resources. Examples: cert-manager generates PEM certificates as Secrets, trust-manager assembles CA bundles as ConfigMaps.
 - **`h2c-provider-*`** — produces compose services (and possibly resources too). The extension *provides* running containers that emulate what a K8s controller would have created. Examples: keycloak turns a CR into a compose service, servicemonitor produces a Prometheus service with baked-in scrape config.
@@ -214,13 +214,14 @@ Ingress providers are a special kind of provider — they handle Ingress manifes
 
 | | |
 |---|---|
+| **Repo** | [h2c-provider-caddy](https://github.com/helmfile2compose/h2c-provider-caddy) |
 | **Type** | distribution built-in |
 | **Kinds** | `Ingress` |
 | **Priority** | 900 |
 | **Produces** | Caddy compose service + Caddyfile |
 | **Status** | stable |
 
-The default ingress provider bundled with the helmfile2compose distribution. Dispatches each Ingress manifest to the first matching rewriter, collects entries, builds a Caddy service with CA cert mounts, and writes a Caddyfile with host blocks. Supports `disableCaddy` mode, `tls internal`, backend SSL via trust pools, `extra_directives`, and `strip_prefix`.
+The default ingress provider bundled with the helmfile2compose distribution. Dispatches each Ingress manifest to the first matching rewriter, collects entries, builds a Caddy service with CA cert mounts, and writes a Caddyfile with host blocks. Supports `disable_ingress` mode, `tls internal`, backend SSL via trust pools, `extra_directives`, and `strip_prefix`.
 
 This is the reference implementation for `IngressProvider`. See [Writing ingress providers](developer/extensions/writing-ingressproviders.md) to build your own.
 

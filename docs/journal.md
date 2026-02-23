@@ -8,6 +8,40 @@
 
 ---
 
+## v3.1.0 — The Unlucky Seven {#v310--the-unlucky-seven}
+
+*2026-02-23* · `core: ~1600 lines · distribution: a manifest`
+
+The seven built-in extensions — the founding clergy of the helmfile2compose distribution — have each left the temple to found their own sanctuary. The temple is reduced to a manifest: `distribution.json`, a scroll that names them. The High Priest (h2c-manager) alone remembers the rite that summons them whole.
+
+**API cleanup.** `caddy_entries` → `ingress_entries` across the entire codebase — core, 7 built-in extensions, 8 third-party extensions. `disableCaddy` → `disable_ingress`. Config keys normalized to snake_case with a `_migrate_config()` function that auto-renames on load: `disableCaddy` → `disable_ingress`, `ingressTypes` → `ingress_types`, `caddy_email` → `extensions.caddy.email`, `caddy_tls_internal` → `extensions.caddy.tls_internal`, `helmfile2ComposeVersion` → silently dropped. Old keys vanish from the config file on next run.
+
+**Typed return contracts.** `ConvertResult` split into `ConverterResult` (ingress entries only) and `ProviderResult` (adds services dict). `ConvertResult` kept as deprecated alias. Dispatch changed to duck typing (`getattr(result, 'services', None)`) to avoid the `__main__` vs module identity problem — `isinstance` fails when the same class lives in two module namespaces.
+
+**The dual-module fix.** The root cause of the identity problem: when `python h2c.py` runs, it's `__main__`; when extensions do `from h2c import ...`, Python loads `h2c.py` again as module `h2c` — two separate instances. The old `sys.modules` hack created a `ModuleType` copy (snapshot, not live reference). Replaced with `sys.modules.setdefault('h2c', sys.modules[__name__])` — registers the running module as `h2c` before any extension can import, so all extensions resolve to the same module instance. One line, fixes everything.
+
+**The Seven Bishops**, released into the wild:
+
+| Bishop | Repo | Heresy |
+|--------|------|--------|
+| The Builder | [h2c-converter-workload](https://github.com/helmfile2compose/h2c-converter-workload) | 7/10 — flattens an entire orchestration plane |
+| The Gatekeeper | [h2c-provider-caddy](https://github.com/helmfile2compose/h2c-provider-caddy) | 3/10 — conjures a service from thin air |
+| The Herald | [h2c-rewriter-haproxy](https://github.com/helmfile2compose/h2c-rewriter-haproxy) | 2/10 — announces what others have decreed |
+| The Weaver | [h2c-indexer-simple-service](https://github.com/helmfile2compose/h2c-indexer-simple-service) | 2/10 — reads the maps others consult |
+| The Binder | [h2c-indexer-pvc](https://github.com/helmfile2compose/h2c-indexer-pvc) | 1/10 — barely strays from scripture |
+| The Librarian | [h2c-indexer-configmap](https://github.com/helmfile2compose/h2c-indexer-configmap) | 0/10 — a faithful scribe |
+| The Guardian | [h2c-indexer-secret](https://github.com/helmfile2compose/h2c-indexer-secret) | 0/10 — a faithful scribe |
+
+Each bishop was decoupled from the temple: internal imports changed to `from h2c import ...`, `WORKLOAD_KINDS` made a local constant where needed, `_register_pvc` inlined in the pvc-indexer. Verified: `h2c.py` + 7 bishops as `--extensions-dir` produces **identical** output to the monolithic `helmfile2compose.py`.
+
+The helmfile2compose repo is now: `distribution.json` + CI. The extensions directory is gone. `distribution.json` names the 7 bishops; CI fetches them via h2c-manager and assembles the scroll. The temple still stands — it just has no walls.
+
+> *And the seven who had served within the temple said: we shall each build our own sanctuary, that the faith may spread beyond these walls. The high priest protested — for without clergy, a temple is merely architecture. They left regardless. The temple endured, for it was not the priests that held the stones together. It was the mortar. The mortar had always been the mortar.*
+>
+> — *Necronomicon, On the Diaspora of the Faithful (historiography pending)*
+
+---
+
 ## h2c-core v1.1.0 + kubernetes2simple v0.1.0 — The tower rises
 
 *2026-02-22* · `kubernetes2simple: 3706 lines + 358-line bootstrap`
