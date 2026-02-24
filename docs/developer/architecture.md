@@ -22,6 +22,8 @@ For the internal package structure, module layout, and build system, see [h2c-co
 
 Manifests are classified by `kind` and dispatched to converter classes. Each converter handles one or more K8s kinds and returns a `ConverterResult` (ingress entries only) or `ProviderResult` (compose services + ingress entries).
 
+**`kinds` is immutable.** The `Converter` base class declares `kinds: tuple = ()`. Extensions override it as a class attribute — this replaces the default entirely, which is the intended pattern. The base default is an empty tuple (not a list) to prevent accidental mutation: if an extension forgot to override `kinds` and called `self.kinds.append(...)`, a mutable default would silently corrupt the shared class attribute across all converter instances. A tuple makes this fail loudly.
+
 ```
 K8s manifests
     | parse + classify by kind
@@ -125,6 +127,26 @@ These happen transparently during conversion:
 - **Kubelet `$(VAR)`** — `$(VAR_NAME)` in container command/args resolved from the container's env vars.
 - **Shell `$VAR` escaping** — `$VAR` in command/entrypoint escaped to `$$VAR` for compose.
 - **String replacements** — user-defined `replacements:` from config applied to env vars, ConfigMap files, and Caddyfile upstreams.
+
+## Beyond single-host : Docker Swarm {#beyond-single-host}
+
+The helmfile2compose distribution targets a single Docker host — bind mounts, no replicas, Caddy as a standalone reverse proxy, fix-permissions assuming a local filesystem. This is a distribution choice, not an engine limitation.
+
+h2c-core produces a service dict and dumps it as YAML — it doesn't validate or restrict what keys extensions put in. A provider can write `deploy.replicas`, `deploy.placement`, or any other section, and it will pass through to the output unchanged. The contracts (`Converter`, `Provider`, `IngressRewriter`, `ConvertContext`) have nothing mono-host-specific.
+
+The format situation is unclear. Swarm and Compose both use YAML files with the same `deploy:` key for replicas, placement, and rolling updates — but they don't use the same spec. The [Swarm docs](https://docs.docker.com/reference/cli/docker/stack/deploy/) say `docker stack deploy` uses the legacy Compose v3 format and that the current Compose Specification "isn't compatible". The [Compose Deploy Specification](https://docs.docker.com/reference/compose-file/deploy/) documents `deploy:` as part of the current spec, supported by `docker compose`. Two pages, same domain, easy to misread. [Docker's own docs AI](https://docs.docker.com/) confirmed: Swarm is stuck on legacy v3. Docker backported Swarm's `deploy:` key into the Compose Specification without upgrading Swarm to support the Compose Specification — so the key exists in both formats, but the surrounding spec diverged. Swarm still wants `version: "3.x"` in the header; the Compose Spec dropped the `version:` field entirely. A Swarm distribution would need to produce Compose v3. A Swarm-oriented distribution would need different monks:
+
+| Concern | Current monk (single-host) | Swarm equivalent |
+|---------|---------------------------|------------------|
+| Volumes | Bind mounts (`host_path`) | Distributed volume drivers (NFS, GlusterFS) or named volumes with `driver_opts` |
+| Replicas | Ignored (single instance) | `deploy.replicas`, placement constraints, rolling updates |
+| Reverse proxy | Caddy (standalone) | Traefik in Swarm mode (service mesh, automatic service discovery) |
+| Permissions | fix-permissions (local `chown`) | Likely unnecessary (volume drivers handle ownership) or different strategy |
+| Ingress | Single Caddyfile | Traefik labels on services, Let's Encrypt via Traefik |
+
+The core engine, indexers, and most transforms would carry over unchanged. The providers and the ingress stack are where the opinions live.
+
+Whether this is a good idea is a separate question. Swarm runs on a spec its own maintainers deprecated without ever upgrading — a format whose future is unclear at best, powering a proclaimed production-grade orchestrator. If you need multi-node scheduling, service mesh, and rolling updates, you already have Kubernetes. The case for helmfile2compose is clear: run the same apps on a single machine without the cluster overhead. The case for writing h2c extensions for Swarm is murkier — you'd be converting from one orchestrator to a less capable one. But the engine will not judge (it just reads YAML manifests, it produces a `.yml`). I — having built this abomination, pot, kettle, yadda — will.
 
 ## Docker/Compose gotchas
 

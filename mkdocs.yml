@@ -44,7 +44,7 @@ nav:
       - h2c-manager: maintainer/h2c-manager.md
   - Developer guide:
       - Concepts: developer/concepts.md
-      - Conversion pipeline: developer/architecture.md
+      - Architecture: developer/architecture.md
       - h2c-core: developer/h2c-core.md
       - Code quality: developer/code-quality.md
       - Testing: developer/testing.md
@@ -67,6 +67,7 @@ nav:
 
 markdown_extensions:
   - attr_list
+  - md_in_html
   - admonition
   - pymdownx.highlight:
       anchor_linenums: true

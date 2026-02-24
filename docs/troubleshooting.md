@@ -50,6 +50,8 @@ If you are running Rancher Desktop with containerd: switching to dockerd (moby) 
 
 If the issue is specific to a Helm chart rather than helmfile2compose itself — a sidecar that needs the K8s API, a container that expects a CRD controller at runtime, an image that phones home to the apiserver on startup — check the [known workarounds](maintainer/known-workarounds/index.md). Those are sushi recipes for tentacles that don't fit, organized by chart.
 
+If the chart *genuinely needs a kube-apiserver at runtime* (leader election, service discovery via API, k8s-sidecar watchers), the [fake-apiserver](catalogue.md#fake-apiserver) extension can provide one — a fake one, backed by a Python script, self-signed certs, and questionable life choices. Install it, and the problem goes away. Whether it's replaced by a worse problem is a matter of perspective.
+
 ## Network alias collisions (multi-project)
 
 Your stack works half the time and breaks the other half? Services resolve to the wrong container? One request succeeds, the next returns someone else's login page?

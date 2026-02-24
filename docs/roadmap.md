@@ -38,6 +38,10 @@ Several conversion primitives exported by h2c-core (`_convert_command`, `_conver
 
 Extension manifests with `core_version_min` / `core_version_max_tested`. Manager warns/errors on mismatch. Today only extension-vs-extension incompatibility is checked — extension-vs-core version compat is not.
 
+### helmfile2swarm distribution
+
+A Swarm-oriented distribution with different monks — distributed volumes, `deploy.replicas`, Traefik in mesh mode. The engine supports it, the contracts are ready, the [architecture page](developer/architecture.md#beyond-single-host) has the blueprint. I've never used Swarm, and I hope I never will. But the door is open for anyone who wants to walk through it.
+
 ## Out of scope
 
 CronJobs, resource limits, HPA, PDB, probes-to-healthcheck. These survived the flattening by virtue of not being worth flattening. See [Limitations](limitations.md) for the full list and rationale.

@@ -228,6 +228,13 @@ Warning: untested. May or may not work. Can't tell. Use HAProxy.
 python3 h2c-manager.py traefik
 ```
 
+## Third-party extensions
+
+Extensions that live outside the helmfile2compose org. They follow the same contracts and install the same way — but the org takes no credit, no blame, and no responsibility.
+
+### fake-apiserver
+A transform that breaches [the wall](developer/concepts.md#the-emulation-boundary). For applications that require a live kube-apiserver at runtime — leader election, service discovery via API, in-cluster auth — this extension provides one. What it does, how it does it, and why you should not use it are documented in the [repo itself](https://github.com/baptisterajaut/h2c-api). No further instructions will be given here. The catalogue acknowledges its existence; it does not condone it.
+
 ## Writing your own
 
 - **[Writing converters](developer/extensions/writing-converters.md)** — the generic interface: `kinds`, `convert()`, `ConvertResult`, `ConvertContext`

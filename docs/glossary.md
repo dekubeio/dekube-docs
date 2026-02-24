@@ -20,7 +20,7 @@ Quick reference for terms used across this documentation. If a word sounds like 
 :   A packaged combination of *h2c-core* + a set of bundled extensions, concatenated into a single `.py` file. The default distribution is `helmfile2compose` (core + the *Eight Monks*). `kubernetes2simple` is a stacked distribution (helmfile2compose + all official extensions). Think of it like a K8s distribution (k3s, EKS) vs the bare apiserver.
 
 **emulation boundary**
-:   The line between what h2c can convert and what it cannot. *Tier 1* (flattened): K8s declarations materialized as compose equivalents. *Tier 2* (ignored): operational K8s features that don't affect app behavior (RBAC, HPA, NetworkPolicies). *Tier 3* (the wall): anything that requires a live kube-apiserver at runtime. See [Concepts](developer/concepts.md#the-emulation-boundary).
+:   The line between what h2c can convert and what it cannot. *Tier 1* (flattened): K8s declarations materialized as compose equivalents. *Tier 2* (ignored): operational K8s features that don't affect app behavior (RBAC, HPA, NetworkPolicies). *Tier 3* (the wall): anything that requires a live kube-apiserver at runtime — now breachable via the [fake-apiserver](catalogue.md#fake-apiserver) extension, which we do not endorse, recommend, or acknowledge. See [Concepts](developer/concepts.md#the-emulation-boundary).
 
 **extension**
 :   A single-file Python module (`.py`) that plugs into h2c-core's contracts. Can be a *converter*, *provider*, *indexer*, *transform*, *rewriter*, or *ingress provider*. Installed via `--extensions-dir` or through *h2c-manager*. Each extension is also a GitHub repo for distribution purposes.

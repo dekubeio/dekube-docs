@@ -4,6 +4,8 @@ First of all, there is nothing to save in this project. The portals are opened, 
 
 This document describes the design philosophy behind h2c — what it *intends* to do, what it *refuses* to do, and where the line is drawn (arbitrarily, under duress, in the dark).
 
+The scope of the existing distributions is single-node Docker Compose — one machine, bind mounts, no replicas. The engine itself is not tied to this assumption; the same core could target Docker Swarm or other compose-compatible runtimes with a different set of extensions. Converting Kubernetes manifests to Swarm would be less heretical than converting them to single-node compose — but it does raise the question of why you'd use Swarm instead of Kubernetes in the first place. See [Beyond single-host](architecture.md#beyond-single-host) for what that would look like, and make your own theological choices.
+
 For the mechanical reality of how the conversion works, see [Architecture](architecture.md).
 
 ## Differences from Kubernetes
@@ -26,21 +28,35 @@ h2c is converging toward a K8s-to-compose emulator — taking declarative K8s re
 
 ### Three tiers
 
-**Tier 1 — Flattened.** K8s as a declaration language. We consume the intent and materialize it in compose. Workloads, ConfigMaps, Secrets, Services, Ingress, PVCs. CRDs fall here too via extensions — converters emulate the *output* of K8s controllers (the resources they would create), not the controllers themselves. cert-manager Certificates become PEM files (converter). Keycloak CRs become compose services (provider). The controller's job happens at conversion time.
+**Tier 1 — Flattened.** K8s as a declaration language. We consume the intent and materialize it in compose. Workloads, ConfigMaps, Secrets, Services, Ingress, PVCs. CRDs fall here too via extensions — converters emulate the *output* of K8s controllers (the resources they would create), not the controllers themselves. cert-manager Certificates become PEM files (converter). Keycloak CRs become compose services (provider). The controller's job happens at conversion time. This is also how h2c handles operators — they *look* like tier 3 (they watch the API, reconcile state, run control loops), but h2c sidesteps them entirely by emulating their output, not their process. The reconciliation loop happens once, in the converter, and the result is static.
 
 **Tier 2 — Ignored.** K8s operational features that don't change what the application *does*, only how K8s manages it. NetworkPolicies, HPA, PDB, RBAC, resource limits/requests, ServiceAccounts. Safe to skip — they affect the cluster's security posture and scaling behavior, not the application's functionality on a single machine.
 
-**Tier 3 — The wall.** Anything that talks to the kube-apiserver at runtime. This is the hard limit. Then [someone built a fake apiserver](https://github.com/baptisterajaut/h2c-api). Consult the [maritime police most wanted list](https://github.com/baptisterajaut/h2c-api#supported-endpoints) for details.
+**Tier 3 — The wall.** Tiers 1 and 2 are about what Kubernetes does *for* the app — scheduling, networking, secret injection. Tier 3 is about what the app does *with* Kubernetes — when the application itself is a kube-apiserver client. That's the real boundary. Then [someone built a fake apiserver](https://github.com/baptisterajaut/h2c-api). Then someone made it [installable in one command](../catalogue.md#fake-apiserver). The wall still exists — but it now has a door, a welcome mat, and a sign that reads "do not enter" in a font that suggests you should.
 
 ### What's behind the wall
 
-- **Operators themselves** — they watch the API for CRDs, reconcile state. But we don't need to *run* them, just emulate their output (tier 1).
-- **Apps that use the K8s API** — service discovery via API instead of DNS, leader election via Lease objects, dynamic config via watching ConfigMaps. [A suspect matching this description](https://github.com/baptisterajaut/h2c-api) — a fake kube-apiserver that serves just enough endpoints (downward API, leader election, service discovery) to fool apps into thinking they're in a cluster — was last seen near the border.
-- **Downward API** — pod name, namespace, node name, labels injected as env vars or files. [The same suspect](https://github.com/baptisterajaut/h2c-api) forged these too. Annotations are still at large.
-- **In-cluster auth** — ServiceAccount tokens, RBAC-gated API calls. [The documents have been falsified](https://github.com/baptisterajaut/h2c-api#leader-election). We don't talk about it.
+The four that remain unsolved without [extraordinary measures](../catalogue.md#fake-apiserver):
+
+- **Live operators** — not the ones whose output we emulate (those are tier 1), but operators that need to *keep running* and observing the cluster. Reconciliation operators (ArgoCD, Flux, the Prometheus Operator's own reconciler) watch the apiserver and act on drift. Policy engines (Kyverno, Kubescape) enforce admission control and audit cluster state. These have no meaning outside a real cluster — there is no state to reconcile, no admissions to gate, no cluster to observe.
+
+    !!! note
+        Some live operator behaviors can be worked around not by emulating them, but by choosing compose-native components that happen to cover the same need. ACME certificate renewal is a live operator concern in Kubernetes (cert-manager watches, requests, renews). In compose, Caddy handles ACME natively — the Caddy provider generates a Caddy service, and Caddy itself takes care of the rest. h2c doesn't implement ACME; the workaround is in the behavior of the final service, not in the conversion act.
+
+- **Runtime API consumers** — apps that call the kube-apiserver for service discovery (listing endpoints instead of using DNS), leader election (Lease objects), or dynamic configuration (watching ConfigMaps for live updates). These assume an apiserver exists and will talk to it. In compose, there is no apiserver — unless someone provides one.
+- **Downward API** — pod name, namespace, node name, labels injected as env vars or volume files. Some apps read these to identify themselves to peers or include in telemetry. Without a kubelet to populate them, they're empty or absent.
+- **In-cluster auth** — ServiceAccount tokens mounted at `/var/run/secrets/kubernetes.io/serviceaccount/`, used for RBAC-gated API calls. Apps that authenticate to the apiserver (or to each other via token review) need a token that something will accept.
 
 > *He who flattens the world into files shall find that each file begets another, and each mount begets a service, until the flattening itself becomes a world — and the disciple realizes he has built not a bridge, but a second shore.*
 > — *Necronomicon, On the Limits of Flattening (supposedly)*
+
+### Push vs pull
+
+h2c is fundamentally push-based: you run a command, it produces files, done. So are its inputs — `helmfile template`, `helm template`, `docker compose up`. The entire pipeline is a single pass from declaration to output, with no agent running afterward.
+
+This is also what makes tier 3 hard. Everything behind the wall is pull-based — an operator watching for changes, an app polling the apiserver, a kubelet injecting live pod metadata. The emulation boundary is, at its core, the boundary between push and pull.
+
+The compose ecosystem has its own pull-based tools. [Komodo](https://github.com/moghtech/komodo) and [Doco-CD](https://github.com/kimdre/doco-cd) are the closest equivalents to ArgoCD/Flux — they poll a git repo and redeploy compose stacks on change. [Watchtower](https://github.com/containrrr/watchtower) watches container registries and auto-updates running containers when a new image is pushed (image drift, not config drift). Portainer's business edition combines both — GitOps stack sync from a repo and container monitoring. These solve the same class of problem (continuous state reconciliation) in a compose-native way. h2c doesn't try to bridge into that world — it produces the static declaration, and what watches or reconciles it afterward is someone else's concern.
 
 ## The curse of names
 
