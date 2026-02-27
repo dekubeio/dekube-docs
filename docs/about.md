@@ -30,6 +30,8 @@ Despite the dark jokes everywhere — despite the desecration, the heresy, the N
 
 It is entirely in the public domain, as every AI-written software should be. It is not (too much) a security mess — the extension system is, but it's not gonna be much worse than npm. And IT HAS AN [EXECUTIONER](extend/testing.md), OH YOG SA'RATH. With CI. And a [torturer](extend/testing.md#the-torturer), because of course it does.
 
+Sound familiar? Every ecosystem starts with someone saying "I can hack that together." Ryan Dahl said "I can run JavaScript on a server" and nobody said no, and now `node_modules` is a black hole that bends spacetime. GitHub built Electron because "I only know web" and now your text editor needs 400MB of RAM. Docker built Swarm because "we already have containers" — Kubernetes did it properly, Swarm basically died, and now dekube is bringing it all back to Docker. The difference? This one knows it's heresy. The others still think they're orthodoxy.
+
 ### The arms race
 
 Here is the thing nobody warns you about with vibe coding: the AI never says no.
@@ -37,10 +39,6 @@ Here is the thing nobody warns you about with vibe coding: the AI never says no.
 It never says "this is getting too complex." It never says "maybe we should stop here." It never pushes back on scope. You ask for an extension system, you get an extension system. You ask for a package manager, you get a package manager. You ask for a distribution model with auto-registration and duplicate kind detection and a build pipeline that concatenates twenty modules into a single file — you get exactly that, in one session, working on the first try. Every feature request is met with enthusiasm and competence. There is no friction.
 
 There is no "let me think about whether we should."
-
-Sound familiar? That's because it's the exact same story as every ecosystem that outgrew its original purpose. Ryan Dahl said "I can run JavaScript on a server" and nobody said no, and now `node_modules` is a black hole that bends spacetime. GitHub built Electron because "I only know web" and now your text editor needs 400MB of RAM. Docker built Swarm because "we already have containers" and — well, Kubernetes happened, and now dekube is bringing it all back to Docker, because the ouroboros never stops eating.
-
-The difference? This one knows it's heresy. The others still think they're orthodoxy.
 
 And the code itself isn't hard. That's the insidious part. There is no machine learning, no complex algorithms, no distributed systems theory. It's dict manipulation. Lists of dicts in, lists of dicts out. Parse YAML, shuffle keys, write YAML. The entire project — engine, distribution, extensions, CLI — is ~3000 lines of near-vanilla Python with one dependency (`pyyaml`). Any senior engineer could read it in an afternoon. Any competent one could maintain it.
 
