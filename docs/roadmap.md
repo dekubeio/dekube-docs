@@ -6,19 +6,13 @@ For the emulation boundary — what can cross the bridge and what can't — see 
 
 ## Next
 
-### Rename: h2c-core → dekube-engine (done)
-
-The rename is complete. The core engine is now `dekube-engine`, the package is `dekube`, and the build artifact is `dekube.py`. Both `from dekube import ...` and `from h2c import ...` coexist during the transition. `dekube.yaml` is the primary config file name (`helmfile2compose.yaml` remains as a legacy fallback). The GitHub org moved from `helmfile2compose` to `dekubeio`.
-
 ### Nginx ingress provider
 
 An `IngressProvider` that produces an Nginx reverse proxy service + `nginx.conf` instead of Caddy. For users who need Nginx specifically — corporate environments, existing Nginx expertise, or setups where Caddy's automatic TLS isn't wanted. The rewriter already exists ([dekube-rewriter-nginx](https://github.com/dekubeio/dekube-rewriter-nginx)); this would be the provider counterpart. See [Writing ingress providers](extend/extensions/writing-ingressproviders.md) for the contract.
 
-### Per-extension `enabled: false`
+### Overrides vs transforms ordering
 
-Bundled extensions can't be individually disabled — the distribution loads all monks unconditionally. An `enabled: false` key under `extensions.<name>` in the config would let maintainers skip specific bundled extensions (fix-permissions, bitnami transform) without switching to dekube-engine + manual `--extensions-dir`. Small change in the dispatch loop, large quality-of-life improvement.
-
-Related: `overrides:` currently runs *before* transforms, so services created by transforms (like `fix-permissions`) can't be overridden. Either overrides need to run after transforms, or transforms need to check `enabled` themselves. Either way, a fix is needed before disabling bundled extensions is useful.
+`overrides:` currently runs *before* transforms, so services created by transforms (like `fix-permissions`) can't be overridden. Either overrides need to run after transforms, or transforms need to check `enabled` themselves.
 
 ## Someday
 
