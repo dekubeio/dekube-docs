@@ -3,7 +3,7 @@
 Convert Kubernetes manifests to `compose.yml` + whatever configfile your proxy server will use. Sanity may or may not be included.
 
 
-If you're here, you either want to understand how the conversion works, write extensions, or build your own distribution. If you just want to run it, head to the [helmfile2compose docs](https://helmfile2compose.dekube.io/docs/).
+If you just want it to work and don't care why, [kubernetes2simple](https://k2s.dekube.io/) will handle everything. If you want to understand what you're running and control what gets loaded, [helmfile2compose](https://helmfile2compose.dekube.io/docs/) is the distribution for you. If you're here, you want to understand the engine itself, write extensions, or build your own distribution.
 
 > *And lo, the architect who sought to render the celestial rites in common tongue found himself building a second heaven. "I have translated," he proclaimed, standing in a temple whose pillars bore the same glyphs as the first. The old gods smiled, for one does not carry fire without becoming a hearth.*
 >
