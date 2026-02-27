@@ -22,17 +22,27 @@ What follows is the complete and unhinged explanation of how we got here. It com
 
 ### The aberration
 
-helmfile2compose is a suite of tools that converts Kubernetes manifests to docker-compose. It emulates CRD controllers. It generates TLS certificates from nothing. It fakes a kube-apiserver. It carries the full FQDN of a cluster that does not exist, because the certificates were signed for a world it dismantled.
+The idea itself is the aberration. Not the scope creep — that came later, and that one's on me. The idea.
 
-The first time someone asked for a docker-compose, I ignored the request. The second time, I built a script and ported two open source platforms. It worked. It should have stopped there. Then I went back to my own production helmfile — operators, SOPS encryption, CRDs, the full temple — looked at the script, and said "why not." That's the moment the project went further than necessary. The fake apiserver, the extension system, the package manager, the distribution model — all of it traces back to one moment of "I've already gone this far."
+Kubernetes manifests encode intentions for a distributed orchestrator. They describe pods that get scheduled across nodes, services that route through kube-proxy, volumes that get provisioned by CSI drivers, certificates that get issued by controllers watching CRDs. Every field assumes a control plane is listening. Every resource assumes a reconciliation loop will eventually make the world match the spec.
+
+docker-compose describes containers on a single host.
+
+Using the first as an intermediate representation to generate the second is like translating a space shuttle launch checklist into instructions for a paper airplane. The paper airplane will fly — but you'll spend most of your time figuring out what "verify LOX tank pressurization" means when you don't have a LOX tank. Or oxygen. Or a launch pad.
+
+That's what dekube does. It reads Kubernetes manifests — the launch checklist — and produces docker-compose files — the paper airplane. And every single complication in this project is a direct, inevitable consequence of that premise. You want to convert Deployments? You need to understand init containers, sidecar injection, volume claim templates. You want to handle Ingresses? You need to rewrite annotations from controllers you've never met. You want CRDs? You're now emulating operators. You want Certificates? You're now a fake CA. You want Helm charts that talk to the apiserver at install time? You're now faking a kube-apiserver. None of this is scope creep. All of it was *implied* the moment someone said "convert Kubernetes to Compose." The ICBM was always in the blueprint — we just didn't read the fine print.
+
+Sound familiar? Ryan Dahl said "I can run JavaScript on a server" — the language that was designed to validate form fields and animate banner ads, repurposed as a systems runtime. The idea was the aberration; `node_modules` was the consequence. GitHub said "what if a desktop app was just a browser" — the engine that was designed to render documents, repurposed as an application framework. The idea was the aberration; 400MB text editors were the consequence. Docker said "we already have containers, we can orchestrate" — the tool that was designed to run processes, repurposed as a cluster scheduler. The idea was the aberration; Swarm's quiet death was the consequence. And I said "Kubernetes manifests are just YAML, I can reshape them" — the format that was designed for a distributed control plane, repurposed as a Compose generator. The idea is the aberration. Everything else is just the invoice.
+
+The first time someone asked for a docker-compose, I ignored the request. The second time, I built a script and ported two open source platforms. It worked. It should not have worked. But it did, and that was the real danger — because a working aberration is harder to kill than a failed one.
 
 Despite the dark jokes everywhere — despite the desecration, the heresy, the Necronomicon quotes that started writing themselves around session three — it works. It works *well*. It is architected. It is pluggable. It handles real-world helmfiles with dozens of services, init containers, sidecars, CRDs, cross-namespace secrets, backend TLS, and ingress annotations from controllers it has never met. And it might be genuinely useful to someone who isn't me.
 
 It is entirely in the public domain, as every AI-written software should be. It is not (too much) a security mess — the extension system is, but it's not gonna be much worse than npm. And IT HAS AN [EXECUTIONER](extend/testing.md), OH YOG SA'RATH. With CI. And a [torturer](extend/testing.md#the-torturer), because of course it does.
 
-Sound familiar? Every ecosystem starts with someone saying "I can hack that together." Ryan Dahl said "I can run JavaScript on a server" and nobody said no, and now `node_modules` is a black hole that bends spacetime. GitHub built Electron because "I only know web" and now your text editor needs 400MB of RAM. Docker built Swarm because "we already have containers" — Kubernetes did it properly, Swarm basically died, and now dekube is bringing it all back to Docker. The difference? This one knows it's heresy. The others still think they're orthodoxy.
-
 ### The arms race
+
+The aberration is the idea. What follows is entirely my fault.
 
 Here is the thing nobody warns you about with vibe coding: the AI never says no.
 

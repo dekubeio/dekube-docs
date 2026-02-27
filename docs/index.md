@@ -1,7 +1,6 @@
 # dekube
 
-Convert Kubernetes manifests to `compose.yml` + whatever configfile your proxy server will use. Sanity may or may not be included.
-
+You deploy with Helm charts or helmfiles. Your users, your dev setup, or your NAS just need `docker compose up`. dekube generates `compose.yml` + reverse proxy config from your Kubernetes manifests — one source of truth, no second stack to maintain.
 
 If you just want it to work and don't care why, [kubernetes2simple](https://k2s.dekube.io/) will handle everything. If you want to understand what you're running and control what gets loaded, [helmfile2compose](https://helmfile2compose.dekube.io/docs/) is the distribution for you. If you're here, you want to understand the engine itself, write extensions, or build your own distribution.
 
