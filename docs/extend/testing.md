@@ -14,7 +14,7 @@ A project that emulates a container orchestrator by flattening its output into a
 
 ### Regression
 
-The test runner (`run-tests.sh`) downloads both versions, generates a `helmfile2compose.yaml` for each, and diffs the output. It runs multiple extension combos:
+The test runner (`run-tests.sh`) downloads both versions, generates a `dekube.yaml` for each, and diffs the output. It runs multiple extension combos:
 
 1. **Core only** — no extensions, baseline behavior
 2. **Each extension individually** — isolation testing

@@ -1,10 +1,43 @@
 # The Cursed Journal
 
-*A record of the rituals performed, in the order they were committed. Read at your own risk.*
+*A record of the dekube ecosystem's rituals — engine, distributions, extensions, manager — in the order they were committed. Earlier entries use the names that existed at the time (h2c, helmfile2compose org, h2c-core); the rename to dekube is documented where it happened. Read at your own risk.*
 
 > *The scribe kept a journal — not for posterity, but as evidence. Should the temple collapse, the authorities would need to know what had been attempted, in what order, and by whom. The scribe was also the architect. This complicated the trial.*
 >
 > — *Necronomicon, On Accountability (apocryphal)*
+
+---
+
+## The Rebrand — h2c becomes dekube {#the-rebrand}
+
+*2026-02-27* · `engine: v1.2.1 · helmfile2compose: v3.1.1 · kubernetes2simple: v1.0.1 · manager: all repos renamed`
+
+The rename that had been "later" since v2.0.0 finally happened. Not on impulse — a week of design documents, naming debates, domain acquisition, doc splits, tone decisions, and four static sites staged before a single repo was touched. Then the big bang: `refactor: rename h2c → dekube` across every repo in the org, in one session.
+
+??? abstract "TL;DR"
+    - GitHub org renamed `helmfile2compose` → `dekubeio`; all repos renamed `h2c-*` → `dekube-*`
+    - Internal Python package `src/h2c/` → `src/dekube/`, all imports `from dekube import ...`
+    - Config file renamed `helmfile2compose.yaml` → `dekube.yaml` (legacy fallback preserved in engine)
+    - `h2c.py` build artifact removed; engine now produces `dekube.py`
+    - Four static sites deployed: landing page, distribution docs, engine docs, manager landing
+    - `per-extension enabled: false` in config (engine feature, shipped alongside)
+    - Full documentation audit and tone pivot
+
+**The planning.** Two design documents iterated over the week: `rebrand-notes` (naming, domain strategy, scope, tone direction) and `rebrand-design` (execution roadmap, repo rename sequence, doc split, compatibility shims). Key decisions: big bang rename (not gradual), doc split into two mkdocs (engine concepts vs distribution operations), compatibility shims for one major version (`from h2c import`, `helmfile2compose.yaml` fallback), consumer projects migrate later.
+
+**The name.** dekube — *de-Kubernetise*. The ecosystem had outgrown the name of one of its distributions. helmfile2compose is a distribution; kubernetes2simple is another; dekube is the engine and the org. The name drops the implementation detail ("helmfile") and names the act ("de-Kubernetise"). It was not focus-grouped. It was whispered.
+
+**The rename.** `src/h2c/` → `src/dekube/` across the engine. `from h2c import ...` → `from dekube import ...` across all 8 monks, all 8 official extensions, the fake-apiserver, and the manager. The `sys.modules` hack now registers `dekube` instead of `h2c`. `build.py` produces `dekube.py`. `build-distribution.py` builds on top of it. The old `h2c.py` was deleted — a 1602-line artifact that had outlived its usefulness by several versions.
+
+**The sites.** `dekube.io` — the landing page, with the tentacle logo (three healthy spokes, four corrupted ones with suckers — the Kubernetes wheel, half-consumed). `docs.dekube.io` — the engine documentation. `helmfile2compose.dekube.io` — the distribution docs. `k2s.dekube.io` — the kubernetes2simple landing and `curl | bash` installer. `manager.dekube.io` — the dekube-manager landing. Five sites. Four domains. One animated cephalopod.
+
+**The tone.** The documentation shifted from apologetic ("I'm sorry you're here") to heretical-but-honest ("at least we warn you"). The project was always heresy — but now it warns louder than the orthodoxy documents. The Necronomicon quotes stayed. The self-awareness stayed. The defeated sighs left.
+
+**Also shipped:** `per-extension enabled: false` in `dekube.yaml` — individual extensions can now be disabled without removing them from the extensions directory.
+
+> *The temple that had lived under a borrowed name built itself a proper one. The old name was not erased — it echoed still in the hallways, and the faithful who had learned it first would always hear it beneath the new syllables. But the new name was carved above the gate, and the gate now opened onto more than one path.*
+>
+> — *Unaussprechlichen Kulten, On the Naming of Temples (finally)*
 
 ---
 
@@ -80,7 +113,7 @@ The first thing stacked on top: [kubernetes2simple](https://github.com/dekubeio/
 The `.py` distribution is half the product. The other half is `kubernetes2simple.sh` — a bash script that detects your source format (helmfile, Helm chart, or flat manifests), bootstraps everything it needs (Python venv, helm, helmfile — all scoped to `.kubernetes2simple/`, never touches the system), downloads `kubernetes2simple.py` from releases, and converts. One command. Zero configuration. Zero questions asked.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/helmfile2compose/kubernetes2simple/main/kubernetes2simple.sh -o k2s.sh
+curl -fsSL https://raw.githubusercontent.com/dekubeio/kubernetes2simple/main/kubernetes2simple.sh -o k2s.sh
 chmod +x k2s.sh && ./k2s.sh
 docker compose up -d
 ```
@@ -114,7 +147,7 @@ Naturally, the two external rewriters — nginx and traefik — never had this b
 
 We just wanted to separate the worlds — split a monolith into a bare engine and a distribution. Improve the architecture. Clean up the layers. Somewhere along the way, the architecture of the tool converged with the architecture of the thing it was converting: a bare API with empty registries, a distribution model, an extension system, priority-based dispatch. We didn't set out to close the ouroboros. We just turned the wheel, and the wheel remembered.
 
-`h2c-core` has been split into two repos: a **bare engine** ([h2c-core](https://github.com/dekubeio/dekube-core)) that produces `h2c.py` — pure potential with empty registries — and a **full distribution** ([helmfile2compose](https://github.com/dekubeio/helmfile2compose)) that splits the monolith's conversion logic into 7 extensions covering every built-in kind, and bundles them into `helmfile2compose.py`.
+`h2c-core` has been split into two repos: a **bare engine** ([h2c-core](https://github.com/dekubeio/dekube-engine)) that produces `h2c.py` — pure potential with empty registries — and a **full distribution** ([helmfile2compose](https://github.com/dekubeio/helmfile2compose)) that splits the monolith's conversion logic into 7 extensions covering every built-in kind, and bundles them into `helmfile2compose.py`.
 
 The bare core has `_CONVERTERS = []`, `_REWRITERS = []`, `CONVERTED_KINDS = set()`. Feed it manifests and it will parse them, warn that every kind is unknown, and produce nothing. A temple with no priests. The distribution wires in ConfigMap, Secret, Service, PVC indexers, the Workloads converter, HAProxy rewriter, and Caddy provider — the default priesthood.
 
@@ -150,7 +183,7 @@ HAProxy rewriter extracted into its own module — structurally identical to ext
 
 Maintainability Index: 0.00 (C) → 68.38 (A). Radon penalizes square footage — the monolith bottomed out regardless of internal structure. Twenty-one focused modules let each shard score on its own merit.
 
-No functional changes. Output identical to v2.3.1 — the [executioner](developer/testing.md) now accepts `--local-core` to validate a locally-built artifact against pinned reference versions before release.
+No functional changes. Output identical to v2.3.1 — the [executioner](extend/testing.md) now accepts `--local-core` to validate a locally-built artifact against pinned reference versions before release.
 
 > *And the disciple said: let us shatter the tablet, that each fragment may be understood alone. Twenty-one shards they made, each labeled and indexed. The labyrinth remained — but now it had signage. The inquisitors returned with their instruments and found every shard scored better than the whole.*
 >
@@ -180,7 +213,7 @@ Three bugs found in one session by pointing h2c at [mijn-bureau-infra](https://g
 >
 > — *Necronomicon, On the Treachery of Empty Vessels (to the best of our knowledge)*
 
-Also released: [h2c-transform-bitnami](https://github.com/dekubeio/dekube-transform-bitnami) — the janitor. Detects Bitnami Redis, PostgreSQL, and Keycloak charts and applies workarounds automatically, replacing the manual overrides documented in [common charts](maintainer/known-workarounds/common-charts.md). Born from the realization that copy-pasting the same redis override across three projects was less heresy and more just tedious. Heresy score: 0/10.
+Also released: [h2c-transform-bitnami](https://github.com/dekubeio/dekube-transform-bitnami) — the janitor. Detects Bitnami Redis, PostgreSQL, and Keycloak charts and applies workarounds automatically, replacing the manual overrides documented in [common charts](https://helmfile2compose.dekube.io/docs/known-workarounds/common-charts/). Born from the realization that copy-pasting the same redis override across three projects was less heresy and more just tedious. Heresy score: 0/10.
 
 ---
 
@@ -262,7 +295,7 @@ Also released: h2c-operator-keycloak v0.2.0 (now h2c-provider-keycloak; namespac
     - Extension loading via `--extensions-dir`, deep merge overrides, hostname truncation, backend SSL
     - Also released: h2c-manager v0.1.0, keycloak, cert-manager, trust-manager extensions
 
-Humanity abandoned the last pretense of restraint. What was one script is now an ecosystem. Everything split into separate repos under [helmfile2compose](https://github.com/helmfile2compose).
+Humanity abandoned the last pretense of restraint. What was one script is now an ecosystem. Everything split into separate repos under the helmfile2compose GitHub org (later renamed [dekubeio](https://github.com/dekubeio)).
 
 Extension loading via `--extensions-dir`. Deep merge for overrides. Hostname truncation. Backend SSL. The org, the manager, the operators — all born on the same day.
 

@@ -34,7 +34,7 @@ dekube-engine/
 │   │   └── convert.py       # convert() orchestration, overrides, _auto_register()
 │   └── io/                  # input/output
 │       ├── parsing.py       # helmfile template, YAML loading, namespace inference
-│       ├── config.py        # helmfile2compose.yaml load/save
+│       ├── config.py        # dekube.yaml load/save
 │       └── output.py        # compose.yml, warnings
 ├── build.py                 # concat → single-file h2c.py (bare engine)
 ├── build-distribution.py    # concat core + extensions → distribution

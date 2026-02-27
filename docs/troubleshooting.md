@@ -48,7 +48,7 @@ If you are running Rancher Desktop with containerd: switching to dockerd (moby) 
 
 ## For maintainers: chart-specific issues
 
-If the issue is specific to a Helm chart rather than helmfile2compose itself — a sidecar that needs the K8s API, a container that expects a CRD controller at runtime, an image that phones home to the apiserver on startup — check the [known workarounds](maintainer/known-workarounds/index.md). Those are sushi recipes for tentacles that don't fit, organized by chart.
+If the issue is specific to a Helm chart rather than helmfile2compose itself — a sidecar that needs the K8s API, a container that expects a CRD controller at runtime, an image that phones home to the apiserver on startup — check the [known workarounds](https://helmfile2compose.dekube.io/docs/known-workarounds/). Those are sushi recipes for tentacles that don't fit, organized by chart.
 
 If the chart *genuinely needs a kube-apiserver at runtime* (leader election, service discovery via API, k8s-sidecar watchers), the [fake-apiserver](catalogue.md#fake-apiserver) extension can provide one — a fake one, backed by a Python script, self-signed certs, and questionable life choices. Install it, and the problem goes away. Whether it's replaced by a worse problem is a matter of perspective.
 
@@ -60,7 +60,7 @@ Congratulations — you are experiencing the consequences of your own actions. Y
 
 But alas, I am here. Not to save you — salvation left this project around v1.2 — but to teach you how to identify which curse is yours and how to keep the tentacles from strangling each other.
 
-When multiple helmfile2compose projects share the same Docker network (`network: shared-infra` in `helmfile2compose.yaml`), every network alias from every service in every project lands on the same DNS namespace. Every FQDN, every short name, every cursed `.svc.cluster.local` suffix — all of them, cohabiting in a flat network that was never designed to hold the naming conventions of multiple fictional clusters.
+When multiple helmfile2compose projects share the same Docker network (`network: shared-infra` in `dekube.yaml`), every network alias from every service in every project lands on the same DNS namespace. Every FQDN, every short name, every cursed `.svc.cluster.local` suffix — all of them, cohabiting in a flat network that was never designed to hold the naming conventions of multiple fictional clusters.
 
 The **FQDNs** are mostly safe — K8s namespaces are baked into the names, so `redis.stoatchat-redis.svc.cluster.local` and `redis.lasuite-redis.svc.cluster.local` resolve to different containers. The temple's naming conventions, for once, protect you.
 
@@ -78,4 +78,4 @@ In practice, short alias collisions are rare — they only appear when the K8s S
 
 ---
 
-Still stuck? Open an issue on the [helmfile2compose repo](https://github.com/dekubeio/helmfile2compose/issues). Include the error, your `helmfile2compose.yaml`, and which extensions you're using. The abyss stares back, but it occasionally answers.
+Still stuck? Open an issue on the [helmfile2compose repo](https://github.com/dekubeio/helmfile2compose/issues). Include the error, your `dekube.yaml`, and which extensions you're using. The abyss stares back, but it occasionally answers.

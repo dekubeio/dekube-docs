@@ -2,7 +2,7 @@
 
 Ideas that haven't earned implementation yet — or that the architect hasn't recovered enough bandwidth to face.
 
-For the emulation boundary — what can cross the bridge and what can't — see [Concepts](developer/concepts.md#the-emulation-boundary).
+For the emulation boundary — what can cross the bridge and what can't — see [Concepts](understand/concepts.md#the-emulation-boundary).
 
 ## Next
 
@@ -12,7 +12,7 @@ The rename is complete. The core engine is now `dekube-engine`, the package is `
 
 ### Nginx ingress provider
 
-An `IngressProvider` that produces an Nginx reverse proxy service + `nginx.conf` instead of Caddy. For users who need Nginx specifically — corporate environments, existing Nginx expertise, or setups where Caddy's automatic TLS isn't wanted. The rewriter already exists ([dekube-rewriter-nginx](https://github.com/dekubeio/dekube-rewriter-nginx)); this would be the provider counterpart. See [Writing ingress providers](developer/extensions/writing-ingressproviders.md) for the contract.
+An `IngressProvider` that produces an Nginx reverse proxy service + `nginx.conf` instead of Caddy. For users who need Nginx specifically — corporate environments, existing Nginx expertise, or setups where Caddy's automatic TLS isn't wanted. The rewriter already exists ([dekube-rewriter-nginx](https://github.com/dekubeio/dekube-rewriter-nginx)); this would be the provider counterpart. See [Writing ingress providers](extend/extensions/writing-ingressproviders.md) for the contract.
 
 ### Per-extension `enabled: false`
 
@@ -40,7 +40,7 @@ Extension manifests with `core_version_min` / `core_version_max_tested`. Manager
 
 ### helmfile2swarm distribution
 
-A Swarm-oriented distribution with different monks — distributed volumes, `deploy.replicas`, Traefik in mesh mode. The engine supports it, the contracts are ready, the [architecture page](developer/architecture.md#beyond-single-host) has the blueprint. I've never used Swarm, and I hope I never will. But the door is open for anyone who wants to walk through it.
+A Swarm-oriented distribution with different monks — distributed volumes, `deploy.replicas`, Traefik in mesh mode. The engine supports it, the contracts are ready, the [architecture page](understand/architecture.md#beyond-single-host) has the blueprint. I've never used Swarm, and I hope I never will. But the door is open for anyone who wants to walk through it.
 
 ## Out of scope
 

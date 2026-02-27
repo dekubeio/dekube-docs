@@ -1,8 +1,8 @@
-site_name: helmfile2compose
+site_name: dekube
 site_url: https://docs.dekube.io/
-site_description: Convert Kubernetes manifests to compose.yml + Caddyfile. Sanity may or may not be included.
-repo_url: https://github.com/dekubeio/helmfile2compose
-repo_name: dekubeio/helmfile2compose
+site_description: "Convert Kubernetes manifests to compose.yml. Sanity may or may not be included."
+repo_url: https://github.com/dekubeio/dekube-engine
+repo_name: dekubeio/dekube-engine
 
 
 theme:
@@ -30,39 +30,27 @@ theme:
 
 nav:
   - Home: index.md
-  - kubernetes2simple: kubernetes2simple.md
-  - User guide:
-      - Operations: user/operations.md
-      - Advanced: user/advanced.md
-  - Maintainer guide:
-      - Your project: maintainer/your-project.md
-      - Configuration: maintainer/configuration.md
-      - Known workarounds:
-          - Overview: maintainer/known-workarounds/index.md
-          - Common charts: maintainer/known-workarounds/common-charts.md
-          - kube-prometheus-stack: maintainer/known-workarounds/kube-prometheus-stack.md
-      - dekube-manager: maintainer/h2c-manager.md
-  - Developer guide:
-      - Concepts: developer/concepts.md
-      - Architecture: developer/architecture.md
-      - dekube-engine: developer/h2c-core.md
-      - Code quality: developer/code-quality.md
-      - Testing: developer/testing.md
+  - Understand:
+      - Concepts: understand/concepts.md
+      - Architecture: understand/architecture.md
+      - dekube-engine: understand/engine.md
+      - Distributions: understand/distributions.md
+      - Build system: understand/build-system.md
+  - Extend:
+      - Code quality: extend/code-quality.md
+      - Testing: extend/testing.md
       - Writing extensions:
-          - Overview: developer/extensions/index.md
-          - Converters: developer/extensions/writing-converters.md
-          - Providers: developer/extensions/writing-providers.md
-          - Transforms: developer/extensions/writing-transforms.md
-          - Rewriters: developer/extensions/writing-rewriters.md
-          - Ingress providers: developer/extensions/writing-ingressproviders.md
-      - Distributions: developer/distributions.md
-      - Build system: developer/build-system.md
+          - Overview: extend/extensions/index.md
+          - Converters: extend/extensions/writing-converters.md
+          - Providers: extend/extensions/writing-providers.md
+          - Transforms: extend/extensions/writing-transforms.md
+          - Rewriters: extend/extensions/writing-rewriters.md
+          - Ingress providers: extend/extensions/writing-ingressproviders.md
   - Extension catalogue: catalogue.md
   - Troubleshooting: troubleshooting.md
-  - Reference:
-      - Limitations: limitations.md
-      - Roadmap: roadmap.md
-      - Glossary: glossary.md
+  - Limitations: limitations.md
+  - Roadmap: roadmap.md
+  - Journal: journal.md
   - About: about.md
 
 markdown_extensions:
@@ -74,6 +62,7 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
+  - pymdownx.details
   - toc:
       permalink: true
 

@@ -41,7 +41,7 @@ Transforms execute at the end of `convert()`, after:
 
 1. All converters have produced services
 2. Network aliases have been injected (`networks.default.aliases`)
-3. Overrides from `helmfile2compose.yaml` have been applied
+3. Overrides from `dekube.yaml` have been applied
 4. Hostname truncation (>63 chars) has been applied
 
 This means transforms see the *final* compose output — aliases, overrides, everything. They are the last step before the output is written to disk. Transforms are sorted by priority — lower runs first. The built-in `fix-permissions` transform runs at priority 8000 (after all other transforms).

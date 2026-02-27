@@ -1,6 +1,6 @@
 # Extensions
 
-Extensions are external modules that extend helmfile2compose beyond its built-in capabilities. Install them via [dekube-manager](maintainer/dekube-manager.md) or manually with `--extensions-dir`.
+Extensions are external modules that extend helmfile2compose beyond its built-in capabilities. Install them via [dekube-manager](https://helmfile2compose.dekube.io/docs/dekube-manager/) or manually with `--extensions-dir`.
 
 CRDs are K8s entities that don't speak compose — exiles from a world with controllers and reconciliation loops. The extension system is the immigration office: each converter forges the documents that the K8s controller would have produced at runtime. The forgery is disturbingly convincing.
 
@@ -17,11 +17,11 @@ There are five extension types, all loaded from the same `--extensions-dir`:
 | **IngressProvider** | subclass of `IngressProvider`, `build_service()` + `write_config()` | Produce the reverse proxy service and config file from ingress entries | distribution-level |
 | **Ingress rewriter** | `name` + `match()` + `rewrite()` | Translate ingress controller annotations into ingress entries | `dekube-rewriter-*` |
 
-See [Writing extensions](developer/extensions/index.md) to build your own.
+See [Writing extensions](extend/extensions/index.md) to build your own.
 
 ## The Eight Monks — bundled in helmfile2compose
 
-These are the eight extensions bundled in the [helmfile2compose distribution](developer/distributions.md). Together they form the reference distribution: everything you need to convert standard K8s manifests into a working compose stack, nothing you don't. No CRD magic, no vendor-specific annotations, no opinions about your monitoring stack — just Deployments, StatefulSets, Jobs, Services, Ingresses, ConfigMaps, Secrets, PVCs, and the plumbing to wire them together.
+These are the eight extensions bundled in the [helmfile2compose distribution](understand/distributions.md). Together they form the reference distribution: everything you need to convert standard K8s manifests into a working compose stack, nothing you don't. No CRD magic, no vendor-specific annotations, no opinions about your monitoring stack — just Deployments, StatefulSets, Jobs, Services, Ingresses, ConfigMaps, Secrets, PVCs, and the plumbing to wire them together.
 
 If your helmfile only uses standard Kubernetes resources, the monks are all you need. The moment you introduce CRDs (cert-manager Certificates, Keycloak CRs, ServiceMonitors…) or vendor-specific ingress annotations (nginx, traefik), you install extensions from the sections below.
 
@@ -40,7 +40,7 @@ The four indexers populate `ConvertContext` lookups so that later stages can res
 
 ## Providers
 
-Providers produce compose services — they emulate what a K8s controller would have created as running workloads. Install them via [dekube-manager](maintainer/dekube-manager.md).
+Providers produce compose services — they emulate what a K8s controller would have created as running workloads. Install them via [dekube-manager](https://helmfile2compose.dekube.io/docs/dekube-manager/).
 
 ### keycloak
 
@@ -84,7 +84,7 @@ Features: FQDN scrape targets (via network aliases), HTTPS scrape with CA bundle
 python3 dekube-manager.py servicemonitor
 ```
 
-Grafana saw what we did to its lifelong companion and [fought back itself](maintainer/known-workarounds/kube-prometheus-stack.md).
+Grafana saw what we did to its lifelong companion and [fought back itself](https://helmfile2compose.dekube.io/docs/known-workarounds/kube-prometheus-stack/).
 
 ## Converters
 
@@ -171,7 +171,7 @@ python3 dekube-manager.py flatten-internal-urls
 | **Priority** | 1500 |
 | **Status** | stable |
 
-The janitor. Bitnami charts — Redis, PostgreSQL, Keycloak — wrap standard images in custom entrypoints, init containers, and volume conventions that assume a full Kubernetes environment. In compose, the entrypoints fail, the volumes don't line up, and the init containers crash on missing emptyDirs. The workarounds are well-documented in [common charts](maintainer/known-workarounds/common-charts.md) — this transform applies them automatically so you don't have to copy-paste overrides across projects.
+The janitor. Bitnami charts — Redis, PostgreSQL, Keycloak — wrap standard images in custom entrypoints, init containers, and volume conventions that assume a full Kubernetes environment. In compose, the entrypoints fail, the volumes don't line up, and the init containers crash on missing emptyDirs. The workarounds are well-documented in [common charts](https://helmfile2compose.dekube.io/docs/known-workarounds/common-charts/) — this transform applies them automatically so you don't have to copy-paste overrides across projects.
 
 Detects Bitnami images by name, then: replaces Redis entirely with stock `redis:7-alpine`, fixes PostgreSQL volume paths, injects Keycloak passwords as env vars and removes the failing init container. Every modification is logged to stderr. User `overrides:` take precedence — if you've already handled a service manually, the transform leaves it alone.
 
@@ -183,7 +183,7 @@ python3 dekube-manager.py bitnami
 
 Ingress providers consume ingress entries (produced by rewriters) and generate the actual reverse proxy service + configuration file. Caddy is the only built-in provider — it ships with the distribution and handles all ingress entries by default. There are no third-party ingress providers yet.
 
-If Caddy doesn't fit your setup (you already run nginx/Traefik/envoy as your local proxy, or you need features Caddy doesn't expose), you can [write your own ingress provider](developer/extensions/writing-ingressproviders.md). The contract is straightforward: receive a list of ingress entries, return a compose service dict and write your config file.
+If Caddy doesn't fit your setup (you already run nginx/Traefik/envoy as your local proxy, or you need features Caddy doesn't expose), you can [write your own ingress provider](extend/extensions/writing-ingressproviders.md). The contract is straightforward: receive a list of ingress entries, return a compose service dict and write your config file.
 
 ## Ingress rewriters
 
@@ -192,7 +192,7 @@ If Caddy doesn't fit your setup (you already run nginx/Traefik/envoy as your loc
 
 Ingress rewriters translate controller-specific annotations into ingress entries consumed by the ingress provider. Unlike converters, they don't claim K8s kinds — they intercept individual Ingress manifests based on `ingressClassName` or annotation prefix, read whatever vendor-specific incantations the chart author scattered across the annotations, and produce routing rules that the provider assembles. The annotations were never meant to be portable. That's the point.
 
-The built-in `HAProxyRewriter` handles `haproxy` and empty/absent ingress classes. If your cluster uses something else — and statistically, it does, because nobody agrees on ingress controllers — you need a rewriter for it. External rewriters with the same `name` replace the built-in one. Remember to map them in `helmfile2compose.yaml`.
+The built-in `HAProxyRewriter` handles `haproxy` and empty/absent ingress classes. If your cluster uses something else — and statistically, it does, because nobody agrees on ingress controllers — you need a rewriter for it. External rewriters with the same `name` replace the built-in one. Remember to map them in `dekube.yaml`.
 
 ### nginx
 
@@ -222,7 +222,7 @@ python3 dekube-manager.py nginx
 
 A translator that knows it doesn't speak the full language, and chooses silence over hallucination. Traefik CRDs (`IngressRoute`, `Middleware`, etc.) are not supported — only standard `Ingress` resources with Traefik annotations. If your helmfile uses Traefik CRDs extensively, this won't save you. If it uses standard Ingress with a few Traefik-flavored annotations, it might. Handles `router.tls` and standard path rules. Everything else passes through unremarked, unrewritten, unrepentant.
 
-Warning: untested. May or may not work. Can't tell. Use HAProxy.
+Untested. Known gaps above. Use HAProxy for anything that matters.
 
 ```bash
 python3 dekube-manager.py traefik
@@ -233,14 +233,14 @@ python3 dekube-manager.py traefik
 Extensions that live outside the dekubeio org. They follow the same contracts and install the same way — but the org takes no credit, no blame, and no responsibility.
 
 ### fake-apiserver
-A transform that breaches [the wall](developer/concepts.md#the-emulation-boundary). For applications that require a live kube-apiserver at runtime — leader election, service discovery via API, in-cluster auth — this extension provides one. What it does, how it does it, and why you should not use it are documented in the [repo itself](https://github.com/baptisterajaut/dekube-fakeapi). No further instructions will be given here. The catalogue acknowledges its existence; it does not condone it.
+A transform that breaches [the wall](understand/concepts.md#the-emulation-boundary). For applications that require a live kube-apiserver at runtime — leader election, service discovery via API, in-cluster auth — this extension provides one. What it does, how it does it, and why you should not use it are documented in the [repo itself](https://github.com/baptisterajaut/dekube-fakeapi). No further instructions will be given here. The catalogue acknowledges its existence; it does not condone it.
 
 ## Writing your own
 
-- **[Writing converters](developer/extensions/writing-converters.md)** — the generic interface: `kinds`, `convert()`, `ConvertResult`, `ConvertContext`
-- **[Writing providers](developer/extensions/writing-providers.md)** — providers: synthetic resources, network alias registration, emulation boundary
-- **[Writing transforms](developer/extensions/writing-transforms.md)** — post-processing the final compose output
-- **[Writing rewriters](developer/extensions/writing-rewriters.md)** — translating ingress annotations to ingress entries
-- **[Writing ingress providers](developer/extensions/writing-ingressproviders.md)** — replacing the reverse proxy backend entirely
+- **[Writing converters](extend/extensions/writing-converters.md)** — the generic interface: `kinds`, `convert()`, `ConvertResult`, `ConvertContext`
+- **[Writing providers](extend/extensions/writing-providers.md)** — providers: synthetic resources, network alias registration, emulation boundary
+- **[Writing transforms](extend/extensions/writing-transforms.md)** — post-processing the final compose output
+- **[Writing rewriters](extend/extensions/writing-rewriters.md)** — translating ingress annotations to ingress entries
+- **[Writing ingress providers](extend/extensions/writing-ingressproviders.md)** — replacing the reverse proxy backend entirely
 
 Drop it in a `.py` file, and either use `--extensions-dir` locally or publish it as a GitHub repo for dekube-manager distribution. The abyss is open for contributions.

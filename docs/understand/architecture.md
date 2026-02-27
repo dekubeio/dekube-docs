@@ -16,7 +16,7 @@ compose.yml + Caddyfile + configmaps/ + secrets/
 
 A dedicated helmfile environment (e.g. `compose`) typically disables K8s-only infrastructure (cert-manager, ingress controller, reflector) and adjusts defaults for compose.
 
-For the internal package structure, module layout, and build system, see [dekube-engine](dekube-engine.md).
+For the internal package structure, module layout, and build system, see [dekube-engine](engine.md).
 
 ## Converter dispatch
 
@@ -56,13 +56,13 @@ Loaded via `--extensions-dir`. Each `.py` file (or one-level subdirectory with `
 │   └── requirements.txt
 ```
 
-See [Writing converters](extensions/writing-converters.md) for the full guide.
+See [Writing converters](../extend/extensions/writing-converters.md) for the full guide.
 
 ### External transforms
 
 Loaded from the same `--extensions-dir` as converters. The loader distinguishes them automatically: classes with `transform()` and no `kinds` are transforms. Sorted by `priority` (lower = earlier, default 100). Run after all converters, aliases, overrides, and hostname truncation — they see the final output.
 
-See [Writing transforms](extensions/writing-transforms.md) for the full guide.
+See [Writing transforms](../extend/extensions/writing-transforms.md) for the full guide.
 
 ### Ingress rewriters
 
@@ -72,7 +72,7 @@ The built-in `HAProxyRewriter` handles `haproxy` and empty/absent ingress classe
 
 External rewriters are loaded from `--extensions-dir` alongside converters and transforms. A rewriter with the same `name` as a built-in one replaces it. Dispatch order: external rewriters first, then built-in.
 
-See [Writing rewriters](extensions/writing-rewriters.md) for the full guide.
+See [Writing rewriters](../extend/extensions/writing-rewriters.md) for the full guide.
 
 ## What it converts
 
@@ -85,7 +85,7 @@ See [Writing rewriters](extensions/writing-rewriters.md) for the full guide.
 | Service (ExternalName) | Resolved through alias chain (e.g. `docs-media` -> minio) |
 | Service (NodePort / LoadBalancer) | `ports:` mapping |
 | Ingress | Caddy service + Caddyfile `reverse_proxy` blocks, dispatched to ingress rewriters by `ingressClassName`. Path-rewrite annotations -> `uri strip_prefix`. Backend SSL -> Caddy TLS transport. Rewriters can inject `extra_directives` for rate-limit, auth, headers, etc. |
-| PVC / volumeClaimTemplates | Host-path bind mounts (auto-registered in `helmfile2compose.yaml` on first run only) |
+| PVC / volumeClaimTemplates | Host-path bind mounts (auto-registered in `dekube.yaml` on first run only) |
 | securityContext (runAsUser) | Auto-generated `fix-permissions` service (`chown -R <uid>`) for non-root bind mounts (via the [fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) transform) |
 
 ### Not converted (warning emitted)
@@ -108,7 +108,7 @@ Thirteen steps. Each one locally reasonable. Together, they flatten a distribute
 3. **Build alias map** — K8s Service name -> workload name mapping. ExternalName services resolved through chain.
 4. **Build port map** — K8s Service port -> container port resolution (named ports resolved via container spec). When the Service is missing from manifests, named ports fall back to a well-known port table (`http` → 80, `https` → 443, `grpc` → 50051).
 5. **Track PVCs** — from both regular volumes and `volumeClaimTemplates`. On first run, auto-register in config for host_path mapping. On subsequent runs, track only (config is read-only after creation).
-6. **First-run init** — auto-exclude K8s-only workloads, generate default config, write `helmfile2compose.yaml`. On subsequent runs: detect stale volume entries (config volumes not referenced by any PVC).
+6. **First-run init** — auto-exclude K8s-only workloads, generate default config, write `dekube.yaml`. On subsequent runs: detect stale volume entries (config volumes not referenced by any PVC).
 7. **Dispatch to converters** — each converter receives its kind's manifests + a `ConvertContext`. Extensions run in priority order (lower first), then built-in converters. Within `IngressProvider`, each Ingress manifest is dispatched to the first matching `IngressRewriter` (by `ingressClassName` or annotation prefix).
 8. **Post-process env** — port remapping and replacements applied to all service environments (idempotent — catches extension-produced services).
 9. **Build network aliases** — for each K8s Service, add FQDN aliases (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`) + short alias to the compose service's `networks.default.aliases`. FQDNs resolve natively via compose DNS — no hostname rewriting needed.

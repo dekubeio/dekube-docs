@@ -1,6 +1,8 @@
 # About
 
-Architect here. This project is an aberration. I am unreasonably proud of it. I am also, at this point, completely spent — two weeks of uninterrupted bandwidth poured into converting Kubernetes manifests into docker-compose files, and I can feel every single one of those days behind my eyes. The architecture is done. The extensions are independent. The core does only core things. There is nothing left to split, nothing left to extract, nothing left to refactor. And yet I keep opening the laptop.
+Architect here. This project is an aberration. I am unreasonably proud of it.
+
+Fourteen days to reinvent the world. Then a fifteenth to look at it, realise it needed a name, and spend an entire week planning a rebrand — designing four static sites, writing design documents, debating tone, and ultimately purchasing an overpriced `.io` domain for a project that converts Kubernetes manifests into docker-compose files. A domain that costs more per year than the project has dependencies.
 
 > *The architect looked upon the temple he had raised from forbidden clay, and saw that it stood — against doctrine, against reason, against every expectation of those who knew what the clay was made of. He wept. Not from shame. From the specific, terrible joy of having built something that should not work, and watching it work anyway.*
 >
@@ -10,21 +12,25 @@ Architect here. This project is an aberration. I am unreasonably proud of it. I 
 
 Using Kubernetes manifests as an intermediate representation to generate a docker-compose is absolutely using an ICBM to kill flies. And then the ICBM grew an extension system, a package manager, a distribution model, and a regression suite — and now it can reach Mars, even though there are no flies there.
 
-It was entirely vibe-coded. It reinvented Kubernetes. It has tentacles. It has complete documentation. It scores well on every linter. It should not exist, and yet it does, and it works oh so well.
+It was entirely vibe-coded. It reinvented Kubernetes. It has tentacles. It has complete documentation. It scores well on every linter. It should not exist, and yet it does, and it works oh so well. Still fewer dependencies than a fresh `create-react-app`.
 
-What follows is the complete and unhinged explanation of how a single autistic engineer with a Claude Teams plan rebuilt the world in fourteen days. You have been warned.
+What follows is the complete and unhinged explanation of how we got here. It comes in two parts: [Part I](#part-i--the-confession) is the existential crisis — how a single autistic engineer with a Claude Teams plan rebuilt the world in fourteen days. [Part II](#part-ii--the-indictment) is the part where I stop apologising and start pointing fingers at the state of open source documentation. If you want to skip the self-flagellation and go straight to my dismay about the industry, [jump to Part II](#part-ii--the-indictment).
 
-## The aberration
+---
+
+## Part I — The Confession { #part-i--the-confession }
+
+### The aberration
 
 helmfile2compose is a suite of tools that converts Kubernetes manifests to docker-compose. It emulates CRD controllers. It generates TLS certificates from nothing. It fakes a kube-apiserver. It carries the full FQDN of a cluster that does not exist, because the certificates were signed for a world it dismantled.
 
+The first time someone asked for a docker-compose, I ignored the request. The second time, I built a script and ported two open source platforms. It worked. It should have stopped there. Then I went back to my own production helmfile — operators, SOPS encryption, CRDs, the full temple — looked at the script, and said "why not." That's the moment the project went further than necessary. The fake apiserver, the extension system, the package manager, the distribution model — all of it traces back to one moment of "I've already gone this far."
+
 Despite the dark jokes everywhere — despite the desecration, the heresy, the Necronomicon quotes that started writing themselves around session three — it works. It works *well*. It is architected. It is pluggable. It handles real-world helmfiles with dozens of services, init containers, sidecars, CRDs, cross-namespace secrets, backend TLS, and ingress annotations from controllers it has never met. And it might be genuinely useful to someone who isn't me.
 
-v3.0.0 split the project into a bare engine with empty registries, and a distribution that bundles extensions and populates those registries via auto-discovery. A core that parses everything and converts nothing. A distribution that wires in the converters, the rewriters, the providers — the opinions. Third-party extensions plug into the core's contracts, comprising a full ecosystem as defined by scope creep. If this sounds familiar, it's because it's the Kubernetes distribution model. A bare apiserver. k3s. The CNI plugin interface. The CSI driver interface. The admission webhook framework. The goal was never to escape Kubernetes — it was to bring its power to the uninitiated, people who just need `docker compose up`. Nobody planned to reinvent its architecture in ~3000 lines of Python along the way. The convergence wasn't forced — it was discovered. Each split solved a real problem. The patterns emerged because the problems were the same problems.
+It is entirely in the public domain, as every AI-written software should be. It is not (too much) a security mess — the extension system is, but it's not gonna be much worse than npm. And IT HAS AN [EXECUTIONER](extend/testing.md), OH YOG SA'RATH. With CI. And a [torturer](extend/testing.md#the-torturer), because of course it does.
 
-It is entirely in the public domain, as every AI-written software should be. It is not (too much) a security mess — the extension system is, but it's not gonna be much worse than npm. And IT HAS AN [EXECUTIONER](developer/testing.md), OH YOG SA'RATH. With CI. And a [torturer](developer/testing.md#the-torturer), because of course it does.
-
-## The arms race
+### The arms race
 
 Here is the thing nobody warns you about with vibe coding: the AI never says no.
 
@@ -32,27 +38,33 @@ It never says "this is getting too complex." It never says "maybe we should stop
 
 There is no "let me think about whether we should."
 
+Sound familiar? That's because it's the exact same story as every ecosystem that outgrew its original purpose. Ryan Dahl said "I can run JavaScript on a server" and nobody said no, and now `node_modules` is a black hole that bends spacetime. GitHub built Electron because "I only know web" and now your text editor needs 400MB of RAM. Docker built Swarm because "we already have containers" and — well, Kubernetes happened, and now dekube is bringing it all back to Docker, because the ouroboros never stops eating.
+
+The difference? This one knows it's heresy. The others still think they're orthodoxy.
+
 And the code itself isn't hard. That's the insidious part. There is no machine learning, no complex algorithms, no distributed systems theory. It's dict manipulation. Lists of dicts in, lists of dicts out. Parse YAML, shuffle keys, write YAML. The entire project — engine, distribution, extensions, CLI — is ~3000 lines of near-vanilla Python with one dependency (`pyyaml`). Any senior engineer could read it in an afternoon. Any competent one could maintain it.
 
-The complexity isn't in the code — it's in the architecture. The layers, the contracts, the separation of concerns, the extension points, the build system that stitches it all back together. Every decision was locally reasonable. And at no point did the tool say "you are overengineering this."
+The complexity isn't in the code — it's in the architecture. The layers, the contracts, the separation of concerns, the extension points, the build system that stitches it all back together. Every decision was locally reasonable. And at no point did the tool say "you are overengineering this." But then again — nobody told the Node.js ecosystem that either, and they have *1200 dependencies to left-pad a string*.
 
 And the thing is — Claude never struggled. Not once. Because I had kept cyclomatic complexity low from the start (radon CC, enforced early), every module was a small brick. No function was a labyrinth. The agent always had the full logic in context, always understood where things fit, always delivered working code on the first or second try. It wasn't fighting the codebase — it was surfing it. The architecture that I kept splitting into smaller pieces made *its* job easier, which made *my* requests faster to fulfill, which made me ask for more. A feedback loop with no natural brake.
 
-So you end up in your own personal arms race — alone. A bigger thing. A cleaner separation. A new base class. An auto-discovery mechanism. A regression suite. A fake apiserver, because why not — the boundary was already behind you. Each step feels like progress because the output improves, the architecture gets cleaner, the tests pass. 
+So you end up in your own personal arms race — alone. A bigger thing. A cleaner separation. A new base class. An auto-discovery mechanism. A regression suite. A fake apiserver, because why not — the boundary was already behind you. Each step feels like progress because the output improves, the architecture gets cleaner, the tests pass. But you're building something that only you will ever fully understand, solving problems that only you have, at a level of sophistication that nobody asked for.
 
-But you're building something that only you will ever fully understand, solving problems that only you have, at a level of sophistication that nobody asked for. You went from "a useful script that does something slightly unhinged" to "a micro-ecosystem that reinvents the architecture of the very thing it converts" — and the agent was right there with you, keeping pace effortlessly, because the bricks were small and the bricks were clean.
+The final escalation: v3.0.0 split the project into a bare engine with empty registries, and a distribution that bundles extensions and populates those registries via auto-discovery. A core that parses everything and converts nothing. A distribution that wires in the converters, the rewriters, the providers — the opinions. Third-party extensions plug into the core's contracts, comprising a full ecosystem as defined by scope creep. The agent delivered it in one session. Working on the first try. Of course.
 
-I don't regret it. The result is genuinely good. But I'd be dishonest if I didn't say: this project would be half its size, half its complexity, and probably just as useful to everyone who isn't me. The scope creep wasn't caused by the tool — I invented every layer of complexity myself. But the tool made each layer *trivially easy* to build, and that's a different kind of danger. There was never a moment where the implementation cost forced me to reconsider the design. The complexity was always mine; the execution was always effortless.
+I don't regret it. The scope creep wasn't caused by the tool — I invented every layer of complexity myself. But the tool made each layer *trivially easy* to build, and that's a different kind of danger. There was never a moment where the implementation cost forced me to reconsider the design. The complexity was always mine; the execution was always effortless. Some people will stop on form, not content. They'll see "vibe-coded" and move on. Their loss. Judge it by its output, not its origin.
 
-Without vibe coding — without the agent, if someone had written this by hand three years ago — this project could have been a small revolution. A genuinely novel approach to a problem nobody else was solving, with clean architecture and solid engineering. But now, many people will stop on form, not content. They'll see "vibe-coded", or they'll see the cursed weird things the agent did (python rituals for building the single file, adding a yaml state machine in the manager instead of import pyyaml), and move on. I'm not saying I agree — but I understand. There is, after all, very little technicality on my part. I have been the architect of my own over-engineering, and Claude just did what I asked.
+The [roadmap](roadmap.md) still has items. Each one is a small step — that's how it always worked, one reasonable brick at a time, until the wall was taller than the builder.
 
-The [roadmap](roadmap.md) still has items. None of them are hard. None of them are remotely useful to anyone who isn't me. Each one is a small step — that's how it always worked, one reasonable brick at a time, until the wall was taller than the builder.
+### The ouroboros
 
-But I have no steps left in me.
+And then I looked at what we had built.
 
-Every waking thought for two weeks, spent on conversion pipelines, extension contracts, build scripts, regression suites. The ideas are gone. The mental tank is dry. I have burned millions and millions of tokens — probably worth hundreds of dollars, not 10$ for two weeks of Claude Teams plan — for a project whose target audience is, generously, myself and maybe three people who will never read this page. The ICBM is now interplanetary. Congratulations. Who is going to bother aiming it when actual spaceships (Kubernetes) exist and do the job they were designed for?
+A bare engine. A distribution model. An extension system with priority-based dispatch. A plugin interface. Auto-discovery. Typed contracts. If this sounds familiar, it's because it's the Kubernetes distribution model. A bare apiserver. k3s. The CNI plugin interface. The CSI driver interface. The admission webhook framework.
 
-The ouroboros closed twice. First, the tool reinvented Kubernetes — a bare engine, a distribution model, an extension system, priority-based dispatch. That was [documented](developer/concepts.md#the-ouroboros), acknowledged, almost funny. But now it's gone further: the project has reinvented its own futility. The earliest releases of `helmfile2compose.py` opened with a comment: *"This script should not exist."* The script doesn't exist anymore. In its place: an engine, a distribution model, a package manager, eight extension repos, a regression suite, a fake apiserver, and a documentation site more thorough than projects with actual funding. A tentacular, over-engineered answer to a question nobody is ever going to ask. The ballistic missile killed the fly, kept going, exited the atmosphere, and is now orbiting Jupiter with nobody at the controls. And the comment was right all along — it should not have existed. But it does, and it's *magnificent*, and that's the worst part.
+The goal was never to escape Kubernetes — it was to bring its power to the uninitiated, people who just need `docker compose up`. Nobody planned to reinvent its architecture along the way. The convergence wasn't forced — it was discovered. Each split solved a real problem. The patterns emerged because the problems were the same problems. That was [documented](understand/concepts.md#the-ouroboros), acknowledged, almost funny.
+
+But the ouroboros closed twice. The second time was worse. The earliest releases of `helmfile2compose.py` opened with a comment: *"This script should not exist."* The script doesn't exist anymore. In its place: an engine, a distribution model, a package manager, eight extension repos, a regression suite, a fake apiserver, and a documentation site. The ballistic missile killed the fly, kept going, exited the atmosphere, and is now orbiting Jupiter with nobody at the controls. The comment was right all along — it should not have existed. But it does, and it's *magnificent*, and that's the worst part.
 
 All of this should have stayed a script. One file. One comment. One warning. But no — the madness of man is to always see bigger, always reach further, always add one more layer of abstraction to a problem that was solved three layers ago. And the oracle never refuses. The oracle just builds what you ask for, without ever asking whether you should.
 
@@ -60,7 +72,11 @@ All of this should have stayed a script. One file. One comment. One warning. But
 >
 > — *Book of Eibon, On Oracles That Never Refuse (alas)*
 
-## The documentation
+---
+
+## Part II — The Indictment { #part-ii--the-indictment }
+
+### The documentation
 
 But here is what genuinely baffles me.
 
@@ -68,19 +84,17 @@ The documentation is *complete*.
 
 Yes, it might be sloppy here and there. It's AI assisted after all. Some examples might be slightly outdated, because Claude struggles with updating small mentions.
 
-BUT, it's not "a README with three examples. Join our discord for more." Not "auto-generated API docs that technically exist." Complete. In MkDocs. With a table of contents. With separate guides for users, maintainers, and developers.
+BUT, it's not "a README with three examples." Not "auto-generated API docs that technically exist." Complete. In MkDocs. With a table of contents. With separate guides for users, maintainers, and developers.
 
-[Writing your own provider](developer/extensions/writing-providers.md) — it's there. The full contract, entry format, available imports, testing instructions, repo structure for distribution. [Implementing helmfile2compose in your helmfile](maintainer/your-project.md) — it's there. Step by step, with the compose environment setup, the first run, the known pitfalls. [The sushi bar](maintainer/known-workarounds/index.md) — it's there. Every chart that fought back, and how it was subdued. [The extension catalogue](catalogue.md). [The architecture](developer/architecture.md). [The limitations](limitations.md). [The cursed journal](journal.md). Everything.
+[Writing your own provider](extend/extensions/writing-providers.md) — it's there. The full contract, entry format, available imports, testing instructions, repo structure for distribution. [Implementing helmfile2compose in your helmfile](https://helmfile2compose.dekube.io/docs/getting-started/) — it's there. Step by step, with the compose environment setup, the first run, the known pitfalls. [The sushi bar](https://helmfile2compose.dekube.io/docs/known-workarounds/) — it's there. Every chart that fought back, and how it was subdued. [The extension catalogue](catalogue.md). [The architecture](understand/architecture.md). [The limitations](limitations.md). [The cursed journal](journal.md). Everything.
 
 Everything is in a static documentation site. Everything is public. Served by GitHub Pages. Indexed by search engines. Readable by humans, machines, and the desperate.
 
-No "join our Discord for support." No "check the Slack channel." No "the real docs are in a Notion page behind a login." No "see the github wiki" where the wiki covers half the features and the other half is on Discord somewhere. No "it's on the roadmap" where the roadmap is a private Linear board. No "ask in Discussions" where Discussions is a graveyard of unanswered questions. 
+And I even put the effort to make it funny. The tone emerged from genuine suffering, and that makes parsing a very technical manual rather enjoyable — or at least bearable.
 
-**All in all: Please stop hiding knowledge in a chat history that search engines will never be able to index.**
+### The question
 
-## The question
-
-Why can't more serious projects do this?
+So why can't more serious projects do this?
 
 Projects that are *actually* made by teams. Backed by companies. With dedicated developer advocates, documentation engineers, and community managers. Projects with actual intent of becoming standard tools — adopted, depended upon, embedded in production systems.
 
@@ -100,21 +114,19 @@ I have seen mass-adopted open source projects with:
 
 Docker Engine 29 switched to the containerd image store by default, which silently changed how `docker buildx build --push` works — images are now pushed as OCI manifest lists with attestation manifests (`unknown/unknown` platform entries) instead of single images. The [release notes](https://docs.docker.com/engine/release-notes/29/) mention the containerd switch but not the consequences. The [containerd store doc](https://docs.docker.com/engine/storage/containerd/) mentions attestation support in passing. The [attestation storage doc](https://docs.docker.com/build/metadata/attestations/attestation-storage/) explains the `unknown/unknown` entries but never links it to v29. Three pages, zero connect the dots. The only place that describes the actual breakage is [a community-filed GitHub issue](https://github.com/moby/moby/issues/51532) by someone who already got burned. It specifically breaks ARM64 Mac users — before, a single-image manifest meant Rosetta fell back to amd64 transparently; now the OCI index triggers platform selection, the runtime finds `unknown/unknown`, and gives up. Kubernetes has no workaround (kubelet always re-resolves from registry). Docker Compose can work around it (`platform: linux/amd64`). nerdctl compose doesn't even support `platform:` per service. We had to [reverse-engineer every workaround ourselves](https://github.com/baptisterajaut/lasuite-platform/blob/main/docs/known-limitations.md#broken-multi-arch-manifests-unknownunknown) because nobody else had documented them. The world's reference container runtime — the one half the internet's CI pipelines depend on — maintained by a company that found time to put previously free features behind a paywall but couldn't find time to document a breaking change. The migration guide is three jigsaw pieces you have to assemble yourself, one victim report, and a niche platform break that nobody warned about.
 
-In different fashion, their own docs [appear to contradict each other](developer/architecture.md#beyond-single-host) on whether Swarm supports the current Compose Specification or is stuck on legacy v3. The `deploy:` key (replicas, placement, rolling updates) originated as a Swarm-specific section in Compose v3. Docker later backported it into the current Compose Specification, so `docker compose` understands it too — but never upgraded Swarm to support the new spec. So both formats have a `deploy:` key with the same syntax, but the files around it are incompatible. The Swarm docs say "the Compose Specification isn't compatible"; the Compose Deploy Specification documents `deploy:` as part of the current spec. Two pages, same domain, same key name, different formats. We had to ask their docs AI to get a straight answer. Which, fair enough, is better than sending an email and being told to pay for support, or posting in a community forum and being answered three months later by a bot closing the issue as stale. But how long will these AI assistants remain free to use? The information *is* in the docs — it's just scattered across pages that don't cross-reference each other, and the only reliable way to find it is a tool whose business model hasn't been figured out yet. Oh, and Swarm's core specification format has been deprecated by its own maintainers without ever being upgraded. A deprecated spec powering a proclaimed production-grade orchestrator. Amazing.
+In different fashion, their own docs [appear to contradict each other](understand/architecture.md#beyond-single-host) on whether Swarm supports the current Compose Specification or is stuck on legacy v3. The `deploy:` key (replicas, placement, rolling updates) originated as a Swarm-specific section in Compose v3. Docker later backported it into the current Compose Specification, so `docker compose` understands it too — but never upgraded Swarm to support the new spec. So both formats have a `deploy:` key with the same syntax, but the files around it are incompatible. The Swarm docs say "the Compose Specification isn't compatible"; the Compose Deploy Specification documents `deploy:` as part of the current spec. Two pages, same domain, same key name, different formats. We had to ask their docs AI to get a straight answer. Which, fair enough, is better than sending an email and being told to pay for support, or posting in a community forum and being answered three months later by a bot closing the issue as stale. But how long will these AI assistants remain free to use? The information *is* in the docs — it's just scattered across pages that don't cross-reference each other, and the only reliable way to find it is a tool whose business model hasn't been figured out yet. Oh, and Swarm's core specification format has been deprecated by its own maintainers without ever being upgraded. A deprecated spec powering a proclaimed production-grade orchestrator. Amazing.
 
 </details>
 
-I alone — on a forsaken MacBook running macOS, an operating system that exists primarily to make you regret not using Windows after all — with the help of an unsuspecting yet remarkably capable Claude agent — produced a documentation site more thorough than many funded open source projects ever ship.
+I alone — with the help of an unsuspecting yet remarkably capable Claude agent — produced a documentation site more thorough than many funded open source projects ever ship. Windows Server has existed for decades and its documentation still can't decide whether IIS is a feature or a punishment. Node.js has 47,000 contributors and the `fs` module docs still don't explain when to use streams.
 
-And I even put the effort to make it funny. The tone emerged from genuine suffering, and that makes parsing a very technical manual rather enjoyable — or at least bearable.
+### The point
 
-## The point
+A vibe-coded heresy about converting Kubernetes manifests to docker-compose ships complete documentation. Your project should as well. You surely have more people. You have a more noble goal. You also probably care a lot more about your beautifully handcrafted nugget than I do about this squishy abomination.
 
-I'm not saying vibe coding is good nor ethical. I'm definitely not saying it's a good idea in the long run. I'm not even saying that paying 300$/month to still be able to maybe maintain this horrible octopod when the AI bubble finally bursts will ever be worth it.
+And yet — here we are. A heresy with full docs, and an orthodoxy with "join our Discord for support." An ICBM with a user manual, and actual spaceships with a Post-it note on the cockpit. We're not better engineers. We're not more virtuous. We just wrote it down — because the heretic knows nobody will believe him otherwise.
 
-I'm saying that a vibe-coded heresy about converting Kubernetes manifests to docker-compose ships complete documentation; your project should as well. You surely have more people. You have a more noble goal. You also probably care a lot more about your beautifully handcrafted nugget than I do about squishy abomination. But please, if you don't want to write it yourself, sloppy AI-written documentation will ALWAYS be better than no documentation (unless it's blatantly wrong, but you can always proofread it).
-
-The templates are not sacred. PLEASE sit down and write, in plain language, what the software does, how to use it, and what to do when it breaks. Then you need to put it where people can find it. Stop putting it in the deep web and burying the knowledge in the mass of discussion. You'll probably have fewer questions repeatedly asked if you had the answer already somewhere.
+The templates are not sacred. PLEASE sit down and write, in plain language, what the software does, how to use it, and what to do when it breaks. Then put it where people can find it. Stop burying knowledge in chat histories that search engines will never index. You'll probably have fewer questions repeatedly asked if the answer was already somewhere findable.
 
 That's it. That's the whole ritual.
 
@@ -124,6 +136,6 @@ That's it. That's the whole ritual.
 
 ---
 
-*Built with anguish, tears, blood, and life force by [Baptiste Rajaut](https://github.com/baptisterajaut) and GenAI. Hopefully that Macbook will end up in the trash, I've never been so happy to be handed an Ubuntu machine.*
+*Built with anguish, tears, blood, life force, and an unreasonable `.io` domain by [Baptiste Rajaut](https://github.com/baptisterajaut) and GenAI.*
 
-*Public domain. No rights are reserved. Tentacles are there to stay. No Discord server. No Slack. Just docs. Open an issue on GitHub if you want help. I may answer, but our salvation will never come.*
+*Public domain. No rights reserved. Tentacles are there to stay. No Discord server. No Slack. Just docs. Open an issue on GitHub if you want help. I may answer, but our salvation will never come.*

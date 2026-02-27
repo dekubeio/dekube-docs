@@ -48,7 +48,7 @@ def build_service(self, entries, ctx):
 
 ### `write_config(entries, output_dir, config)`
 
-Writes the reverse proxy configuration file to `output_dir`. Receives the collected entries, the output directory, and the raw config dict (from `helmfile2compose.yaml`).
+Writes the reverse proxy configuration file to `output_dir`. Receives the collected entries, the output directory, and the raw config dict (from `dekube.yaml`).
 
 ```python
 def write_config(self, entries, output_dir, config):
@@ -126,7 +126,7 @@ If you only need to translate a different ingress controller's annotations into 
 
 `IngressProvider` subclasses are *typically* bundled into distributions at build time via `build-distribution.py` — that's the intended pattern, since the ingress provider is a core architectural choice for a distribution.
 
-That said, loading an `IngressProvider` from `--extensions-dir` works — the extension loader detects it as a converter (it has `kinds` and `convert()`), and the CLI scans for the active `IngressProvider` at runtime. It's just not the recommended path: the ingress provider shapes the entire output (Caddyfile vs nginx.conf vs traefik.yml), so shipping it as a loose external extension makes the setup fragile. Prefer building a [custom distribution](../distributions.md) instead.
+That said, loading an `IngressProvider` from `--extensions-dir` works — the extension loader detects it as a converter (it has `kinds` and `convert()`), and the CLI scans for the active `IngressProvider` at runtime. It's just not the recommended path: the ingress provider shapes the entire output (Caddyfile vs nginx.conf vs traefik.yml), so shipping it as a loose external extension makes the setup fragile. Prefer building a [custom distribution](../../understand/distributions.md) instead.
 
 ```
 my-distribution/

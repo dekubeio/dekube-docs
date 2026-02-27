@@ -50,11 +50,11 @@ Limitation: `emptyDir` volumes are not shared between the main container and its
 
 K8s `emptyDir` volumes are shared between containers in the same pod. When init containers and the main container both mount the same `emptyDir` (e.g. to chmod a directory), compose converts them to anonymous volumes (`- /path`) which are NOT shared between services.
 
-If an init container needs to prepare data for the main container via a shared volume, the `emptyDir` must be mapped to a named volume in `helmfile2compose.yaml` manually.
+If an init container needs to prepare data for the main container via a shared volume, the `emptyDir` must be mapped to a named volume in `dekube.yaml` manually.
 
 ### PVC (PersistentVolumeClaim) conversion
 
-Kubernetes PVCs request dynamic storage from a provisioner (Longhorn, Ceph, etc.). helmfile2compose converts them to bind mounts — host directories mapped into the container. Each PVC claim name is registered in `helmfile2compose.yaml` on first run with a default host path under `./data/`. `volumeClaimTemplates` (StatefulSets) are handled the same way.
+Kubernetes PVCs request dynamic storage from a provisioner (Longhorn, Ceph, etc.). helmfile2compose converts them to bind mounts — host directories mapped into the container. Each PVC claim name is registered in `dekube.yaml` on first run with a default host path under `./data/`. `volumeClaimTemplates` (StatefulSets) are handled the same way.
 
 ### Secrets
 
@@ -62,7 +62,7 @@ Kubernetes Secrets exist because serious people built a serious system for serio
 
 We take all of that and dump it as plain-text environment variables into a YAML file on your laptop.
 
-The generated `compose.yml` contains your database passwords, your API keys, your OAuth client secrets — everything — in clear text, because that's what happens when you devolve a production orchestrator into `docker compose up`. Do not commit it to version control. Not because we care about your security posture at this point (we lost that right several abstractions ago), but because your colleagues might see what you've done and ask questions you don't want to answer.
+The generated `compose.yml` contains your database passwords, your API keys, your OAuth client secrets — everything — in clear text, because that's what happens when you devolve a production orchestrator into `docker compose up`. Do not commit it to version control. Not because the heresy wasn't already committed several abstractions ago, but because your colleagues might see what you've done and ask questions you don't want to answer.
 
 ### TLS between services
 
@@ -119,7 +119,7 @@ Not converted. A CronJob would need an external scheduler or a `sleep`-loop wrap
 
 Operator-managed resources (`Keycloak`, `KeycloakRealmImport`, Zalando `postgresql`, Strimzi `Kafka`, etc.) are skipped with a warning unless a loaded [extension](catalogue.md) handles them.
 
-Extensions can be loaded via `--extensions-dir` or installed with [dekube-manager](maintainer/h2c-manager.md). See the [extension catalogue](catalogue.md) for available extensions.
+Extensions can be loaded via `--extensions-dir` or installed with [dekube-manager](https://helmfile2compose.dekube.io/docs/dekube-manager/). See the [extension catalogue](catalogue.md) for available extensions.
 
 ### Longhorn
 

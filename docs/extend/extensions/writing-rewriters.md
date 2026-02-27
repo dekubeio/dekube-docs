@@ -93,7 +93,7 @@ The built-in `HAProxyRewriter` matches:
 
 ### Custom ingress class names (`ingress_types`)
 
-When clusters use custom `ingressClassName` values (e.g. `haproxy-controller-internal`, `nginx-external`), add an `ingress_types` mapping in `helmfile2compose.yaml` to resolve them to canonical rewriter names:
+When clusters use custom `ingressClassName` values (e.g. `haproxy-controller-internal`, `nginx-external`), add an `ingress_types` mapping in `dekube.yaml` to resolve them to canonical rewriter names:
 
 ```yaml
 ingress_types:

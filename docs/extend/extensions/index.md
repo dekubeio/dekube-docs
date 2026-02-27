@@ -1,6 +1,6 @@
 # Writing extensions
 
-Before writing an extension, make sure you're familiar with [Concepts](../concepts.md) (design philosophy, emulation boundary) and [Architecture](../architecture.md) (converter pipeline, dispatch loop). A look at [Code quality](../code-quality.md) is also recommended — the bar is higher than the project's origins would suggest.
+Before writing an extension, make sure you're familiar with [Concepts](../../understand/concepts.md) (design philosophy, emulation boundary) and [Architecture](../../understand/architecture.md) (converter pipeline, dispatch loop). A look at [Code quality](../code-quality.md) is also recommended — the bar is higher than the project's origins would suggest.
 
 ## Extension types
 
@@ -33,7 +33,7 @@ from dekube import resolve_env             # resolve env/envFrom into flat list
 from dekube import _secret_value           # decode a Secret key (base64 or plain)
 ```
 
-These are the **pacts** — the [sacred contracts](../dekube-engine.md#pacts--the-sacred-contracts) — and are stable across minor versions. Both import paths work:
+These are the **pacts** — the [sacred contracts](../../understand/engine.md#pacts--the-sacred-contracts) — and are stable across minor versions. Both import paths work:
 
 ```python
 from dekube import ConvertContext           # via re-export
@@ -83,7 +83,7 @@ Loaded rewriters: NginxRewriter (nginx)
 
 ## Repo structure
 
-For distribution via [dekube-manager](../../maintainer/h2c-manager.md), each extension is a GitHub repo with:
+For distribution via [dekube-manager](https://helmfile2compose.dekube.io/docs/dekube-manager/), each extension is a GitHub repo with:
 
 ```
 dekube-{type}-{name}/

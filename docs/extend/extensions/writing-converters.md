@@ -59,7 +59,7 @@ The conversion context passed to every converter. Key attributes:
 |-----------|------|-------------|
 | `ctx.configmaps` | `dict` | Indexed ConfigMaps (name -> manifest). **Writable** — converters can inject synthetic ConfigMaps (see [Writing providers](writing-providers.md)). |
 | `ctx.secrets` | `dict` | Indexed Secrets (name -> manifest). **Writable** — converters can inject synthetic secrets (see [Writing providers](writing-providers.md)). |
-| `ctx.config` | `dict` | The `helmfile2compose.yaml` config |
+| `ctx.config` | `dict` | The `dekube.yaml` config |
 | `ctx.output_dir` | `str` | Output directory for generated files |
 | `ctx.warnings` | `list[str]` | Append warnings here (printed to stderr) |
 | `ctx.generated_cms` | `set[str]` | Names of ConfigMaps already written to disk |
@@ -70,7 +70,7 @@ The conversion context passed to every converter. Key attributes:
 | `ctx.fix_permissions` | `dict[str, int]` | Legacy field (kept for backwards compatibility). The built-in [fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) transform now handles permission fixing by scanning K8s manifests and final compose volumes directly. |
 | `ctx.services_by_selector` | `dict` | Index of K8s Services by name. Each entry has `name`, `namespace`, `selector`, `type`, `ports`. Used to resolve Services to compose names, generate network aliases, and build port maps. **Writable** — converters should register runtime-created Services here. |
 | `ctx.pvc_names` | `set[str]` | Names of PersistentVolumeClaims discovered in manifests. Used to distinguish PVC mounts from other volume types during conversion. |
-| `ctx.extension_config` | `dict` | Per-converter config section from `helmfile2compose.yaml`. Set automatically before each `convert()` call, keyed by the converter's `name` attribute (e.g. `caddy` → `extensions.caddy` in config). Empty dict if not configured. |
+| `ctx.extension_config` | `dict` | Per-converter config section from `dekube.yaml`. Set automatically before each `convert()` call, keyed by the converter's `name` attribute (e.g. `caddy` → `extensions.caddy` in config). Empty dict if not configured. |
 
 ### Priority
 

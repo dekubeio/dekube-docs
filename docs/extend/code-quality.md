@@ -1,6 +1,6 @@
 # Code quality
 
-This should not score well. A project born from desecration, vibe-coded across multiple sessions of questionable mental health, whose primary architectural document is a fake Lovecraftian grimoire — this project has no business passing a linter. And yet.
+A project born from desecration, vibe-coded across multiple sessions, whose primary architectural document is a fake Lovecraftian grimoire — has no business passing a linter. It passes every single one. That's somehow worse.
 
 > *The inquisitors arrived at dawn, instruments of measurement in hand, expecting to find the temple in ruin. Instead they found the walls straight, the columns load-bearing, and the altar — though undeniably profane — structurally sound. They left in silence, more disturbed than when they came.*
 >
@@ -39,7 +39,7 @@ Remaining warnings are accepted style issues (`R0914` too-many-locals, `R0913` t
 
 ### Pyflakes
 
-Zero warnings across all repos. We don't know how. We don't ask.
+Zero warnings across all repos. The inquisitors left in silence.
 
 ### Radon (cyclomatic complexity)
 
@@ -106,7 +106,7 @@ v2.3.2 split the 1858-line monolith into 21 modules across three layers: `pacts/
 
 The split alone fixed MI — from 0.00 (C) to 68.38 (A). Then a cyclomatic complexity pass extracted helpers from every function rated CC 14+. The worst offender dropped from 18 to 16. Average CC went from 6.6 to 5.9. All 21 modules score MI A individually.
 
-A project whose existence is an architectural crime now has an architecture page. With a dependency graph. And layer boundaries. And a section called "[the sacred contracts](dekube-engine.md#pacts--the-sacred-contracts)."
+A project whose existence is an architectural crime now has an architecture page. With a dependency graph. And layer boundaries. And a section called "[the sacred contracts](../understand/engine.md#pacts--the-sacred-contracts)."
 
 > *They said: let us impose order upon the chaos, that future disciples may navigate the labyrinth without losing their minds. And so the tablet was broken into twenty-one fragments, each labeled and indexed. The labyrinth remained — but now it had signage.*
 >
@@ -130,7 +130,7 @@ The output is identical to v2.3.1.
 
 Not "similar." Not "equivalent." Identical. The executioner diffs every byte across every extension combo and confirms: the split changed nothing about what the tool produces. It changed *everything* about how it's organized. dekube-engine's MI went from 68.38 to 74.07 — not because any function improved, but because `workloads.py` and `haproxy.py` left. The core got lighter by becoming less. The distribution got heavier by becoming more. The sum is greater than the whole was.
 
-Two repos. Fourteen files. Zero functional change. The metrics improved. The architecture is now a dependency graph with layer boundaries and a section called "the sacred contracts." There is a page called [Distributions](distributions.md) that explains the Kubernetes distribution model as applied to a tool whose sole purpose is to flee Kubernetes.
+Two repos. Fourteen files. Zero functional change. The metrics improved. The architecture is now a dependency graph with layer boundaries and a section called "the sacred contracts." There is a page called [Distributions](../understand/distributions.md) that explains the Kubernetes distribution model as applied to a tool whose sole purpose is to flee Kubernetes.
 
 The linters approved. The executioner confirmed. The architect looked at what he had built to harness the temple's power and recognized its floor plan.
 
