@@ -1,4 +1,4 @@
-# h2c-core — the bare engine
+# dekube-engine — the bare engine
 
 > *The disciple gazed upon the monolith and saw that it was vast — a single tablet bearing every law, every rite, every contradiction. And he said: let us shatter the tablet, that each fragment may be understood alone. But when the pieces lay scattered, each fragment still whispered the name of the whole.*
 >
@@ -6,19 +6,19 @@
 
 ## What it is
 
-h2c-core is the conversion engine — the pipeline, the extension loader, the CLI, and nothing else. No built-in converters. No built-in rewriters. All registries empty. Feed it manifests and it will parse them, warn that every kind is unknown, and produce nothing. A temple with no priests.
+dekube-engine is the conversion engine — the pipeline, the extension loader, the CLI, and nothing else. No built-in converters. No built-in rewriters. All registries empty. Feed it manifests and it will parse them, warn that every kind is unknown, and produce nothing. A temple with no priests.
 
-It exists so that [distributions](distributions.md) can bundle different sets of extensions on top of the same engine. The [helmfile2compose](https://github.com/helmfile2compose/helmfile2compose) distribution is the default — h2c-core + 8 bundled extensions, concatenated into a single `helmfile2compose.py`. But h2c-core can also be used standalone with `--extensions-dir`, or as the foundation for custom distributions.
+It exists so that [distributions](distributions.md) can bundle different sets of extensions on top of the same engine. The [helmfile2compose](https://github.com/dekubeio/helmfile2compose) distribution is the default — dekube-engine + 8 bundled extensions, concatenated into a single `helmfile2compose.py`. But dekube-engine can also be used standalone with `--extensions-dir`, or as the foundation for custom distributions.
 
-**Users never interact with h2c-core directly.** They use a distribution. h2c-core is for extension developers, distribution builders, and people who want to understand how the engine works.
+**Users never interact with dekube-engine directly.** They use a distribution. dekube-engine is for extension developers, distribution builders, and people who want to understand how the engine works.
 
 ## Package structure
 
 ```
-h2c-core/
-├── src/h2c/
+dekube-engine/
+├── src/dekube/
 │   ├── __init__.py          # re-exports pacts API
-│   ├── __main__.py          # python -m h2c entry point
+│   ├── __main__.py          # python -m dekube entry point
 │   ├── cli.py               # argument parsing, orchestration
 │   ├── pacts/               # public contracts for extensions
 │   │   ├── types.py         # ConvertContext, ConverterResult, ProviderResult, Converter, Provider
@@ -49,18 +49,18 @@ h2c-core/
 Everything extensions can import. This is the stable API:
 
 ```python
-from h2c import ConvertContext, ConverterResult, ProviderResult
-from h2c import ConvertResult  # deprecated alias for ProviderResult
-from h2c import Converter, IndexerConverter, Provider
-from h2c import IngressRewriter, get_ingress_class, resolve_backend
-from h2c import apply_replacements, resolve_env, _secret_value
+from dekube import ConvertContext, ConverterResult, ProviderResult
+from dekube import ConvertResult  # deprecated alias for ProviderResult
+from dekube import Converter, IndexerConverter, Provider
+from dekube import IngressRewriter, get_ingress_class, resolve_backend
+from dekube import apply_replacements, resolve_env, _secret_value
 ```
 
 Or explicitly:
 
 ```python
-from h2c.pacts import ConvertContext, IngressRewriter
-from h2c.pacts.types import Provider
+from dekube.pacts import ConvertContext, IngressRewriter
+from dekube.pacts.types import Provider
 ```
 
 Both paths work — `__init__.py` re-exports the pacts API. These are the only imports extensions should use. If it's not in `pacts/`, it's internal and may change.
@@ -89,16 +89,16 @@ Parsing, config, and output writing. No conversion logic — just plumbing betwe
 
 Two build scripts produce two different outputs:
 
-- **`build.py`** — concatenates `src/h2c/` into a single `h2c.py`. Bare engine, no extensions. This is the h2c-core release artifact.
+- **`build.py`** — concatenates `src/dekube/` into a single `dekube.py`. Bare engine, no extensions. This is the dekube-engine release artifact.
 - **`build-distribution.py`** — builds a distribution from core + extensions dir. Used by distribution repos. Fetched directly from the repo (`main` branch) — not a release asset.
 
 ```bash
-# Bare core
+# Bare engine
 python build.py
-# → h2c.py (~1265 lines, not committed)
+# → dekube.py (~1265 lines, not committed)
 
 # Distribution (from a distribution repo)
-python build-distribution.py helmfile2compose --extensions-dir extensions --core-dir ../h2c-core
+python build-distribution.py helmfile2compose --extensions-dir extensions --core-dir ../dekube-engine
 # → helmfile2compose.py
 ```
 
@@ -108,9 +108,9 @@ See [Build system](build-system.md) for the full deep dive on concatenation, imp
 
 ```bash
 # Run from the package (development)
-PYTHONPATH=src python -m h2c --from-dir /tmp/rendered --output-dir /tmp/out
+PYTHONPATH=src python -m dekube --from-dir /tmp/rendered --output-dir /tmp/out
 
 # Build and smoke test
 python build.py
-python h2c.py --from-dir /tmp/rendered --output-dir /tmp/out
+python dekube.py --from-dir /tmp/rendered --output-dir /tmp/out
 ```

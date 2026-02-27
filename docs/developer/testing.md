@@ -10,7 +10,7 @@ A project that emulates a container orchestrator by flattening its output into a
 
 ## What it tests
 
-[h2c-testsuite](https://github.com/helmfile2compose/h2c-testsuite) compares h2c output between a **pinned reference version** and the **latest release**. The test harness uses h2c-manager (rolling from `main`) as the runner — it's the tool, not the subject. What's compared is core + extension output between versions.
+[dekube-testsuite](https://github.com/dekubeio/dekube-testsuite) compares dekube output between a **pinned reference version** and the **latest release**. The test harness uses dekube-manager (rolling from `main`) as the runner — it's the tool, not the subject. What's compared is core + extension output between versions.
 
 ### Regression
 
@@ -75,7 +75,7 @@ Performance tests run locally, not in CI — public runners aren't meant for thi
 
 ## Reference versions
 
-Edit `h2c-known-versions.json` to bump the pinned reference:
+Edit `dekube-known-versions.json` to bump the pinned reference:
 
 ```json
 {
@@ -104,8 +104,8 @@ The GitHub Actions workflow runs regression weekly (Monday 6am UTC) and on push 
 
 ## Reading diffs
 
-- `core-only` diff → pure h2c-core behavioral change
+- `core-only` diff → pure dekube-engine behavioral change
 - `ext-<name>` diff → change in that extension or its interaction with core
 - `ext-all` diff → interaction between extensions
 
-When you see a diff, the question isn't "is this a bug?" — it's "did I mean to change this?" If yes, bump the reference version in `h2c-known-versions.json` and the diff disappears. If no, you just caught a regression.
+When you see a diff, the question isn't "is this a bug?" — it's "did I mean to change this?" If yes, bump the reference version in `dekube-known-versions.json` and the diff disappears. If no, you just caught a regression.

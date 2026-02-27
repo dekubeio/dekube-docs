@@ -62,7 +62,7 @@ The exact config key depends on your application (Django: `AWS_S3_ADDRESSING_STY
 Want to fix Bitnami shenanigans? Just install the bitnami transform. We desecrate the temple by deconstructing it — they do it by existing.
 
 ```bash
-python3 h2c-manager.py bitnami
+python3 dekube-manager.py bitnami
 ```
 
 The transform detects Bitnami images, applies the fixes below automatically, and logs every modification to stderr. Manual overrides still take precedence if you need fine-grained control.

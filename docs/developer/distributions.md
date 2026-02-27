@@ -6,19 +6,19 @@
 
 ## What
 
-A distribution is h2c-core (the bare engine) + a set of bundled extensions, concatenated into a single Python script. The engine provides the pipeline, CLI, and extension loader; the distribution decides what's built in.
+A distribution is dekube-engine (the bare engine) + a set of bundled extensions, concatenated into a single Python script. The engine provides the pipeline, CLI, and extension loader; the distribution decides what's built in.
 
 If you're reading this and thinking "this is the Kubernetes distribution model" — yes. A bare apiserver that does nothing without controllers, wrapped by a distribution (k3s, EKS, etc.) that bundles the defaults. I arrived here by solving engineering problems one at a time, each decision locally reasonable, and looked up to find I had recreated the architecture of the very thing I was trying to bring to the uninitiated. The concepts page has a [longer meditation on this](concepts.md#the-ouroboros) for those who enjoy watching someone realize what they've done.
 
 ```
-h2c-core (engine)  +  extensions  =  distribution
-    h2c.py                              helmfile2compose.py
+dekube-engine      +  extensions  =  distribution
+    dekube.py                           helmfile2compose.py
 
                  stacking
 helmfile2compose  +  more extensions  =  kubernetes2simple.py
 ```
 
-Distributions can be **stacked**: built on top of another distribution instead of bare h2c-core. `kubernetes2simple` stacks on `helmfile2compose`, adding all official extensions. The build script strips the tail (registries, `sys.modules` hack, `__main__` guard) from the base, appends new extensions, and re-appends the tail.
+Distributions can be **stacked**: built on top of another distribution instead of bare dekube-engine. `kubernetes2simple` stacks on `helmfile2compose`, adding all official extensions. The build script strips the tail (registries, `sys.modules` hack, `__main__` guard) from the base, appends new extensions, and re-appends the tail.
 
 ## Why
 
@@ -28,18 +28,18 @@ The distribution model avoids forking the core — everyone shares the same engi
 
 ## helmfile2compose — the reference distribution
 
-[helmfile2compose](https://github.com/helmfile2compose/helmfile2compose) is the default distribution. It bundles 8 extensions:
+[helmfile2compose](https://github.com/dekubeio/helmfile2compose) is the default distribution. It bundles 8 extensions:
 
 | Repo | Type | File | Purpose |
 |------|------|------|---------|
-| [h2c-indexer-configmap](https://github.com/helmfile2compose/h2c-indexer-configmap) | IndexerConverter | `configmap_indexer.py` | Populates `ctx.configmaps` |
-| [h2c-indexer-secret](https://github.com/helmfile2compose/h2c-indexer-secret) | IndexerConverter | `secret_indexer.py` | Populates `ctx.secrets` |
-| [h2c-indexer-pvc](https://github.com/helmfile2compose/h2c-indexer-pvc) | IndexerConverter | `pvc_indexer.py` | Populates `ctx.pvc_names` |
-| [h2c-indexer-service](https://github.com/helmfile2compose/h2c-indexer-service) | IndexerConverter | `service_indexer.py` | Populates `ctx.services_by_selector` |
-| [h2c-provider-simple-workload](https://github.com/helmfile2compose/h2c-provider-simple-workload) | Provider | `workloads.py` | DaemonSet, Deployment, Job, StatefulSet → compose services |
-| [h2c-rewriter-haproxy](https://github.com/helmfile2compose/h2c-rewriter-haproxy) | IngressRewriter | `haproxy.py` | HAProxy annotations + default fallback |
-| [h2c-provider-caddy](https://github.com/helmfile2compose/h2c-provider-caddy) | IngressProvider | `caddy.py` | Caddy service + Caddyfile generation |
-| [h2c-transform-fix-permissions](https://github.com/helmfile2compose/h2c-transform-fix-permissions) | Transform | `fix_permissions.py` | Fix bind mount permissions for non-root containers |
+| [dekube-indexer-configmap](https://github.com/dekubeio/dekube-indexer-configmap) | IndexerConverter | `configmap_indexer.py` | Populates `ctx.configmaps` |
+| [dekube-indexer-secret](https://github.com/dekubeio/dekube-indexer-secret) | IndexerConverter | `secret_indexer.py` | Populates `ctx.secrets` |
+| [dekube-indexer-pvc](https://github.com/dekubeio/dekube-indexer-pvc) | IndexerConverter | `pvc_indexer.py` | Populates `ctx.pvc_names` |
+| [dekube-indexer-service](https://github.com/dekubeio/dekube-indexer-service) | IndexerConverter | `service_indexer.py` | Populates `ctx.services_by_selector` |
+| [dekube-provider-simple-workload](https://github.com/dekubeio/dekube-provider-simple-workload) | Provider | `workloads.py` | DaemonSet, Deployment, Job, StatefulSet → compose services |
+| [dekube-rewriter-haproxy](https://github.com/dekubeio/dekube-rewriter-haproxy) | IngressRewriter | `haproxy.py` | HAProxy annotations + default fallback |
+| [dekube-provider-caddy](https://github.com/dekubeio/dekube-provider-caddy) | IngressProvider | `caddy.py` | Caddy service + Caddyfile generation |
+| [dekube-transform-fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) | Transform | `fix_permissions.py` | Fix bind mount permissions for non-root containers |
 
 External extensions (loaded via `--extensions-dir` at runtime) work on top of whatever a distribution bundles.
 
@@ -49,7 +49,7 @@ External extensions (loaded via `--extensions-dir` at runtime) work on top of wh
 my-distribution/
 ├── distribution.json          # manifest: base + extension names
 ├── .github/workflows/
-│   └── release.yml           # CI: h2c-manager fetch + build-distribution.py
+│   └── release.yml           # CI: dekube-manager fetch + build-distribution.py
 └── README.md
 ```
 
@@ -65,7 +65,7 @@ my-distribution/
 }
 ```
 
-CI fetches h2c-manager and `build-distribution.py`, downloads extensions from their individual repos, and assembles the single-file script.
+CI fetches dekube-manager and `build-distribution.py`, downloads extensions from their individual repos, and assembles the single-file script.
 
 ## `_auto_register()` — how it works
 
@@ -81,27 +81,27 @@ This means you just define classes in your extension files — no manual registr
 
 ## Stacking distributions
 
-A distribution can be built on top of another distribution instead of bare h2c-core. The `--base-distribution` flag tells `build-distribution.py` to fetch the parent from GitHub releases (resolved via h2c-manager's `distributions.json`), strip its tail blocks, and use it as the base instead of `h2c.py`.
+A distribution can be built on top of another distribution instead of bare dekube-engine. The `--base-distribution` flag tells `build-distribution.py` to fetch the parent from GitHub releases (resolved via dekube-manager's `distributions.json`), strip its tail blocks, and use it as the base instead of `dekube.py`.
 
 ```bash
 # Build kubernetes2simple on top of helmfile2compose
 python build-distribution.py kubernetes2simple \
-  --extensions-dir .h2c/extensions \
+  --extensions-dir .dekube/extensions \
   --base-distribution helmfile2compose
 
 # Or use a local .py file as base
 python build-distribution.py kubernetes2simple \
-  --extensions-dir .h2c/extensions \
+  --extensions-dir .dekube/extensions \
   --base ../helmfile2compose/helmfile2compose.py
 ```
 
-The `--base-distribution` flag defaults to `core` (bare h2c-core). When set to another distribution name, `build-distribution.py` looks it up in h2c-manager's `distributions.json`, downloads the `.py` release artifact, and uses it as the base. `--base-version` pins a specific version (default: `latest`).
+The `--base-distribution` flag defaults to `core` (bare dekube-engine). When set to another distribution name, `build-distribution.py` looks it up in dekube-manager's `distributions.json`, downloads the `.py` release artifact, and uses it as the base. `--base-version` pins a specific version (default: `latest`).
 
 `--base` takes a local `.py` file path directly — useful for local dev when you have the parent distribution already built.
 
 ## CI workflow example
 
-### Standard distribution (against h2c-core)
+### Standard distribution (against dekube-engine)
 
 ```yaml
 name: Release
@@ -117,7 +117,7 @@ jobs:
 
       - name: Fetch build-distribution.py
         run: |
-          curl -fsSL https://raw.githubusercontent.com/helmfile2compose/h2c-core/main/build-distribution.py \
+          curl -fsSL https://raw.githubusercontent.com/dekubeio/dekube-engine/main/build-distribution.py \
             -o build-distribution.py
 
       - name: Build distribution
@@ -135,7 +135,7 @@ jobs:
 - name: Build kubernetes2simple.py
   run: |
     python build-distribution.py kubernetes2simple \
-      --extensions-dir .h2c/extensions \
+      --extensions-dir .dekube/extensions \
       --base-distribution helmfile2compose
 ```
 
@@ -144,14 +144,14 @@ jobs:
 ```bash
 # Build locally (reads core sources from sibling checkout)
 cd my-distribution
-python ../h2c-core/build-distribution.py helmfile2compose \
-  --extensions-dir extensions --core-dir ../h2c-core
+python ../dekube-engine/build-distribution.py helmfile2compose \
+  --extensions-dir extensions --core-dir ../dekube-engine
 # → helmfile2compose.py
 
 # Build stacked distribution locally
 cd kubernetes2simple
-python ../h2c-core/build-distribution.py kubernetes2simple \
-  --extensions-dir .h2c/extensions \
+python ../dekube-engine/build-distribution.py kubernetes2simple \
+  --extensions-dir .dekube/extensions \
   --base ../helmfile2compose/helmfile2compose.py
 # → kubernetes2simple.py
 

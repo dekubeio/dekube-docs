@@ -1,6 +1,6 @@
 # Extensions
 
-Extensions are external modules that extend helmfile2compose beyond its built-in capabilities. Install them via [h2c-manager](maintainer/h2c-manager.md) or manually with `--extensions-dir`.
+Extensions are external modules that extend helmfile2compose beyond its built-in capabilities. Install them via [dekube-manager](maintainer/dekube-manager.md) or manually with `--extensions-dir`.
 
 CRDs are K8s entities that don't speak compose — exiles from a world with controllers and reconciliation loops. The extension system is the immigration office: each converter forges the documents that the K8s controller would have produced at runtime. The forgery is disturbingly convincing.
 
@@ -10,12 +10,12 @@ There are five extension types, all loaded from the same `--extensions-dir`:
 
 | Type | Interface | Purpose | Naming convention |
 |------|-----------|---------|-------------------|
-| **IndexerConverter** | `kinds` + `convert()` | Populate `ConvertContext` lookups (configmaps, secrets, PVCs, services) without producing services | `h2c-indexer-*` |
-| **Converter** | `kinds` + `convert()` | Handle K8s resource kinds, produce synthetic resources (Secrets, ConfigMaps) | `h2c-converter-*` |
-| **Provider** | `kinds` + `convert()` | Handle K8s resource kinds, produce compose services (and possibly resources) | `h2c-provider-*` |
-| **Transform** | `transform()`, no `kinds` | Post-process the final compose output after converters | `h2c-transform-*` |
+| **IndexerConverter** | `kinds` + `convert()` | Populate `ConvertContext` lookups (configmaps, secrets, PVCs, services) without producing services | `dekube-indexer-*` |
+| **Converter** | `kinds` + `convert()` | Handle K8s resource kinds, produce synthetic resources (Secrets, ConfigMaps) | `dekube-converter-*` |
+| **Provider** | `kinds` + `convert()` | Handle K8s resource kinds, produce compose services (and possibly resources) | `dekube-provider-*` |
+| **Transform** | `transform()`, no `kinds` | Post-process the final compose output after converters | `dekube-transform-*` |
 | **IngressProvider** | subclass of `IngressProvider`, `build_service()` + `write_config()` | Produce the reverse proxy service and config file from ingress entries | distribution-level |
-| **Ingress rewriter** | `name` + `match()` + `rewrite()` | Translate ingress controller annotations into ingress entries | `h2c-rewriter-*` |
+| **Ingress rewriter** | `name` + `match()` + `rewrite()` | Translate ingress controller annotations into ingress entries | `dekube-rewriter-*` |
 
 See [Writing extensions](developer/extensions/index.md) to build your own.
 
@@ -27,38 +27,38 @@ If your helmfile only uses standard Kubernetes resources, the monks are all you 
 
 | Monk | Type | Kinds | Priority |
 |------|------|-------|----------|
-| [The Librarian](https://github.com/helmfile2compose/h2c-indexer-configmap) | IndexerConverter | `ConfigMap` | 50 |
-| [The Guardian](https://github.com/helmfile2compose/h2c-indexer-secret) | IndexerConverter | `Secret` | 50 |
-| [The Binder](https://github.com/helmfile2compose/h2c-indexer-pvc) | IndexerConverter | `PersistentVolumeClaim` | 50 |
-| [The Weaver](https://github.com/helmfile2compose/h2c-indexer-service) | IndexerConverter | `Service` | 50 |
-| [The Builder](https://github.com/helmfile2compose/h2c-provider-simple-workload) | Provider | `Deployment`, `StatefulSet`, `DaemonSet`, `Job` | 500 |
-| [The Herald](https://github.com/helmfile2compose/h2c-rewriter-haproxy) | IngressRewriter | — | — |
-| [The Gatekeeper](https://github.com/helmfile2compose/h2c-provider-caddy) | IngressProvider | `Ingress` | 900 |
-| [The Custodian](https://github.com/helmfile2compose/h2c-transform-fix-permissions) | Transform | — | 8000 |
+| [The Librarian](https://github.com/dekubeio/dekube-indexer-configmap) | IndexerConverter | `ConfigMap` | 50 |
+| [The Guardian](https://github.com/dekubeio/dekube-indexer-secret) | IndexerConverter | `Secret` | 50 |
+| [The Binder](https://github.com/dekubeio/dekube-indexer-pvc) | IndexerConverter | `PersistentVolumeClaim` | 50 |
+| [The Weaver](https://github.com/dekubeio/dekube-indexer-service) | IndexerConverter | `Service` | 50 |
+| [The Builder](https://github.com/dekubeio/dekube-provider-simple-workload) | Provider | `Deployment`, `StatefulSet`, `DaemonSet`, `Job` | 500 |
+| [The Herald](https://github.com/dekubeio/dekube-rewriter-haproxy) | IngressRewriter | — | — |
+| [The Gatekeeper](https://github.com/dekubeio/dekube-provider-caddy) | IngressProvider | `Ingress` | 900 |
+| [The Custodian](https://github.com/dekubeio/dekube-transform-fix-permissions) | Transform | — | 8000 |
 
 The four indexers populate `ConvertContext` lookups so that later stages can resolve ConfigMap keys, Secret references, PVC claims, and Service ports. The Builder turns workloads into compose services. The Herald translates HAProxy ingress annotations, the Gatekeeper assembles them into a Caddy reverse proxy. The Custodian runs last — it scans for non-root containers and generates a busybox init service that fixes bind mount permissions.
 
 ## Providers
 
-Providers produce compose services — they emulate what a K8s controller would have created as running workloads. Install them via [h2c-manager](maintainer/h2c-manager.md).
+Providers produce compose services — they emulate what a K8s controller would have created as running workloads. Install them via [dekube-manager](maintainer/dekube-manager.md).
 
 ### keycloak
 
 | | |
 |---|---|
-| **Repo** | [h2c-provider-keycloak](https://github.com/helmfile2compose/h2c-provider-keycloak) |
+| **Repo** | [dekube-provider-keycloak](https://github.com/dekubeio/dekube-provider-keycloak) |
 | **Kinds** | `Keycloak`, `KeycloakRealmImport` |
 | **Dependencies** | none |
 | **Priority** | 500 |
 | **Produces** | compose services + realm JSON files |
 | **Status** | stable |
 
-Almost boring by this project's standards. The Keycloak Operator's job is to read a CR and produce a Deployment with the right env vars — which is exactly what h2c does for every other workload anyway. The `Keycloak` CR becomes a compose service with KC_* environment variables (database, HTTP, hostname, proxy, features). `KeycloakRealmImport` CRs are written as JSON files and mounted for auto-import on startup. A realm import is a static declaration that gets applied once — no reconciliation loop needed, no mutation, no drift to watch for. Turns out, removing the operator from a CRD that was already declarative just... works. Barely heretical.
+Almost boring by this project's standards. The Keycloak Operator's job is to read a CR and produce a Deployment with the right env vars — which is exactly what dekube does for every other workload anyway. The `Keycloak` CR becomes a compose service with KC_* environment variables (database, HTTP, hostname, proxy, features). `KeycloakRealmImport` CRs are written as JSON files and mounted for auto-import on startup. A realm import is a static declaration that gets applied once — no reconciliation loop needed, no mutation, no drift to watch for. Turns out, removing the operator from a CRD that was already declarative just... works. Barely heretical.
 
 Features: TLS secret mounting (if certs exist — doesn't care who made them), podTemplate volume support, bootstrap admin generation, realm placeholder resolution, namespace and K8s Service alias registration for network aliases.
 
 ```bash
-python3 h2c-manager.py keycloak
+python3 dekube-manager.py keycloak
 ```
 
 ---
@@ -67,7 +67,7 @@ python3 h2c-manager.py keycloak
 
 | | |
 |---|---|
-| **Repo** | [h2c-provider-servicemonitor](https://github.com/helmfile2compose/h2c-provider-servicemonitor) |
+| **Repo** | [dekube-provider-servicemonitor](https://github.com/dekubeio/dekube-provider-servicemonitor) |
 | **Kinds** | `Prometheus`, `ServiceMonitor` |
 | **Dependencies** | none |
 | **Priority** | 600 |
@@ -81,7 +81,7 @@ In Kubernetes, the Prometheus Operator watches ServiceMonitor CRDs and rewrites 
 Features: FQDN scrape targets (via network aliases), HTTPS scrape with CA bundle mounting (uses trust-manager ConfigMaps if available), named port resolution, label-based Service matching, fallback name-based matching for converter-created resources (e.g. Keycloak). No hard dependencies on other extensions — works standalone for HTTP scrape targets.
 
 ```bash
-python3 h2c-manager.py servicemonitor
+python3 dekube-manager.py servicemonitor
 ```
 
 Grafana saw what we did to its lifelong companion and [fought back itself](maintainer/known-workarounds/kube-prometheus-stack.md).
@@ -94,7 +94,7 @@ Converters produce synthetic resources (Secrets, ConfigMaps, files on disk) with
 
 | | |
 |---|---|
-| **Repo** | [h2c-converter-cert-manager](https://github.com/helmfile2compose/h2c-converter-cert-manager) |
+| **Repo** | [dekube-converter-cert-manager](https://github.com/dekubeio/dekube-converter-cert-manager) |
 | **Kinds** | `Certificate`, `ClusterIssuer`, `Issuer` |
 | **Dependencies** | `cryptography` (Python package) |
 | **Priority** | 100 |
@@ -108,7 +108,7 @@ This extension generates real PEM certificates at conversion time — CA chains,
 Then it starts merging certificates. Duplicate `secretName` entries across namespaces? Combined into a single cert with merged SANs. Rounds of issuance — self-signed CAs first, then CA-issued certs — because dependency order matters even in forgery. The kind of extension you can't predict, can't control, and can't entirely disapprove of — because the results speak for themselves, even if the methods are grounds for intervention.
 
 ```bash
-python3 h2c-manager.py cert-manager
+python3 dekube-manager.py cert-manager
 pip install cryptography  # required dependency
 ```
 
@@ -118,7 +118,7 @@ pip install cryptography  # required dependency
 
 | | |
 |---|---|
-| **Repo** | [h2c-converter-trust-manager](https://github.com/helmfile2compose/h2c-converter-trust-manager) |
+| **Repo** | [dekube-converter-trust-manager](https://github.com/dekubeio/dekube-converter-trust-manager) |
 | **Kinds** | `Bundle` |
 | **Dependencies** | `cert-manager` extension; optional `certifi` (falls back to system CA paths) |
 | **Priority** | 200 |
@@ -127,10 +127,10 @@ pip install cryptography  # required dependency
 
 The accomplice. Assembles CA trust bundles from cert-manager Secrets, ConfigMaps, inline PEM, and system default CAs. Injects the result as a synthetic ConfigMap. Pods that mount the trust bundle ConfigMap get the assembled CA chain automatically — believing they live in a cluster where a trust-manager controller reconciled this for them.
 
-Depends on the cert-manager extension (needs its generated secrets). When installed via h2c-manager, cert-manager is auto-resolved as a dependency.
+Depends on the cert-manager extension (needs its generated secrets). When installed via dekube-manager, cert-manager is auto-resolved as a dependency.
 
 ```bash
-python3 h2c-manager.py trust-manager
+python3 dekube-manager.py trust-manager
 # cert-manager is installed automatically as a dependency
 ```
 
@@ -142,7 +142,7 @@ Transforms are extensions that modify the final compose output *after* converter
 
 | | |
 |---|---|
-| **Repo** | [h2c-transform-flatten-internal-urls](https://github.com/helmfile2compose/h2c-transform-flatten-internal-urls) |
+| **Repo** | [dekube-transform-flatten-internal-urls](https://github.com/dekubeio/dekube-transform-flatten-internal-urls) |
 | **Dependencies** | none |
 | **Priority** | 2000 |
 | **Incompatible with** | `cert-manager` |
@@ -154,10 +154,10 @@ Strips Docker Compose network aliases and rewrites K8s FQDNs (`svc.ns.svc.cluste
 
 Built to restore **nerdctl compose** compatibility — nerdctl silently ignores network aliases, so FQDNs never resolve. But nerdctl isn't the only reason to use it. The transform also produces **cleaner compose output** — no 4-line alias blocks on every service, no `keycloak.auth.svc.cluster.local` in environment variables when `keycloak` would do. If you don't need FQDN preservation (no inter-service TLS, no cert SANs to match), flattening makes the generated files easier to read, debug, and diff.
 
-**Incompatible with cert-manager**: the cert-manager extension generates certificates with SANs matching K8s FQDNs. Flattening those FQDNs breaks TLS verification. h2c-manager blocks this combination by default — use `--ignore-compatibility-errors` if you know what you're doing.
+**Incompatible with cert-manager**: the cert-manager extension generates certificates with SANs matching K8s FQDNs. Flattening those FQDNs breaks TLS verification. dekube-manager blocks this combination by default — use `--ignore-compatibility-errors` if you know what you're doing.
 
 ```bash
-python3 h2c-manager.py flatten-internal-urls
+python3 dekube-manager.py flatten-internal-urls
 ```
 
 ---
@@ -166,7 +166,7 @@ python3 h2c-manager.py flatten-internal-urls
 
 | | |
 |---|---|
-| **Repo** | [h2c-transform-bitnami](https://github.com/helmfile2compose/h2c-transform-bitnami) |
+| **Repo** | [dekube-transform-bitnami](https://github.com/dekubeio/dekube-transform-bitnami) |
 | **Dependencies** | none |
 | **Priority** | 1500 |
 | **Status** | stable |
@@ -176,7 +176,7 @@ The janitor. Bitnami charts — Redis, PostgreSQL, Keycloak — wrap standard im
 Detects Bitnami images by name, then: replaces Redis entirely with stock `redis:7-alpine`, fixes PostgreSQL volume paths, injects Keycloak passwords as env vars and removes the failing init container. Every modification is logged to stderr. User `overrides:` take precedence — if you've already handled a service manually, the transform leaves it alone.
 
 ```bash
-python3 h2c-manager.py bitnami
+python3 dekube-manager.py bitnami
 ```
 
 ## Ingress providers
@@ -198,7 +198,7 @@ The built-in `HAProxyRewriter` handles `haproxy` and empty/absent ingress classe
 
 | | |
 |---|---|
-| **Repo** | [h2c-rewriter-nginx](https://github.com/helmfile2compose/h2c-rewriter-nginx) |
+| **Repo** | [dekube-rewriter-nginx](https://github.com/dekubeio/dekube-rewriter-nginx) |
 | **Matches** | `nginx` ingressClassName |
 | **Status** | stable |
 
@@ -207,7 +207,7 @@ It just translates. Not its fault the controller it serves gets deprecated while
 Handles `rewrite-target`, `backend-protocol`, CORS, `proxy-body-size`, `configuration-snippet`. If your helmfile uses nginx annotations, install this or watch your Caddy routes silently ignore everything that made your app work.
 
 ```bash
-python3 h2c-manager.py nginx
+python3 dekube-manager.py nginx
 ```
 
 ---
@@ -216,7 +216,7 @@ python3 h2c-manager.py nginx
 
 | | |
 |---|---|
-| **Repo** | [h2c-rewriter-traefik](https://github.com/helmfile2compose/h2c-rewriter-traefik) |
+| **Repo** | [dekube-rewriter-traefik](https://github.com/dekubeio/dekube-rewriter-traefik) |
 | **Matches** | `traefik` ingressClassName |
 | **Status** | POC |
 
@@ -225,15 +225,15 @@ A translator that knows it doesn't speak the full language, and chooses silence 
 Warning: untested. May or may not work. Can't tell. Use HAProxy.
 
 ```bash
-python3 h2c-manager.py traefik
+python3 dekube-manager.py traefik
 ```
 
 ## Third-party extensions
 
-Extensions that live outside the helmfile2compose org. They follow the same contracts and install the same way — but the org takes no credit, no blame, and no responsibility.
+Extensions that live outside the dekubeio org. They follow the same contracts and install the same way — but the org takes no credit, no blame, and no responsibility.
 
 ### fake-apiserver
-A transform that breaches [the wall](developer/concepts.md#the-emulation-boundary). For applications that require a live kube-apiserver at runtime — leader election, service discovery via API, in-cluster auth — this extension provides one. What it does, how it does it, and why you should not use it are documented in the [repo itself](https://github.com/baptisterajaut/h2c-api). No further instructions will be given here. The catalogue acknowledges its existence; it does not condone it.
+A transform that breaches [the wall](developer/concepts.md#the-emulation-boundary). For applications that require a live kube-apiserver at runtime — leader election, service discovery via API, in-cluster auth — this extension provides one. What it does, how it does it, and why you should not use it are documented in the [repo itself](https://github.com/baptisterajaut/dekube-fakeapi). No further instructions will be given here. The catalogue acknowledges its existence; it does not condone it.
 
 ## Writing your own
 
@@ -243,4 +243,4 @@ A transform that breaches [the wall](developer/concepts.md#the-emulation-boundar
 - **[Writing rewriters](developer/extensions/writing-rewriters.md)** — translating ingress annotations to ingress entries
 - **[Writing ingress providers](developer/extensions/writing-ingressproviders.md)** — replacing the reverse proxy backend entirely
 
-Drop it in a `.py` file, and either use `--extensions-dir` locally or publish it as a GitHub repo for h2c-manager distribution. The abyss is open for contributions.
+Drop it in a `.py` file, and either use `--extensions-dir` locally or publish it as a GitHub repo for dekube-manager distribution. The abyss is open for contributions.

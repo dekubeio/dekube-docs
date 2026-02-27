@@ -136,7 +136,7 @@ class AddWhoami:
 
 ## Self-contained — no core imports {#self-contained--no-core-imports}
 
-Transforms should not import private functions from `h2c`. The core's `_`-prefixed functions (`_apply_port_remap`, `_K8S_DNS_RE`, etc.) are internal and may change between versions.
+Transforms should not import private functions from `dekube`. The core's `_`-prefixed functions (`_apply_port_remap`, `_K8S_DNS_RE`, etc.) are internal and may change between versions.
 
 If your transform needs regex patterns or utility functions that exist in the core, copy them into your module. This is intentional — transforms are independent modules that should work across core versions without breakage. `flatten-internal-urls` defines its own `_K8S_DNS_RE` and `_apply_alias_map` for this reason.
 

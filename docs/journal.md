@@ -34,13 +34,13 @@ The eight monk extensions — the founding clergy of the helmfile2compose distri
 
 | Monk | Repo | Heresy |
 |--------|------|--------|
-| The Builder | [h2c-provider-simple-workload](https://github.com/helmfile2compose/h2c-provider-simple-workload) | 7/10 — flattens an entire orchestration plane |
-| The Gatekeeper | [h2c-provider-caddy](https://github.com/helmfile2compose/h2c-provider-caddy) | 3/10 — conjures a service from thin air |
-| The Herald | [h2c-rewriter-haproxy](https://github.com/helmfile2compose/h2c-rewriter-haproxy) | 2/10 — announces what others have decreed |
-| The Weaver | [h2c-indexer-service](https://github.com/helmfile2compose/h2c-indexer-service) | 2/10 — reads the maps others consult |
-| The Binder | [h2c-indexer-pvc](https://github.com/helmfile2compose/h2c-indexer-pvc) | 1/10 — barely strays from scripture |
-| The Librarian | [h2c-indexer-configmap](https://github.com/helmfile2compose/h2c-indexer-configmap) | 0/10 — a faithful scribe |
-| The Guardian | [h2c-indexer-secret](https://github.com/helmfile2compose/h2c-indexer-secret) | 0/10 — a faithful scribe |
+| The Builder | [h2c-provider-simple-workload](https://github.com/dekubeio/dekube-provider-simple-workload) | 7/10 — flattens an entire orchestration plane |
+| The Gatekeeper | [h2c-provider-caddy](https://github.com/dekubeio/dekube-provider-caddy) | 3/10 — conjures a service from thin air |
+| The Herald | [h2c-rewriter-haproxy](https://github.com/dekubeio/dekube-rewriter-haproxy) | 2/10 — announces what others have decreed |
+| The Weaver | [h2c-indexer-service](https://github.com/dekubeio/dekube-indexer-service) | 2/10 — reads the maps others consult |
+| The Binder | [h2c-indexer-pvc](https://github.com/dekubeio/dekube-indexer-pvc) | 1/10 — barely strays from scripture |
+| The Librarian | [h2c-indexer-configmap](https://github.com/dekubeio/dekube-indexer-configmap) | 0/10 — a faithful scribe |
+| The Guardian | [h2c-indexer-secret](https://github.com/dekubeio/dekube-indexer-secret) | 0/10 — a faithful scribe |
 
 Each monk was decoupled from the temple: internal imports changed to `from h2c import ...`, `WORKLOAD_KINDS` made a local constant where needed, `_register_pvc` inlined in the pvc-indexer. Verified: `h2c.py` + 7 monks as `--extensions-dir` produces **identical** output to the monolithic `helmfile2compose.py`.
 
@@ -50,11 +50,11 @@ The helmfile2compose repo is now: `distribution.json` + CI. The extensions direc
 
 The fix: `save_config()` gated behind `first_run`. PVC auto-add moved behind `ctx.first_run`. `ConvertContext` gained a `first_run: bool` field (pacts API addition). On subsequent runs, stale volume entries now emit a warning instead of being silently added. The config file is the user's territory — the engine reads it, never writes it (except to create it).
 
-**The Custodian.** The first seven monks were released on broken coupling: `fix-permissions` lived half in the workload converter (collecting PVC claim→UID) and half in the core (`_generate_fix_permissions` resolving claim→host_path). Transforms that rewrote volumes (bitnami) ran *after* fix-permissions — so it chowned the old paths, not the rewritten ones. The fix: extract fix-permissions into a standalone transform ([h2c-transform-fix-permissions](https://github.com/helmfile2compose/h2c-transform-fix-permissions)) at priority 8000. Instead of tracking PVC claims through the converter, The Custodian scans K8s manifests for `securityContext.runAsUser` and inspects the *final* compose service volumes for bind mounts. Zero dependency on the workload converter. The broken intermediate releases were deleted and the whole thing re-released clean.
+**The Custodian.** The first seven monks were released on broken coupling: `fix-permissions` lived half in the workload converter (collecting PVC claim→UID) and half in the core (`_generate_fix_permissions` resolving claim→host_path). Transforms that rewrote volumes (bitnami) ran *after* fix-permissions — so it chowned the old paths, not the rewritten ones. The fix: extract fix-permissions into a standalone transform ([h2c-transform-fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions)) at priority 8000. Instead of tracking PVC claims through the converter, The Custodian scans K8s manifests for `securityContext.runAsUser` and inspects the *final* compose service volumes for bind mounts. Zero dependency on the workload converter. The broken intermediate releases were deleted and the whole thing re-released clean.
 
 | Monk | Repo | Heresy |
 |--------|------|--------|
-| The Custodian | [h2c-transform-fix-permissions](https://github.com/helmfile2compose/h2c-transform-fix-permissions) | 3/10 — rewrites filesystem ownership behind the user's back |
+| The Custodian | [h2c-transform-fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) | 3/10 — rewrites filesystem ownership behind the user's back |
 
 `distribution.json` names all 8 monks; CI fetches them via h2c-manager and assembles the scroll. The temple still stands — it just has no walls. And the architect has no energy left to add more.
 
@@ -70,12 +70,12 @@ The fix: `save_config()` gated behind `first_run`. PVC auto-add moved behind `ct
 
 ??? abstract "TL;DR"
     - `build-distribution.py` gained stacking: distributions can be built on top of other distributions
-    - [kubernetes2simple](https://github.com/helmfile2compose/kubernetes2simple): turnkey distribution (helmfile2compose + all official extensions) + bash bootstrap script
+    - [kubernetes2simple](https://github.com/dekubeio/kubernetes2simple): turnkey distribution (helmfile2compose + all official extensions) + bash bootstrap script
     - One-command install: `curl | sh && ./k2s.sh && docker compose up -d`
 
 `build-distribution.py` gained stacking support — distributions can now be built on top of other distributions, not just bare h2c-core. New flags: `--base` (local `.py` path), `--base-distribution` (fetch from registry, default: `core`), `--base-version` (default: `latest`). The build script resolves distribution names via h2c-manager's `distributions.json`, downloads the parent artifact, strips its tail (`_auto_register()`, `sys.modules` hack, `__main__` guard), appends extensions, and re-generates the tail. Also fixed: indented imports (inside `try/except`) no longer hoisted to top-level, `from __future__ import annotations` stripped from concatenated output, line count reporting corrected.
 
-The first thing stacked on top: [kubernetes2simple](https://github.com/helmfile2compose/kubernetes2simple). The friendly face of the abyss. Built on helmfile2compose, bundling all official extensions (keycloak, cert-manager, trust-manager, servicemonitor, nginx, traefik, bitnami) into a single `kubernetes2simple.py`.
+The first thing stacked on top: [kubernetes2simple](https://github.com/dekubeio/kubernetes2simple). The friendly face of the abyss. Built on helmfile2compose, bundling all official extensions (keycloak, cert-manager, trust-manager, servicemonitor, nginx, traefik, bitnami) into a single `kubernetes2simple.py`.
 
 The `.py` distribution is half the product. The other half is `kubernetes2simple.sh` — a bash script that detects your source format (helmfile, Helm chart, or flat manifests), bootstraps everything it needs (Python venv, helm, helmfile — all scoped to `.kubernetes2simple/`, never touches the system), downloads `kubernetes2simple.py` from releases, and converts. One command. Zero configuration. Zero questions asked.
 
@@ -114,7 +114,7 @@ Naturally, the two external rewriters — nginx and traefik — never had this b
 
 We just wanted to separate the worlds — split a monolith into a bare engine and a distribution. Improve the architecture. Clean up the layers. Somewhere along the way, the architecture of the tool converged with the architecture of the thing it was converting: a bare API with empty registries, a distribution model, an extension system, priority-based dispatch. We didn't set out to close the ouroboros. We just turned the wheel, and the wheel remembered.
 
-`h2c-core` has been split into two repos: a **bare engine** ([h2c-core](https://github.com/helmfile2compose/h2c-core)) that produces `h2c.py` — pure potential with empty registries — and a **full distribution** ([helmfile2compose](https://github.com/helmfile2compose/helmfile2compose)) that splits the monolith's conversion logic into 7 extensions covering every built-in kind, and bundles them into `helmfile2compose.py`.
+`h2c-core` has been split into two repos: a **bare engine** ([h2c-core](https://github.com/dekubeio/dekube-core)) that produces `h2c.py` — pure potential with empty registries — and a **full distribution** ([helmfile2compose](https://github.com/dekubeio/helmfile2compose)) that splits the monolith's conversion logic into 7 extensions covering every built-in kind, and bundles them into `helmfile2compose.py`.
 
 The bare core has `_CONVERTERS = []`, `_REWRITERS = []`, `CONVERTED_KINDS = set()`. Feed it manifests and it will parse them, warn that every kind is unknown, and produce nothing. A temple with no priests. The distribution wires in ConfigMap, Secret, Service, PVC indexers, the Workloads converter, HAProxy rewriter, and Caddy provider — the default priesthood.
 
@@ -180,7 +180,7 @@ Three bugs found in one session by pointing h2c at [mijn-bureau-infra](https://g
 >
 > — *Necronomicon, On the Treachery of Empty Vessels (to the best of our knowledge)*
 
-Also released: [h2c-transform-bitnami](https://github.com/helmfile2compose/h2c-transform-bitnami) — the janitor. Detects Bitnami Redis, PostgreSQL, and Keycloak charts and applies workarounds automatically, replacing the manual overrides documented in [common charts](maintainer/known-workarounds/common-charts.md). Born from the realization that copy-pasting the same redis override across three projects was less heresy and more just tedious. Heresy score: 0/10.
+Also released: [h2c-transform-bitnami](https://github.com/dekubeio/dekube-transform-bitnami) — the janitor. Detects Bitnami Redis, PostgreSQL, and Keycloak charts and applies workarounds automatically, replacing the manual overrides documented in [common charts](maintainer/known-workarounds/common-charts.md). Born from the realization that copy-pasting the same redis override across three projects was less heresy and more just tedious. Heresy score: 0/10.
 
 ---
 
@@ -222,7 +222,7 @@ Built for `flatten-internal-urls`, which undoes the alias work from v2.1 for ner
 >
 > — *Book of Eibon, On Liturgical Mutability (probablement)*
 
-Also released: [h2c-transform-flatten-internal-urls v0.1.0](https://github.com/helmfile2compose/h2c-transform-flatten-internal-urls/releases/tag/v0.1.0) — the anti-ritual. Incompatibility checking added to h2c-manager (508 lines now — the "lightweight" package manager keeps finding reasons to grow).
+Also released: [h2c-transform-flatten-internal-urls v0.1.0](https://github.com/dekubeio/dekube-transform-flatten-internal-urls/releases/tag/v0.1.0) — the anti-ritual. Incompatibility checking added to h2c-manager (508 lines now — the "lightweight" package manager keeps finding reasons to grow).
 
 ---
 
@@ -249,7 +249,7 @@ Also released: h2c-operator-keycloak v0.2.0 (now h2c-provider-keycloak; namespac
 
 ---
 
-*On the evening of February 14th, between v1.3.1 and v2.0.0, something was built that does not appear in any release. It answers on port 6443. It was not necessary. It was not justified. But the world had already ended, and at that point, what's one more atrocity? It is hosted on a [personal account](https://github.com/baptisterajaut/h2c-api) — for plausible deniability.*
+*On the evening of February 14th, between v1.3.1 and v2.0.0, something was built that does not appear in any release. It answers on port 6443. It was not necessary. It was not justified. But the world had already ended, and at that point, what's one more atrocity? It is hosted on a [personal account](https://github.com/baptisterajaut/dekube-fakeapi) — for plausible deniability.*
 
 ---
 

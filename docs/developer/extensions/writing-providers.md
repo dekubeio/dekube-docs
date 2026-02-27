@@ -1,6 +1,6 @@
 # Writing providers
 
-A provider is a converter that produces compose services from CRD kinds — emulating what a K8s controller would have done at runtime. Providers subclass `Provider` (from `h2c`) and share the same `kinds` + `convert()` interface as converters, but deal with additional patterns: injecting synthetic resources, registering services that the K8s controller would have created, and coordinating with other extensions through priority ordering.
+A provider is a converter that produces compose services from CRD kinds — emulating what a K8s controller would have done at runtime. Providers subclass `Provider` (from `dekube`) and share the same `kinds` + `convert()` interface as converters, but deal with additional patterns: injecting synthetic resources, registering services that the K8s controller would have created, and coordinating with other extensions through priority ordering.
 
 > *The priests were gone, yet the rituals continued. The faithful did not notice — for the incantations were spoken in the same tongue, and the sacrifices consumed in the same fire. Only the altar knew that the hands were different.*
 >
@@ -13,7 +13,7 @@ Read [Writing converters](writing-converters.md) first for the base interface (`
 CRD extensions that **produce compose services** (i.e. return non-empty `ProviderResult.services`) should subclass `Provider`:
 
 ```python
-from h2c import Provider, ProviderResult
+from dekube import Provider, ProviderResult
 
 class KeycloakProvider(Provider):
     kinds = ["Keycloak", "KeycloakRealmImport"]
@@ -24,14 +24,14 @@ class KeycloakProvider(Provider):
 CRD extensions that only **inject synthetic resources** (Secrets, ConfigMaps) without producing services should remain plain converters:
 
 ```python
-from h2c import ConverterResult
+from dekube import ConverterResult
 
 class CertManagerConverter:
     kinds = ["Certificate", "ClusterIssuer", "Issuer"]
     priority = 10
 ```
 
-The distinction is enforced — `Provider` is a base class in `h2c.pacts.types` (subclass of `Converter`, default priority 500). Subclassing it signals intent to the framework. Naming convention: `h2c-provider-*` for providers, `h2c-converter-*` for converters.
+The distinction is enforced — `Provider` is a base class in `dekube.pacts.types` (subclass of `Converter`, default priority 500). Subclassing it signals intent to the framework. Naming convention: `dekube-provider-*` for providers, `dekube-converter-*` for converters.
 
 ## Injecting synthetic resources
 
@@ -131,7 +131,7 @@ A CRD converter doesn't *run* the K8s controller — it *replaces* it. The contr
 
 This means:
 
-- **No reconciliation loop** — the converter runs once. If something changes, you re-run h2c.
+- **No reconciliation loop** — the converter runs once. If something changes, you re-run dekube.
 - **No runtime state** — the converter can't watch for changes or react to failures.
 - **No side effects** — the converter shouldn't create containers or processes. It produces compose service definitions (providers) or synthetic resources (converters), or both.
 

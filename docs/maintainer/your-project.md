@@ -4,8 +4,8 @@ I'm sorry you're here. Truly. If you're reading this, it means you maintain a he
 
 I've been there. Twice. This tool is the scar tissue.
 
-!!! note "helmfile2compose vs h2c"
-    **h2c** (or h2c-core) is the bare conversion engine — an empty pipeline with no built-in converters. **helmfile2compose** is the distribution: h2c-core bundled with 8 extensions (workloads, indexers, HAProxy, Caddy) into a single `helmfile2compose.py`. This is what you download, run, and ship. When this page says "helmfile2compose", it means the distribution — the thing you actually use.
+!!! note "helmfile2compose vs dekube-engine"
+    **dekube-engine** is the bare conversion engine — an empty pipeline with no built-in converters. **helmfile2compose** is the distribution: dekube-engine bundled with 8 extensions (workloads, indexers, HAProxy, Caddy) into a single `helmfile2compose.py`. This is what you download, run, and ship. When this page says "helmfile2compose", it means the distribution — the thing you actually use.
 
 > *He who renders the celestial into the mundane does not ascend — he merely ensures that both realms now share his suffering equally.*
 >
@@ -29,8 +29,8 @@ The default reverse proxy is **Caddy**, bundled with the distribution. The entir
 | Controller | Rewriter | Status |
 |------------|----------|--------|
 | **HAProxy** | bundled | stable |
-| **Nginx** | [h2c-rewriter-nginx](https://github.com/helmfile2compose/h2c-rewriter-nginx) (extension) | stable |
-| **Traefik** | [h2c-rewriter-traefik](https://github.com/helmfile2compose/h2c-rewriter-traefik) (extension) | POC |
+| **Nginx** | [dekube-rewriter-nginx](https://github.com/dekubeio/dekube-rewriter-nginx) (extension) | stable |
+| **Traefik** | [dekube-rewriter-traefik](https://github.com/dekubeio/dekube-rewriter-traefik) (extension) | POC |
 
 If you use something else (Contour, Ambassador, Istio, AWS ALB, etc.) — standard Ingress `host`/`path`/`backend` fields are always read, so basic routing works, but controller-specific annotations won't translate. Check this *before* investing time in the rest of the setup.
 
@@ -51,17 +51,17 @@ services:
 
 ## Installation
 
-Download `helmfile2compose.py` from the [latest helmfile2compose release](https://github.com/helmfile2compose/helmfile2compose/releases/latest).
+Download `helmfile2compose.py` from the [latest helmfile2compose release](https://github.com/dekubeio/helmfile2compose/releases/latest).
 
-If your stack uses CRDs that have an [h2c extension](../catalogue.md) (Keycloak, cert-manager, trust-manager), grab the extension `.py` files from their repos too and drop them in an `extensions/` directory next to the script:
+If your stack uses CRDs that have an [dekube extension](../catalogue.md) (Keycloak, cert-manager, trust-manager), grab the extension `.py` files from their repos too and drop them in an `extensions/` directory next to the script:
 
 ```
 extensions/
-├── keycloak.py            # from h2c-provider-keycloak
-└── cert_manager.py        # from h2c-converter-cert-manager
+├── keycloak.py            # from dekube-provider-keycloak
+└── cert_manager.py        # from dekube-converter-cert-manager
 ```
 
-That's it. No package manager needed at this stage — [h2c-manager](h2c-manager.md) is for later, when you ship a `generate-compose.sh` to your users (see [Recommended workflow](#recommended-workflow)).
+That's it. No package manager needed at this stage — [dekube-manager](h2c-manager.md) is for later, when you ship a `generate-compose.sh` to your users (see [Recommended workflow](#recommended-workflow)).
 
 ## Preparing your helmfile
 
@@ -79,7 +79,7 @@ reflector:
 
 Everything else stays enabled — the tool needs to see your Deployments, Services, ConfigMaps, Secrets, and Ingress resources to do its job.
 
-If your stack uses CRDs that have an [h2c extension](../catalogue.md) (Keycloak, cert-manager, trust-manager), keep those enabled — the extensions you should have previously acquired will handle them.
+If your stack uses CRDs that have an [dekube extension](../catalogue.md) (Keycloak, cert-manager, trust-manager), keep those enabled — the extensions you should have previously acquired will handle them.
 
 ## First run
 
@@ -128,7 +128,7 @@ See [Configuration](configuration.md) for the full reference.
 
 Before debugging something for hours, check the [known workarounds](known-workarounds/index.md). Recurring tentacles have been identified, sliced, and served — no need to catch the same kraken twice. 
 
-If your stack includes Bitnami charts (Redis, PostgreSQL, Keycloak), install the [bitnami transform](https://github.com/helmfile2compose/h2c-transform-bitnami) — it handles the worst of it automatically.
+If your stack includes Bitnami charts (Redis, PostgreSQL, Keycloak), install the [bitnami transform](https://github.com/dekubeio/dekube-transform-bitnami) — it handles the worst of it automatically.
 
 ## What works well
 
@@ -160,7 +160,7 @@ Compatibility was covered [above](#before-you-start-ingress-controller). This se
 | **Nginx** | `rewrite-target`, `backend-protocol`, `enable-cors`, `proxy-body-size`, `configuration-snippet` (partial) |
 | **Traefik** | `router.tls`, standard Ingress path rules. No middleware CRD support. |
 
-HAProxy is built into the helmfile2compose distribution. Nginx and Traefik are extensions — install them with [h2c-manager](h2c-manager.md) or drop the `.py` file in your `extensions/` directory.
+HAProxy is built into the helmfile2compose distribution. Nginx and Traefik are extensions — install them with [dekube-manager](h2c-manager.md) or drop the `.py` file in your `extensions/` directory.
 
 ### Custom ingress class names
 
@@ -179,11 +179,11 @@ Without this, helmfile2compose won't recognize the class and the Ingress is skip
 
 1. **One helmfile, two environments.** Keep your K8s environment as-is. Add a `compose` environment that disables cluster-only components. Same charts, same values (mostly), different targets.
 
-2. **Ship a `generate-compose.sh`.** A wrapper script that downloads h2c-manager, installs helmfile2compose + extensions, runs the conversion, and maybe generates secrets. See stoatchat-platform or lasuite-platform for examples.
+2. **Ship a `generate-compose.sh`.** A wrapper script that downloads dekube-manager, installs helmfile2compose + extensions, runs the conversion, and maybe generates secrets. See stoatchat-platform or lasuite-platform for examples.
 
 3. **Ship a `helmfile2compose.yaml.template`.** Pre-configure excludes, overrides, and volume mappings that are specific to your project. The generate script copies it to `helmfile2compose.yaml` on first run. Users then customize their copy.
 
-4. **Pin a release.** Use `--distribution-version` in h2c-manager and `==version` for extensions. Don't point at `main`. The tool's behavior may change between releases (or mutate on its own, I don't know anything at this point). I don't do it myself — but I think we already established my sanity left around v1.2, way before extensions were even on the roadmap.
+4. **Pin a release.** Use `--distribution-version` in dekube-manager and `==version` for extensions. Don't point at `main`. The tool's behavior may change between releases (or mutate on its own, I don't know anything at this point). I don't do it myself — but I think we already established my sanity left around v1.2, way before extensions were even on the roadmap.
 
 ## The two projects that caused this to exist
 

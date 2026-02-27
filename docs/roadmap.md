@@ -6,17 +6,17 @@ For the emulation boundary — what can cross the bridge and what can't — see 
 
 ## Next
 
-### Rename: h2c-core → dekube
+### Rename: h2c-core → dekube-engine (done)
 
-The core engine deserves a name that isn't an abbreviation of a tool it predates. `dekube` — as in *de-Kubernetes* — says what it does. Zero code changes beyond imports, and both `from dekube import ...` and `from h2c import ...` will coexist during the transition. `helmfile2compose.yaml` would become `dekube.yaml`. Mostly renaming. Entirely tedious. Architecturally irrelevant. Must be done anyway.
+The rename is complete. The core engine is now `dekube-engine`, the package is `dekube`, and the build artifact is `dekube.py`. Both `from dekube import ...` and `from h2c import ...` coexist during the transition. `dekube.yaml` is the primary config file name (`helmfile2compose.yaml` remains as a legacy fallback). The GitHub org moved from `helmfile2compose` to `dekubeio`.
 
 ### Nginx ingress provider
 
-An `IngressProvider` that produces an Nginx reverse proxy service + `nginx.conf` instead of Caddy. For users who need Nginx specifically — corporate environments, existing Nginx expertise, or setups where Caddy's automatic TLS isn't wanted. The rewriter already exists ([h2c-rewriter-nginx](https://github.com/helmfile2compose/h2c-rewriter-nginx)); this would be the provider counterpart. See [Writing ingress providers](developer/extensions/writing-ingressproviders.md) for the contract.
+An `IngressProvider` that produces an Nginx reverse proxy service + `nginx.conf` instead of Caddy. For users who need Nginx specifically — corporate environments, existing Nginx expertise, or setups where Caddy's automatic TLS isn't wanted. The rewriter already exists ([dekube-rewriter-nginx](https://github.com/dekubeio/dekube-rewriter-nginx)); this would be the provider counterpart. See [Writing ingress providers](developer/extensions/writing-ingressproviders.md) for the contract.
 
 ### Per-extension `enabled: false`
 
-Bundled extensions can't be individually disabled — the distribution loads all monks unconditionally. An `enabled: false` key under `extensions.<name>` in the config would let maintainers skip specific bundled extensions (fix-permissions, bitnami transform) without switching to h2c-core + manual `--extensions-dir`. Small change in the dispatch loop, large quality-of-life improvement.
+Bundled extensions can't be individually disabled — the distribution loads all monks unconditionally. An `enabled: false` key under `extensions.<name>` in the config would let maintainers skip specific bundled extensions (fix-permissions, bitnami transform) without switching to dekube-engine + manual `--extensions-dir`. Small change in the dispatch loop, large quality-of-life improvement.
 
 Related: `overrides:` currently runs *before* transforms, so services created by transforms (like `fix-permissions`) can't be overridden. Either overrides need to run after transforms, or transforms need to check `enabled` themselves. Either way, a fix is needed before disabling bundled extensions is useful.
 
@@ -32,7 +32,7 @@ Named pipeline hooks (`post_aliases`, `pre_write`, etc.) for extensions. Not nee
 
 ### Promote `_`-prefixed helpers to public API
 
-Several conversion primitives exported by h2c-core (`_convert_command`, `_convert_volume_mounts`, `_build_alias_map`, `_build_service_port_map`, `_resolve_named_port`) are used by bundled extensions and useful to any third-party provider or indexer. They're currently `_`-prefixed (historical — they lived in the monolith before the split) but exported in `__all__`. Drop the underscore, document them in the pacts API, remove `_build_vol_map` (unused outside `_convert_volume_mounts`).
+Several conversion primitives exported by dekube-engine (`_convert_command`, `_convert_volume_mounts`, `_build_alias_map`, `_build_service_port_map`, `_resolve_named_port`) are used by bundled extensions and useful to any third-party provider or indexer. They're currently `_`-prefixed (historical — they lived in the monolith before the split) but exported in `__all__`. Drop the underscore, document them in the pacts API, remove `_build_vol_map` (unused outside `_convert_volume_mounts`).
 
 ### Extension compatibility matrix
 

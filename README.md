@@ -1,8 +1,8 @@
-# helmfile2compose.github.io
+# dekube-docs
 
-Documentation site for [helmfile2compose](https://github.com/helmfile2compose).
+Documentation site for [dekube](https://dekube.io).
 
-Published at **[helmfile2compose.github.io](https://helmfile2compose.github.io/)**.
+Published at **[docs.dekube.io](https://docs.dekube.io/)**.
 
 ## Local preview
 

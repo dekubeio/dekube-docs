@@ -41,7 +41,7 @@ nerdctl compose silently ignores `networks.*.aliases` — the key that makes K8s
 **The fix**: install the [`flatten-internal-urls`](catalogue.md#flatten-internal-urls) transform. It strips all network aliases and rewrites FQDNs to short compose service names, which nerdctl resolves natively. No runtime change needed.
 
 ```bash
-python3 h2c-manager.py flatten-internal-urls
+python3 dekube-manager.py flatten-internal-urls
 ```
 
 If you are running Rancher Desktop with containerd: switching to dockerd (moby) in Rancher Desktop settings avoids the problem entirely — one checkbox, one VM restart. See [limitations](limitations.md#network-aliases-nerdctl) for the full list of workarounds and caveats (including cert-manager compatibility).
@@ -78,4 +78,4 @@ In practice, short alias collisions are rare — they only appear when the K8s S
 
 ---
 
-Still stuck? Open an issue on the [helmfile2compose repo](https://github.com/helmfile2compose/helmfile2compose/issues). Include the error, your `helmfile2compose.yaml`, and which extensions you're using. The abyss stares back, but it occasionally answers.
+Still stuck? Open an issue on the [helmfile2compose repo](https://github.com/dekubeio/helmfile2compose/issues). Include the error, your `helmfile2compose.yaml`, and which extensions you're using. The abyss stares back, but it occasionally answers.

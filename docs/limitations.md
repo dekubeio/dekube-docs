@@ -74,7 +74,7 @@ The [cert-manager extension](catalogue.md#cert-manager) can generate real certif
 
 Bitnami images (PostgreSQL, Redis, MongoDB) run as non-root (UID 1001) and expect Unix permissions on their data directories. The host directory is typically owned by your user (UID 1000), so the container can't write to it. This causes `mkdir: cannot create directory: Permission denied`.
 
-This is handled automatically: the built-in [fix-permissions](https://github.com/helmfile2compose/h2c-transform-fix-permissions) transform detects non-root containers (`securityContext.runAsUser`) with bind-mounted volumes and generates a `fix-permissions` service that runs `chown -R <uid>` as root on first startup. No manual intervention needed.
+This is handled automatically: the built-in [fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) transform detects non-root containers (`securityContext.runAsUser`) with bind-mounted volumes and generates a `fix-permissions` service that runs `chown -R <uid>` as root on first startup. No manual intervention needed.
 
 ### Hostname length
 
@@ -119,7 +119,7 @@ Not converted. A CronJob would need an external scheduler or a `sleep`-loop wrap
 
 Operator-managed resources (`Keycloak`, `KeycloakRealmImport`, Zalando `postgresql`, Strimzi `Kafka`, etc.) are skipped with a warning unless a loaded [extension](catalogue.md) handles them.
 
-Extensions can be loaded via `--extensions-dir` or installed with [h2c-manager](maintainer/h2c-manager.md). See the [extension catalogue](catalogue.md) for available extensions.
+Extensions can be loaded via `--extensions-dir` or installed with [dekube-manager](maintainer/h2c-manager.md). See the [extension catalogue](catalogue.md) for available extensions.
 
 ### Longhorn
 

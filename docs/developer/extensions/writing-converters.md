@@ -1,6 +1,6 @@
 # Writing converters
 
-A converter is an extension that teaches h2c how to handle specific Kubernetes resource kinds. Each converter is a single `.py` file with a converter class.
+A converter is an extension that teaches dekube how to handle specific Kubernetes resource kinds. Each converter is a single `.py` file with a converter class.
 
 > *To name a thing is to summon it. To teach another its name is to bind your fate to what answers.*
 >
@@ -8,7 +8,7 @@ A converter is an extension that teaches h2c how to handle specific Kubernetes r
 
 If your converter targets CRD kinds (replacing a K8s controller), see [Writing providers](writing-providers.md) for additional patterns (synthetic resources, network alias registration, cross-converter dependencies). For Ingress-specific reverse proxy backends, see [Writing ingress providers](writing-ingressproviders.md).
 
-Note: the distinction between converters (`h2c-converter-*`) and providers (`h2c-provider-*`) is enforced — `Provider` is a base class in `h2c.pacts.types`. Providers produce compose services; converters produce synthetic resources. Both use typed return contracts (`ConverterResult` / `ProviderResult`), but subclassing `Provider` signals your intent to the framework.
+Note: the distinction between converters (`dekube-converter-*`) and providers (`dekube-provider-*`) is enforced — `Provider` is a base class in `dekube.pacts.types`. Providers produce compose services; converters produce synthetic resources. Both use typed return contracts (`ConverterResult` / `ProviderResult`), but subclassing `Provider` signals your intent to the framework.
 
 !!! warning "Services from non-Provider converters are discarded"
     The dispatch loop ignores `services` returned by converters that don't subclass `Provider`. If your converter produces compose services, subclass `Provider` and return `ProviderResult`. Non-provider converters should return `ConverterResult` (which has no `services` field). The typed contracts enforce this at the API level.
@@ -17,11 +17,11 @@ Note: the distinction between converters (`h2c-converter-*`) and providers (`h2c
 
 A converter class must have:
 
-1. **`kinds`** — a list of K8s kinds to handle (e.g. `["Keycloak", "KeycloakRealmImport"]`). **Kinds are exclusive between extensions** — if two extensions claim the same kind, h2c exits with an error. An extension *can* override a built-in converter by claiming the same kind — the built-in is silently removed from the dispatch for that kind. Yes, this means you can replace how h2c handles Secrets, or Deployments. Why you would corrupt the already corrupted is between you and Yog Sa'rath. (For Ingress annotation handling, use an [ingress rewriter](writing-rewriters.md) instead — converters handle the kind dispatch, rewriters handle the annotation translation.)
+1. **`kinds`** — a list of K8s kinds to handle (e.g. `["Keycloak", "KeycloakRealmImport"]`). **Kinds are exclusive between extensions** — if two extensions claim the same kind, dekube exits with an error. An extension *can* override a built-in converter by claiming the same kind — the built-in is silently removed from the dispatch for that kind. Yes, this means you can replace how dekube handles Secrets, or Deployments. Why you would corrupt the already corrupted is between you and Yog Sa'rath. (For Ingress annotation handling, use an [ingress rewriter](writing-rewriters.md) instead — converters handle the kind dispatch, rewriters handle the annotation translation.)
 2. **`convert(kind, manifests, ctx)`** — called once per kind, returns a `ConvertResult`
 
 ```python
-from h2c import ProviderResult, Provider
+from dekube import ProviderResult, Provider
 
 class MyConverter(Provider):
     kinds = ["MyCustomResource"]
@@ -67,7 +67,7 @@ The conversion context passed to every converter. Key attributes:
 | `ctx.replacements` | `list[dict]` | User-defined string replacements |
 | `ctx.alias_map` | `dict` | Service alias map (K8s Service name -> workload name) |
 | `ctx.service_port_map` | `dict` | Service port map ((svc_name, port) -> container_port) |
-| `ctx.fix_permissions` | `dict[str, int]` | Legacy field (kept for backwards compatibility). The built-in [fix-permissions](https://github.com/helmfile2compose/h2c-transform-fix-permissions) transform now handles permission fixing by scanning K8s manifests and final compose volumes directly. |
+| `ctx.fix_permissions` | `dict[str, int]` | Legacy field (kept for backwards compatibility). The built-in [fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) transform now handles permission fixing by scanning K8s manifests and final compose volumes directly. |
 | `ctx.services_by_selector` | `dict` | Index of K8s Services by name. Each entry has `name`, `namespace`, `selector`, `type`, `ports`. Used to resolve Services to compose names, generate network aliases, and build port maps. **Writable** — converters should register runtime-created Services here. |
 | `ctx.pvc_names` | `set[str]` | Names of PersistentVolumeClaims discovered in manifests. Used to distinguish PVC mounts from other volume types during conversion. |
 | `ctx.extension_config` | `dict` | Per-converter config section from `helmfile2compose.yaml`. Set automatically before each `convert()` call, keyed by the converter's `name` attribute (e.g. `caddy` → `extensions.caddy` in config). Empty dict if not configured. |

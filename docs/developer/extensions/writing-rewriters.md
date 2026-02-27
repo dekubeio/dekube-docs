@@ -16,7 +16,7 @@ A rewriter class must have:
 4. **`priority`** *(optional)* — integer, default `1000`. Lower = checked earlier. External rewriters are always checked before built-in ones, regardless of priority. Priority only orders rewriters within the same pool (external or built-in).
 
 ```python
-from h2c import IngressRewriter, get_ingress_class, resolve_backend
+from dekube import IngressRewriter, get_ingress_class, resolve_backend
 
 class NginxRewriter(IngressRewriter):
     name = "nginx"
@@ -104,7 +104,7 @@ ingress_types:
 
 The mapping is applied before rewriter dispatch — rewriters see the canonical name. Without it, custom class names won't match any rewriter and the Ingress is skipped with a warning.
 
-Inside your rewriter, use `get_ingress_class(manifest, ctx.config.get("ingress_types") or {})` to get the resolved class name. Both `get_ingress_class` and `resolve_backend` are part of the public interface — import them from `h2c`.
+Inside your rewriter, use `get_ingress_class(manifest, ctx.config.get("ingress_types") or {})` to get the resolved class name. Both `get_ingress_class` and `resolve_backend` are part of the public interface — import them from `dekube`.
 
 For building a complete reverse proxy backend (not just an annotation translator), see [Writing ingress providers](writing-ingressproviders.md).
 
@@ -112,7 +112,7 @@ For building a complete reverse proxy backend (not just an annotation translator
 
 An external rewriter with the same `name` as a built-in one replaces it entirely. For example, a custom `HAProxyRewriter` with `name = "haproxy"` would replace the built-in HAProxy handling.
 
-When an override occurs, h2c prints:
+When an override occurs, dekube prints:
 
 ```
 Rewriter overrides built-in: haproxy

@@ -22,11 +22,11 @@ git pull
 docker compose up -d
 ```
 
-Or if your project uses [h2c-manager](../maintainer/h2c-manager.md) directly (the package manager that downloads and runs helmfile2compose):
+Or if your project uses [dekube-manager](../maintainer/h2c-manager.md) directly (the package manager that downloads and runs helmfile2compose):
 
 ```bash
 git pull
-python3 h2c-manager.py run -e compose
+python3 dekube-manager.py run -e compose
 docker compose up -d
 ```
 

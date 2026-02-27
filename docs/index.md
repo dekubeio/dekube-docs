@@ -29,13 +29,13 @@ When the cursed lands fight back
 - **[Your project](maintainer/your-project.md)** — installation, first run, adapting helmfile2compose for your own helmfile
 - **[Configuration](maintainer/configuration.md)** — `helmfile2compose.yaml` deep dive: volumes, overrides, secrets, replacements
 - **[Known workarounds](maintainer/known-workarounds/index.md)** — sushi recipes for the tentacles that don't fit
-- **[h2c-manager](maintainer/h2c-manager.md)** — installing helmfile2compose and extensions via the package manager
+- **[dekube-manager](maintainer/h2c-manager.md)** — installing helmfile2compose and extensions via the package manager
 
 ### For developers
 
 - **[Concepts](developer/concepts.md)** — design philosophy, emulation boundary, K8s vs Compose differences
 - **[Architecture](developer/architecture.md)** — converter pipeline, what gets converted, dispatch loop
-- **[h2c-core](developer/h2c-core.md)** — the bare engine: package structure, three layers, pacts API (the stable public contracts for extensions)
+- **[dekube-engine](developer/h2c-core.md)** — the bare engine: package structure, three layers, pacts API (the stable public contracts for extensions)
 - **[Distributions](developer/distributions.md)** — what a distribution is, how to build one, `_auto_register()`
 - **[Build system](developer/build-system.md)** — concatenation, import stripping, `sys.modules` hack
 - **[Code quality](developer/code-quality.md)** — linter scores, complexity metrics, existential dread
@@ -75,13 +75,13 @@ More details, ramblings, and a thorough post-mortem on the [about page](about.md
 
 | Repo | What it is |
 |------|------------|
-| [kubernetes2simple](https://github.com/helmfile2compose/kubernetes2simple) | Turnkey distribution — helmfile2compose + all extensions + automagic bootstrap script. |
-| [h2c-core](https://github.com/helmfile2compose/h2c-core) | Bare conversion engine — empty registries, no opinions. Produces `h2c.py`. |
-| [helmfile2compose](https://github.com/helmfile2compose/helmfile2compose) | The distribution — core + 8 bundled extensions → single `helmfile2compose.py`. |
-| [h2c-manager](https://github.com/helmfile2compose/h2c-manager) | Package manager — downloads distribution + extensions, resolves dependencies. |
+| [kubernetes2simple](https://github.com/dekubeio/kubernetes2simple) | Turnkey distribution — helmfile2compose + all extensions + automagic bootstrap script. |
+| [dekube-engine](https://github.com/dekubeio/dekube-engine) | Bare conversion engine — empty registries, no opinions. Produces `dekube.py`. |
+| [helmfile2compose](https://github.com/dekubeio/helmfile2compose) | The distribution — core + 8 bundled extensions → single `helmfile2compose.py`. |
+| [dekube-manager](https://github.com/dekubeio/dekube-manager) | Package manager — downloads distribution + extensions, resolves dependencies. |
 | [Extensions](catalogue.md) | Single-file modules: providers, converters, transforms, rewriters. |
-| [h2c-testsuite](https://github.com/helmfile2compose/h2c-testsuite) | Regression suite + torture generator. |
-| [helmfile2compose.github.io](https://github.com/helmfile2compose/helmfile2compose.github.io) | This documentation site. |
+| [dekube-testsuite](https://github.com/dekubeio/dekube-testsuite) | Regression suite + torture generator. |
+| [dekube-docs](https://github.com/dekubeio/dekube-docs) | This documentation site. |
 
 ## License
 

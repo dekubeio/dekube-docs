@@ -17,22 +17,22 @@ Quick reference for terms used across this documentation. If a word sounds like 
 :   The process of routing each K8s manifest to the converter (or provider, or indexer) that handles its `kind`. Converters are sorted by *priority* (lower = earlier) and each manifest is handed to the first converter that claims its kind. "Dispatch loop" = the core engine iterating over all manifests and calling the appropriate `convert()` method.
 
 **distribution**
-:   A packaged combination of *h2c-core* + a set of bundled extensions, concatenated into a single `.py` file. The default distribution is `helmfile2compose` (core + the *Eight Monks*). `kubernetes2simple` is a stacked distribution (helmfile2compose + all official extensions). Think of it like a K8s distribution (k3s, EKS) vs the bare apiserver.
+:   A packaged combination of *dekube-engine* + a set of bundled extensions, concatenated into a single `.py` file. The default distribution is `helmfile2compose` (core + the *Eight Monks*). `kubernetes2simple` is a stacked distribution (helmfile2compose + all official extensions). Think of it like a K8s distribution (k3s, EKS) vs the bare apiserver.
 
 **emulation boundary**
 :   The line between what h2c can convert and what it cannot. *Tier 1* (flattened): K8s declarations materialized as compose equivalents. *Tier 2* (ignored): operational K8s features that don't affect app behavior (RBAC, HPA, NetworkPolicies). *Tier 3* (the wall): anything that requires a live kube-apiserver at runtime — now breachable via the [fake-apiserver](catalogue.md#fake-apiserver) extension, which we do not endorse, recommend, or acknowledge. See [Concepts](developer/concepts.md#the-emulation-boundary).
 
 **extension**
-:   A single-file Python module (`.py`) that plugs into h2c-core's contracts. Can be a *converter*, *provider*, *indexer*, *transform*, *rewriter*, or *ingress provider*. Installed via `--extensions-dir` or through *h2c-manager*. Each extension is also a GitHub repo for distribution purposes.
+:   A single-file Python module (`.py`) that plugs into dekube-engine's contracts. Can be a *converter*, *provider*, *indexer*, *transform*, *rewriter*, or *ingress provider*. Installed via `--extensions-dir` or through *dekube-manager*. Each extension is also a GitHub repo for distribution purposes.
 
 **FQDN** (Fully Qualified Domain Name)
 :   The complete DNS name of a K8s service: `service.namespace.svc.cluster.local`. helmfile2compose preserves these as Docker Compose network aliases so that certificates, Prometheus targets, and hardcoded URLs continue to work without rewriting.
 
-**h2c-core**
-:   The bare conversion engine — pipeline, extension loader, CLI, empty registries. Converts nothing on its own. Users never interact with it directly; they use a *distribution*. Extension developers and distribution builders work with h2c-core. Produces `h2c.py`.
+**dekube-engine**
+:   The bare conversion engine — pipeline, extension loader, CLI, empty registries. Converts nothing on its own. Users never interact with it directly; they use a *distribution*. Extension developers and distribution builders work with dekube-engine. Produces `dekube.py`.
 
 **helmfile2compose**
-:   Two things depending on context: (1) the GitHub org and overall project name, (2) the default *distribution* — h2c-core + the *Eight Monks*, assembled into `helmfile2compose.py`. When the docs say "helmfile2compose" without qualifier, they usually mean the distribution.
+:   The default *distribution* — dekube-engine + the *Eight Monks*, assembled into `helmfile2compose.py`. The ecosystem is called [dekube](https://dekube.io); "helmfile2compose" specifically refers to this distribution.
 
 **indexer** (IndexerConverter)
 :   A converter subtype that populates `ConvertContext` lookups (e.g. `ctx.configmaps`, `ctx.secrets`, `ctx.services`) without producing any output. Indexers run first (default priority 50) so that later converters and providers can resolve references. The four bundled indexers handle ConfigMap, Secret, PVC, and Service.
@@ -53,7 +53,7 @@ Quick reference for terms used across this documentation. If a word sounds like 
 :   A DNS name that Docker Compose registers for a service on its network. helmfile2compose adds K8s FQDN variants as aliases so that services can reach each other using the same DNS names they used in Kubernetes.
 
 **pacts**
-:   The stable public API that extensions import from h2c-core (`from h2c import ...`). Located in `src/h2c/pacts/`. Includes `ConvertContext`, `ConverterResult`, `ProviderResult`, base classes, and helper functions. Guaranteed stable across minor versions. The Lovecraftian name reflects the project's tone — "pacts" = "contracts."
+:   The stable public API that extensions import from dekube-engine (`from dekube import ...`). Located in `src/dekube/pacts/`. Includes `ConvertContext`, `ConverterResult`, `ProviderResult`, base classes, and helper functions. Guaranteed stable across minor versions. The Lovecraftian name reflects the project's tone — "pacts" = "contracts."
 
 **provider**
 :   A converter subtype that produces compose services (and possibly synthetic resources). Subclasses `Provider` (default priority 500). Example: the Keycloak provider reads `Keycloak` CRDs and produces a compose service with the right env vars. See also: *converter*, *indexer*.

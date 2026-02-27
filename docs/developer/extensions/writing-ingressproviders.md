@@ -8,7 +8,7 @@ An ingress provider is the abstract base for reverse proxy backends. Subclasses 
 
 ## What it is
 
-`IngressProvider` is an abstract class (subclass of `Provider`) that handles the entire Ingress conversion lifecycle. It lives in `h2c.core.ingress` internally, but extensions should import it from the pacts API:
+`IngressProvider` is an abstract class (subclass of `Provider`) that handles the entire Ingress conversion lifecycle. It lives in `dekube.core.ingress` internally, but extensions should import it from the pacts API:
 
 1. Receives all `Ingress` manifests (via `convert()`)
 2. Dispatches each manifest to the first matching `IngressRewriter` (via `_find_rewriter()`)
@@ -17,7 +17,7 @@ An ingress provider is the abstract base for reverse proxy backends. Subclasses 
 5. Calls `write_config(entries, output_dir, config)` to write the proxy config file
 
 ```python
-from h2c import IngressProvider
+from dekube import IngressProvider
 ```
 
 ## Base class attributes
@@ -79,10 +79,10 @@ Each Ingress manifest is matched against loaded `IngressRewriter` classes. The r
 
 ## Reference: CaddyProvider
 
-The built-in `CaddyProvider` (in [h2c-provider-caddy](https://github.com/helmfile2compose/h2c-provider-caddy)) is the reference implementation:
+The built-in `CaddyProvider` (in [dekube-provider-caddy](https://github.com/dekubeio/dekube-provider-caddy)) is the reference implementation:
 
 ```python
-from h2c import IngressProvider
+from dekube import IngressProvider
 
 class CaddyProvider(IngressProvider):
     name = "caddy"

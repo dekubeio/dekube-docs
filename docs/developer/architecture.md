@@ -9,14 +9,14 @@ Helm charts (helmfile / helm / kustomize)
     |  helmfile template / helm template / kustomize build
     v
 K8s manifests (Deployments, Services, ConfigMaps, Secrets, Ingress...)
-    |  helmfile2compose.py (distribution) / h2c.py (bare core)
+    |  helmfile2compose.py (distribution) / dekube.py (bare core)
     v
 compose.yml + Caddyfile + configmaps/ + secrets/
 ```
 
 A dedicated helmfile environment (e.g. `compose`) typically disables K8s-only infrastructure (cert-manager, ingress controller, reflector) and adjusts defaults for compose.
 
-For the internal package structure, module layout, and build system, see [h2c-core](h2c-core.md).
+For the internal package structure, module layout, and build system, see [dekube-engine](dekube-engine.md).
 
 ## Converter dispatch
 
@@ -34,24 +34,24 @@ compose.yml + Caddyfile
 
 ### The Eight Monks (distribution)
 
-The bare h2c-core has **no** built-in converters — all registries are empty. The [helmfile2compose](https://github.com/helmfile2compose/helmfile2compose) distribution bundles 8 bundled extensions via `_auto_register()`:
+The bare dekube-engine has **no** built-in converters — all registries are empty. The [helmfile2compose](https://github.com/dekubeio/helmfile2compose) distribution bundles 8 bundled extensions via `_auto_register()`:
 
-- **`ConfigMapIndexer`** / **`SecretIndexer`** / **`PvcIndexer`** / **`ServiceIndexer`** — index resources into `ctx` ([h2c-indexer-*](https://github.com/helmfile2compose))
-- **`SimpleWorkloadProvider`** — kinds: DaemonSet, Deployment, Job, StatefulSet ([h2c-provider-simple-workload](https://github.com/helmfile2compose/h2c-provider-simple-workload))
-- **`HAProxyRewriter`** — built-in ingress rewriter, haproxy + default fallback ([h2c-rewriter-haproxy](https://github.com/helmfile2compose/h2c-rewriter-haproxy))
-- **`CaddyProvider`** — IngressProvider, produces a Caddy service + Caddyfile ([h2c-provider-caddy](https://github.com/helmfile2compose/h2c-provider-caddy))
-- **`FixPermissions`** — transform, generates fix-permissions service for non-root bind mounts ([h2c-transform-fix-permissions](https://github.com/helmfile2compose/h2c-transform-fix-permissions))
+- **`ConfigMapIndexer`** / **`SecretIndexer`** / **`PvcIndexer`** / **`ServiceIndexer`** — index resources into `ctx` ([dekube-indexer-*](https://github.com/dekubeio))
+- **`SimpleWorkloadProvider`** — kinds: DaemonSet, Deployment, Job, StatefulSet ([dekube-provider-simple-workload](https://github.com/dekubeio/dekube-provider-simple-workload))
+- **`HAProxyRewriter`** — built-in ingress rewriter, haproxy + default fallback ([dekube-rewriter-haproxy](https://github.com/dekubeio/dekube-rewriter-haproxy))
+- **`CaddyProvider`** — IngressProvider, produces a Caddy service + Caddyfile ([dekube-provider-caddy](https://github.com/dekubeio/dekube-provider-caddy))
+- **`FixPermissions`** — transform, generates fix-permissions service for non-root bind mounts ([dekube-transform-fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions))
 
-Each lives in its own repo, referenced in `distribution.json`. The distribution assembles them at build time via h2c-manager.
+Each lives in its own repo, referenced in `distribution.json`. The distribution assembles them at build time via dekube-manager.
 
 ### External extensions (providers and converters)
 
 Loaded via `--extensions-dir`. Each `.py` file (or one-level subdirectory with `.py` files) is scanned for classes with `kinds` and `convert()`. Providers (keycloak, servicemonitor) produce compose services; converters (cert-manager, trust-manager) produce synthetic resources. Both share the same code interface and are sorted by `priority` (lower = earlier, default 100) and registered into the dispatch loop.
 
 ```
-.h2c/extensions/
+.dekube/extensions/
 ├── keycloak.py                        # flat file
-├── h2c-converter-cert-manager/         # cloned repo
+├── dekube-converter-cert-manager/      # cloned repo
 │   ├── cert_manager.py                # converter class
 │   └── requirements.txt
 ```
@@ -86,7 +86,7 @@ See [Writing rewriters](extensions/writing-rewriters.md) for the full guide.
 | Service (NodePort / LoadBalancer) | `ports:` mapping |
 | Ingress | Caddy service + Caddyfile `reverse_proxy` blocks, dispatched to ingress rewriters by `ingressClassName`. Path-rewrite annotations -> `uri strip_prefix`. Backend SSL -> Caddy TLS transport. Rewriters can inject `extra_directives` for rate-limit, auth, headers, etc. |
 | PVC / volumeClaimTemplates | Host-path bind mounts (auto-registered in `helmfile2compose.yaml` on first run only) |
-| securityContext (runAsUser) | Auto-generated `fix-permissions` service (`chown -R <uid>`) for non-root bind mounts (via the [fix-permissions](https://github.com/helmfile2compose/h2c-transform-fix-permissions) transform) |
+| securityContext (runAsUser) | Auto-generated `fix-permissions` service (`chown -R <uid>`) for non-root bind mounts (via the [fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) transform) |
 
 ### Not converted (warning emitted)
 
@@ -132,7 +132,7 @@ These happen transparently during conversion:
 
 The helmfile2compose distribution targets a single Docker host — bind mounts, no replicas, Caddy as a standalone reverse proxy, fix-permissions assuming a local filesystem. This is a distribution choice, not an engine limitation.
 
-h2c-core produces a service dict and dumps it as YAML — it doesn't validate or restrict what keys extensions put in. A provider can write `deploy.replicas`, `deploy.placement`, or any other section, and it will pass through to the output unchanged. The contracts (`Converter`, `Provider`, `IngressRewriter`, `ConvertContext`) have nothing mono-host-specific.
+dekube-engine produces a service dict and dumps it as YAML — it doesn't validate or restrict what keys extensions put in. A provider can write `deploy.replicas`, `deploy.placement`, or any other section, and it will pass through to the output unchanged. The contracts (`Converter`, `Provider`, `IngressRewriter`, `ConvertContext`) have nothing mono-host-specific.
 
 The format situation is unclear. Swarm and Compose both use YAML files with the same `deploy:` key for replicas, placement, and rolling updates — but they don't use the same spec. The [Swarm docs](https://docs.docker.com/reference/cli/docker/stack/deploy/) say `docker stack deploy` uses the legacy Compose v3 format and that the current Compose Specification "isn't compatible". The [Compose Deploy Specification](https://docs.docker.com/reference/compose-file/deploy/) documents `deploy:` as part of the current spec, supported by `docker compose`. Two pages, same domain, easy to misread. [Docker's own docs AI](https://docs.docker.com/) confirmed: Swarm is stuck on legacy v3. Docker backported Swarm's `deploy:` key into the Compose Specification without upgrading Swarm to support the Compose Specification — so the key exists in both formats, but the surrounding spec diverged. Swarm still wants `version: "3.x"` in the header; the Compose Spec dropped the `version:` field entirely. A Swarm distribution would need to produce Compose v3. A Swarm-oriented distribution would need different monks:
 
@@ -146,7 +146,7 @@ The format situation is unclear. Swarm and Compose both use YAML files with the 
 
 The core engine, indexers, and most transforms would carry over unchanged. The providers and the ingress stack are where the opinions live.
 
-Whether this is a good idea is a separate question. Swarm runs on a spec its own maintainers deprecated without ever upgrading — a format whose future is unclear at best, powering a proclaimed production-grade orchestrator. If you need multi-node scheduling, service mesh, and rolling updates, you already have Kubernetes. The case for helmfile2compose is clear: run the same apps on a single machine without the cluster overhead. The case for writing h2c extensions for Swarm is murkier — you'd be converting from one orchestrator to a less capable one. But the engine will not judge (it just reads YAML manifests, it produces a `.yml`). I — having built this abomination, pot, kettle, yadda — will.
+Whether this is a good idea is a separate question. Swarm runs on a spec its own maintainers deprecated without ever upgrading — a format whose future is unclear at best, powering a proclaimed production-grade orchestrator. If you need multi-node scheduling, service mesh, and rolling updates, you already have Kubernetes. The case for helmfile2compose is clear: run the same apps on a single machine without the cluster overhead. The case for writing dekube extensions for Swarm is murkier — you'd be converting from one orchestrator to a less capable one. But the engine will not judge (it just reads YAML manifests, it produces a `.yml`). I — having built this abomination, pot, kettle, yadda — will.
 
 ## Docker/Compose gotchas
 

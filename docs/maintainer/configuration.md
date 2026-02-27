@@ -174,7 +174,7 @@ Previously `caddy_tls_internal` (top-level). Migrated automatically on first run
 
 ### `distribution_version`
 
-Pin the distribution version for [h2c-manager](h2c-manager.md). Ignored by helmfile2compose itself.
+Pin the distribution version for [dekube-manager](h2c-manager.md). Ignored by helmfile2compose itself.
 
 ```yaml
 distribution_version: v3.1.0
@@ -184,7 +184,7 @@ distribution_version: v3.1.0
 
 ### `distribution`
 
-Select which distribution h2c-manager installs. Default: `helmfile2compose`. Use `core` for the bare engine (`h2c.py`).
+Select which distribution dekube-manager installs. Default: `helmfile2compose`. Use `core` for the bare engine (`dekube.py`).
 
 ```yaml
 distribution: helmfile2compose
@@ -192,7 +192,7 @@ distribution: helmfile2compose
 
 ### `depends`
 
-List of [h2c extensions](../catalogue.md) required by this project. h2c-manager reads this list and installs them automatically.
+List of [dekube extensions](../catalogue.md) required by this project. dekube-manager reads this list and installs them automatically.
 
 ```yaml
 depends:
@@ -203,7 +203,7 @@ depends:
 
 Bare names pull the latest release. Pin with `==version` for reproducibility (recommended — see [Your project](your-project.md#recommended-workflow)).
 
-See [h2c-manager — declarative dependencies](h2c-manager.md#declarative-dependencies) for override behavior and details.
+See [dekube-manager — declarative dependencies](h2c-manager.md#declarative-dependencies) for override behavior and details.
 
 ### `ingress_types`
 

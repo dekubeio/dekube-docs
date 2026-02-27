@@ -1,8 +1,8 @@
 site_name: helmfile2compose
-site_url: https://helmfile2compose.github.io/
+site_url: https://docs.dekube.io/
 site_description: Convert Kubernetes manifests to compose.yml + Caddyfile. Sanity may or may not be included.
-repo_url: https://github.com/helmfile2compose/helmfile2compose
-repo_name: helmfile2compose/helmfile2compose
+repo_url: https://github.com/dekubeio/helmfile2compose
+repo_name: dekubeio/helmfile2compose
 
 
 theme:
@@ -41,11 +41,11 @@ nav:
           - Overview: maintainer/known-workarounds/index.md
           - Common charts: maintainer/known-workarounds/common-charts.md
           - kube-prometheus-stack: maintainer/known-workarounds/kube-prometheus-stack.md
-      - h2c-manager: maintainer/h2c-manager.md
+      - dekube-manager: maintainer/h2c-manager.md
   - Developer guide:
       - Concepts: developer/concepts.md
       - Architecture: developer/architecture.md
-      - h2c-core: developer/h2c-core.md
+      - dekube-engine: developer/h2c-core.md
       - Code quality: developer/code-quality.md
       - Testing: developer/testing.md
       - Writing extensions:
