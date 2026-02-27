@@ -1,6 +1,6 @@
 # Extensions
 
-Extensions are external modules that extend helmfile2compose beyond its built-in capabilities. Install them via [dekube-manager](https://helmfile2compose.dekube.io/docs/dekube-manager/) or manually with `--extensions-dir`.
+Extensions are external modules that extend helmfile2compose beyond its built-in capabilities. Install them via [dekube-manager](https://manager.dekube.io/docs/) or manually with `--extensions-dir`.
 
 CRDs are K8s entities that don't speak compose — exiles from a world with controllers and reconciliation loops. The extension system is the immigration office: each converter forges the documents that the K8s controller would have produced at runtime. The forgery is disturbingly convincing.
 
@@ -40,7 +40,7 @@ The four indexers populate `ConvertContext` lookups so that later stages can res
 
 ## Providers
 
-Providers produce compose services — they emulate what a K8s controller would have created as running workloads. Install them via [dekube-manager](https://helmfile2compose.dekube.io/docs/dekube-manager/).
+Providers produce compose services — they emulate what a K8s controller would have created as running workloads. Install them via [dekube-manager](https://manager.dekube.io/docs/).
 
 ### keycloak
 

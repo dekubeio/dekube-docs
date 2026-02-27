@@ -83,7 +83,7 @@ Loaded rewriters: NginxRewriter (nginx)
 
 ## Repo structure
 
-For distribution via [dekube-manager](https://helmfile2compose.dekube.io/docs/dekube-manager/), each extension is a GitHub repo with:
+For distribution via [dekube-manager](https://manager.dekube.io/docs/), each extension is a GitHub repo with:
 
 ```
 dekube-{type}-{name}/

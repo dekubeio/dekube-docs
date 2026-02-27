@@ -119,7 +119,7 @@ Not converted. A CronJob would need an external scheduler or a `sleep`-loop wrap
 
 Operator-managed resources (`Keycloak`, `KeycloakRealmImport`, Zalando `postgresql`, Strimzi `Kafka`, etc.) are skipped with a warning unless a loaded [extension](catalogue.md) handles them.
 
-Extensions can be loaded via `--extensions-dir` or installed with [dekube-manager](https://helmfile2compose.dekube.io/docs/dekube-manager/). See the [extension catalogue](catalogue.md) for available extensions.
+Extensions can be loaded via `--extensions-dir` or installed with [dekube-manager](https://manager.dekube.io/docs/). See the [extension catalogue](catalogue.md) for available extensions.
 
 ### Longhorn
 
