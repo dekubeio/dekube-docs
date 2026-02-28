@@ -128,7 +128,7 @@ In different fashion, their own docs [appear to contradict each other](understan
 
 </details>
 
-I alone — with the help of an unsuspecting yet remarkably capable Claude agent — produced a documentation site more thorough than many funded open source projects ever ship. Windows Server has existed for decades and its documentation still can't decide whether IIS is a feature or a punishment. Node.js has 47,000 contributors and the `fs` module docs still don't explain when to use streams.
+I alone — with the help of an unsuspecting yet remarkably capable Claude agent — produced a documentation site more thorough than many funded open source projects ever ship. Windows Server has existed for decades and its documentation still can't decide whether IIS is a feature or a punishment. Node.js has 47,000 contributors and the `fs` module docs still don't explain when to use streams. And [Kompose](https://kompose.io/) — the Kubernetes SIG project that does the exact opposite of dekube (Compose → K8s) — ships five pages of documentation, an architecture guide that shows three Go interfaces and stops, and a [development guide](https://github.com/kubernetes/kompose/blob/main/docs/development.md) that teaches you how to fork a repo and run `git push`. A CNCF project. With maintainers. Whose contribution guide is a git tutorial.
 
 ### The point
 
