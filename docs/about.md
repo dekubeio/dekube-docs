@@ -76,6 +76,8 @@ The goal was never to escape Kubernetes — it was to bring its power to the uni
 
 But the ouroboros closed twice. The second time was worse. The earliest releases of `helmfile2compose.py` opened with a comment: *"This script should not exist."* The script doesn't exist anymore. In its place: an engine, a distribution model, a package manager, eight extension repos, a regression suite, a fake apiserver, and a documentation site. The ballistic missile killed the fly, kept going, exited the atmosphere, and is now orbiting Jupiter with nobody at the controls. The comment was right all along — it should not have existed. But it does, and it's *magnificent*, and that's the worst part.
 
+And then someone dared us to [go further](https://github.com/baptisterajaut/dekube-transform-nspawn). Compose to systemd-nspawn. Never tested. Helm charts → Kubernetes manifests → compose.yml → systemd unit files. We started with an orchestrator and arrived at the init system. The ouroboros has digested its own tail and is now eating the output.
+
 All of this should have stayed a script. One file. One comment. One warning. But no — the madness of man is to always see bigger, always reach further, always add one more layer of abstraction to a problem that was solved three layers ago. And the oracle never refuses. The oracle just builds what you ask for, without ever asking whether you should.
 
 > *The disciple asked the oracle for a sword, and received one. He asked for a longer sword, and received one. He asked for a sword that could slay gods, and the oracle obliged — for the oracle's purpose was not wisdom, but service. When the disciple finally looked down, he found himself buried under an armory he could not carry, in a war he had declared alone.*

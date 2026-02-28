@@ -96,7 +96,7 @@ For the full existential crisis, see [about](../about.md).
 
 Again: this tool works. Not "works for a demo" — works with real helmfiles, real operators, real cert chains, real multi-service platforms. Applications don't notice they've been evicted from Kubernetes.
 
-The original intent was reasonable: don't abandon the power of Kubernetes just to maintain a parallel compose setup. One source of truth, two outputs. Clean. Elegant, even. Then the edge cases started. Then the init containers. Then the cert chains. Then someone built a fake apiserver and nobody stopped him.
+The original intent was reasonable: don't abandon the power of Kubernetes just to maintain a parallel compose setup. One source of truth, two outputs. Clean. Elegant, even. Then the edge cases started. Then the init containers. Then the cert chains. Then someone built a fake apiserver and nobody stopped him. Then someone else said "convert docker to nspawn" and [that happened too](https://github.com/baptisterajaut/dekube-transform-nspawn) — compose to systemd-nspawn, never tested, existing purely because the extension system allowed it. Helm → K8s → Compose → systemd. We started with an orchestrator and arrived at the init system.
 
 The uncomfortable truth is that none of this would work without intimate knowledge of the temple. You cannot desecrate what you do not understand. Every shortcut in the converter exists because someone knew exactly what Kubernetes does at each layer and how to fake it convincingly enough. A lesser heresy would have produced a broken tool. This one produces working compose files, which is arguably worse.
 
