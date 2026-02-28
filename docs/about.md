@@ -4,6 +4,8 @@ Architect here. This project is an aberration. I am unreasonably proud of it.
 
 Fourteen days to reinvent the world. Then a fifteenth to look at it, realise it needed a name, and spend an entire week planning a rebrand — designing four static sites, writing design documents, debating tone, and ultimately purchasing an overpriced `.io` domain for a project that converts Kubernetes manifests into docker-compose files. A domain that costs more per year than the project has dependencies.
 
+Of course, the better name — **dekompose** — only came to mind *after* the rebrand was complete. de-K(ubernetes) + compose, the lexical inverse of [Kompose](https://kompose.io/), and "decompose" as a double meaning. Also already taken, more or less. Madness never arrives on schedule.
+
 > *The architect looked upon the temple he had raised from forbidden clay, and saw that it stood — against doctrine, against reason, against every expectation of those who knew what the clay was made of. He wept. Not from shame. From the specific, terrible joy of having built something that should not work, and watching it work anyway.*
 >
 > — *Necronomicon, On Forbidden Craftsmanship (for the record)*
