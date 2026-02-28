@@ -201,7 +201,7 @@ No functional changes. Output identical to v2.3.1 — the [executioner](extend/t
     - Named port resolution fallback to well-known port table
     - Also released: `h2c-transform-bitnami` (auto-workarounds for Bitnami charts)
 
-Three bugs found in one session by pointing h2c at [mijn-bureau-infra](https://github.com/numerique-gouv/mijn-bureau-infra) — 16 Helm charts, nested helmfiles, and a generous sprinkling of Bitnami.
+Three bugs found in one session by pointing h2c at [mijn-bureau-infra](https://github.com/MinBZK/mijn-bureau-infra) — 16 Helm charts, nested helmfiles, and a generous sprinkling of Bitnami.
 
 **Nested helmfiles.** `helmfile template --output-dir` with nested `helmfiles:` directives creates per-child `.helmfile-rendered` directories instead of consolidating into the target. h2c now detects and merges them after rendering. Without this fix, nested helmfile projects produce an empty manifest set — the script reads an empty directory and politely generates nothing.
 
