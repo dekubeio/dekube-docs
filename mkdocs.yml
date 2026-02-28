@@ -1,6 +1,6 @@
 site_name: dekube
 site_url: https://docs.dekube.io/
-site_description: "Generate compose.yml from your Kubernetes manifests. One source of truth, no second stack to maintain."
+site_description: "Generate compose.yml from your Kubernetes manifests. Same charts, same values, no second stack to maintain."
 repo_url: https://github.com/dekubeio/dekube-engine
 repo_name: dekubeio/dekube-engine
 
@@ -49,10 +49,9 @@ nav:
           - Rewriters: extend/extensions/writing-rewriters.md
           - Ingress providers: extend/extensions/writing-ingressproviders.md
   - Extension catalogue: catalogue.md
-  - Troubleshooting: troubleshooting.md
+  - Pitfalls: pitfalls.md
   - Limitations: limitations.md
   - Roadmap: roadmap.md
-  - Journal: journal.md
   - About: about.md
 
 markdown_extensions:

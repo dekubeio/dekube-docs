@@ -12,8 +12,8 @@ For the mechanical reality of how the conversion works, see [Architecture](archi
 
 | Aspect | Kubernetes | Compose |
 |--------|-----------|---------|
-| Reverse proxy | Ingress controller (HAProxy, nginx, traefik) | Caddy (auto-TLS, path routing) |
-| TLS | cert-manager (selfsigned or Let's Encrypt) | Caddy (internal CA or Let's Encrypt) |
+| Reverse proxy | Ingress controller (HAProxy, nginx, traefik) | Pluggable `IngressProvider` (Caddy by default — auto-TLS, path routing) |
+| TLS | cert-manager (selfsigned or Let's Encrypt) | Depends on IngressProvider (Caddy: internal CA or Let's Encrypt) |
 | Service discovery | K8s DNS (`.svc.cluster.local`) | Compose DNS + network aliases (K8s FQDNs preserved), or short names via [`flatten-internal-urls`](../catalogue.md#flatten-internal-urls) |
 | Secrets | K8s Secrets (base64, RBAC-gated) | Inline env vars (plain text in compose.yml) |
 | Volumes | PVCs (dynamic provisioning) | Bind mounts or named volumes |
@@ -41,7 +41,7 @@ The four that remain unsolved without [extraordinary measures](../catalogue.md#f
 - **Live operators** — not the ones whose output we emulate (those are tier 1), but operators that need to *keep running* and observing the cluster. Reconciliation operators (ArgoCD, Flux, the Prometheus Operator's own reconciler) watch the apiserver and act on drift. Policy engines (Kyverno, Kubescape) enforce admission control and audit cluster state. These have no meaning outside a real cluster — there is no state to reconcile, no admissions to gate, no cluster to observe.
 
     !!! note
-        Some live operator behaviors can be worked around not by emulating them, but by choosing compose-native components that happen to cover the same need. ACME certificate renewal is a live operator concern in Kubernetes (cert-manager watches, requests, renews). In compose, Caddy handles ACME natively — the Caddy provider generates a Caddy service, and Caddy itself takes care of the rest. dekube doesn't implement ACME; the workaround is in the behavior of the final service, not in the conversion act.
+        Some live operator behaviors can be worked around not by emulating them, but by choosing compose-native components that happen to cover the same need. ACME certificate renewal is a live operator concern in Kubernetes (cert-manager watches, requests, renews). In compose, the reverse proxy itself can handle ACME natively — Caddy does this out of the box, for instance. dekube doesn't implement ACME; the workaround is in the behavior of the final reverse proxy, not in the conversion act.
 
 - **Runtime API consumers** — apps that call the kube-apiserver for service discovery (listing endpoints instead of using DNS), leader election (Lease objects), or dynamic configuration (watching ConfigMaps for live updates). These assume an apiserver exists and will talk to it. In compose, there is no apiserver — unless someone provides one.
 - **Downward API** — pod name, namespace, node name, labels injected as env vars or volume files. Some apps read these to identify themselves to peers or include in telemetry. Without a kubelet to populate them, they're empty or absent.
@@ -76,7 +76,7 @@ The cost: every compose service now bears the weight of its former K8s identity.
 
 The temple was desecrated. But the names — the names refused to die.
 
-There is, however, a way back. The [`flatten-internal-urls`](../catalogue.md#flatten-internal-urls) transform strips the aliases and rewrites FQDNs to short names — the original approach, revived as an opt-in post-processing step. It was built for nerdctl compatibility (nerdctl ignores aliases), but it also produces cleaner output for anyone who doesn't need FQDN preservation. The cost is real: certificates with FQDN SANs will break, Prometheus FQDN scrape targets will stop resolving. If you don't have inter-service TLS, you don't pay the cost. The old scribe's approach was not *wrong* — it was wrong as a default.
+There is, however, a way back. The [`flatten-internal-urls`](../catalogue.md#flatten-internal-urls) transform strips the aliases and rewrites FQDNs to short names — the original approach, revived as an opt-in post-processing step. The old scribe's approach was not *wrong* — it was wrong as a default. See [Limitations — Network aliases](../limitations.md#network-aliases-nerdctl) for the practical tradeoffs and workarounds.
 
 > *The scribe tore the names from the temple walls and carved simpler ones in their place. But the prayers failed — for the gods answer only to the names they were given at consecration. And so the scribe, humbled, carved the old names back, letter by letter, onto walls that were never meant to hold them.*
 >

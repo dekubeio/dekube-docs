@@ -66,9 +66,9 @@ The generated `compose.yml` contains your database passwords, your API keys, you
 
 ### TLS between services
 
-In Kubernetes, services can use mTLS (via service mesh or cert-manager) for internal communication. You had encryption between every pod. You had mutual authentication. You had a trust model. In compose, inter-service traffic is plain HTTP on the shared bridge network by default. Only the Caddy reverse proxy terminates TLS for external access.
+In Kubernetes, services can use mTLS (via service mesh or cert-manager) for internal communication. You had encryption between every pod. You had mutual authentication. You had a trust model. In compose, inter-service traffic is plain HTTP on the shared bridge network by default. Only the reverse proxy (provided by the `IngressProvider`) terminates TLS for external access.
 
-The [cert-manager extension](catalogue.md#cert-manager) can generate real certificates at conversion time, enabling TLS between services when needed. Caddy backend SSL annotations (`haproxy.org/server-ssl`, `nginx.ingress.kubernetes.io/backend-protocol: HTTPS`) are translated to Caddy TLS transport configuration.
+The [cert-manager extension](catalogue.md#cert-manager) can generate real certificates at conversion time, enabling TLS between services when needed. Backend SSL annotations (`haproxy.org/server-ssl`, `nginx.ingress.kubernetes.io/backend-protocol: HTTPS`) are translated to reverse proxy TLS transport configuration by the `IngressProvider`.
 
 ### Bind mount permissions (Linux / WSL)
 

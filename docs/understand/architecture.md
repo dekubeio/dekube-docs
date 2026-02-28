@@ -11,7 +11,7 @@ Helm charts (helmfile / helm / kustomize)
 K8s manifests (Deployments, Services, ConfigMaps, Secrets, Ingress...)
     |  helmfile2compose.py (distribution) / dekube.py (bare core)
     v
-compose.yml + Caddyfile + configmaps/ + secrets/
+compose.yml + reverse proxy config + configmaps/ + secrets/
 ```
 
 A dedicated helmfile environment (e.g. `compose`) typically disables K8s-only infrastructure (cert-manager, ingress controller, reflector) and adjusts defaults for compose.
@@ -29,7 +29,7 @@ K8s manifests
     | parse + classify by kind
     | dispatch to converters (built-in or external, same interface)
     v
-compose.yml + Caddyfile
+compose.yml + reverse proxy config
 ```
 
 ### The Eight Monks (distribution)
@@ -46,7 +46,7 @@ Each lives in its own repo, referenced in `distribution.json`. The distribution 
 
 ### External extensions (providers and converters)
 
-Loaded via `--extensions-dir`. Each `.py` file (or one-level subdirectory with `.py` files) is scanned for classes with `kinds` and `convert()`. Providers (keycloak, servicemonitor) produce compose services; converters (cert-manager, trust-manager) produce synthetic resources. Both share the same code interface and are sorted by `priority` (lower = earlier, default 100) and registered into the dispatch loop.
+Loaded via `--extensions-dir`. Each `.py` file (or one-level subdirectory with `.py` files) is scanned for classes with `kinds` and `convert()`. Providers (keycloak, servicemonitor) produce compose services; converters (cert-manager, trust-manager) produce synthetic resources. Both share the same code interface and are sorted by `priority` (lower = earlier; default 1000 for `Converter`, 50 for `IndexerConverter`, 500 for `Provider`) and registered into the dispatch loop.
 
 ```
 .dekube/extensions/
@@ -60,7 +60,7 @@ See [Writing converters](../extend/extensions/writing-converters.md) for the ful
 
 ### External transforms
 
-Loaded from the same `--extensions-dir` as converters. The loader distinguishes them automatically: classes with `transform()` and no `kinds` are transforms. Sorted by `priority` (lower = earlier, default 100). Run after all converters, aliases, overrides, and hostname truncation — they see the final output.
+Loaded from the same `--extensions-dir` as converters. The loader distinguishes them automatically: classes with `transform()` and no `kinds` are transforms. Sorted by `priority` (lower = earlier, default 1000). Run after all converters, aliases, overrides, and hostname truncation — they see the final output.
 
 See [Writing transforms](../extend/extensions/writing-transforms.md) for the full guide.
 
@@ -84,20 +84,13 @@ See [Writing rewriters](../extend/extensions/writing-rewriters.md) for the full 
 | Service (ClusterIP) | Network aliases (FQDN variants resolve via compose DNS) |
 | Service (ExternalName) | Resolved through alias chain (e.g. `docs-media` -> minio) |
 | Service (NodePort / LoadBalancer) | `ports:` mapping |
-| Ingress | Caddy service + Caddyfile `reverse_proxy` blocks, dispatched to ingress rewriters by `ingressClassName`. Path-rewrite annotations -> `uri strip_prefix`. Backend SSL -> Caddy TLS transport. Rewriters can inject `extra_directives` for rate-limit, auth, headers, etc. |
+| Ingress | Reverse proxy service + config file, dispatched to ingress rewriters by `ingressClassName`. The `IngressProvider` (Caddy by default) consumes rewriter output and produces the proxy service. Path-rewrite annotations, backend SSL, and `extra_directives` (rate-limit, auth, headers) are passed through as provider-agnostic entry dicts. |
 | PVC / volumeClaimTemplates | Host-path bind mounts (auto-registered in `dekube.yaml` on first run only) |
 | securityContext (runAsUser) | Auto-generated `fix-permissions` service (`chown -R <uid>`) for non-root bind mounts (via the [fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) transform) |
 
-### Not converted (warning emitted)
+### Not converted or silently ignored
 
-- CronJobs
-- Resource limits / requests, HPA, PDB
-
-### Silently ignored (no compose equivalent)
-
-- RBAC, ServiceAccounts, NetworkPolicies, CRDs (unless claimed by a loaded extension), IngressClass, Webhooks, Namespaces
-- Probes (liveness, readiness, startup) — no healthcheck generation
-- Unknown kinds trigger a warning
+CronJobs, resource limits, HPA, PDB emit warnings. RBAC, NetworkPolicies, CRDs (unless claimed by an extension), probes, and other cluster-only kinds are silently skipped. Unknown kinds trigger a warning. See [Limitations](../limitations.md) for the full breakdown and rationale.
 
 ## Processing pipeline
 
@@ -115,22 +108,22 @@ Thirteen steps. Each one locally reasonable. Together, they flatten a distribute
 10. **Apply overrides** — deep merge from config `overrides:` and `services:` sections.
 11. **Hostname truncation** — services with names >63 chars get explicit `hostname:`.
 12. **Run transforms** — post-processing hooks (if loaded). Transforms mutate `compose_services` and `ingress_entries` in place.
-13. **Write output** — `compose.yml`, `Caddyfile`, config/secret files. The temple is rendered. The architect goes to sleep. The architect does not sleep well.
+13. **Write output** — `compose.yml`, reverse proxy config (via `IngressProvider`), config/secret files. The temple is rendered. The architect goes to sleep. The architect does not sleep well.
 
 ## Automatic rewrites
 
 These happen transparently during conversion:
 
-- **Network aliases** — each compose service gets `networks.default.aliases` with all K8s FQDN variants (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`). FQDNs in env vars, ConfigMaps, and Caddyfile upstreams resolve natively via compose DNS — no hostname rewriting needed. This preserves cert SANs for HTTPS.
+- **Network aliases** — each compose service gets `networks.default.aliases` with all K8s FQDN variants (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`). FQDNs in env vars, ConfigMaps, and reverse proxy upstreams resolve natively via compose DNS — no hostname rewriting needed. This preserves cert SANs for HTTPS.
 - **Service aliases** — K8s Services whose name differs from the workload are resolved. ExternalName services followed through the chain. The short K8s Service name is added as a network alias on the compose service.
 - **Port remapping** — K8s Service port -> container port in URLs. `http://svc` (implicit port 80) and `http://svc:80` both rewritten to `http://svc:8080` if the container listens on 8080. FQDN variants (`svc.ns.svc.cluster.local:80`) are also matched.
 - **Kubelet `$(VAR)`** — `$(VAR_NAME)` in container command/args resolved from the container's env vars.
 - **Shell `$VAR` escaping** — `$VAR` in command/entrypoint escaped to `$$VAR` for compose.
-- **String replacements** — user-defined `replacements:` from config applied to env vars, ConfigMap files, and Caddyfile upstreams.
+- **String replacements** — user-defined `replacements:` from config applied to env vars, ConfigMap files, and reverse proxy upstreams.
 
 ## Beyond single-host : Docker Swarm {#beyond-single-host}
 
-The helmfile2compose distribution targets a single Docker host — bind mounts, no replicas, Caddy as a standalone reverse proxy, fix-permissions assuming a local filesystem. This is a distribution choice, not an engine limitation.
+The helmfile2compose distribution targets a single Docker host — bind mounts, no replicas, Caddy as the default reverse proxy, fix-permissions assuming a local filesystem. These are distribution choices, not engine limitations.
 
 dekube-engine produces a service dict and dumps it as YAML — it doesn't validate or restrict what keys extensions put in. A provider can write `deploy.replicas`, `deploy.placement`, or any other section, and it will pass through to the output unchanged. The contracts (`Converter`, `Provider`, `IngressRewriter`, `ConvertContext`) have nothing mono-host-specific.
 
@@ -150,10 +143,4 @@ Whether this is a good idea is a separate question. Swarm runs on a spec its own
 
 ## Docker/Compose gotchas
 
-These are Docker/Compose limitations, not conversion limitations. See [Limitations](../limitations.md) for what gets lost in translation.
-
-- **Large port ranges** — K8s with `hostNetwork` handles thousands of ports natively. Docker creates one iptables/pf rule per port, so a range like 50000-60000 (e.g. WebRTC) will kill your network stack. Reduce the range in your compose environment values (e.g. 50000-50100).
-- **hostNetwork** — K8s pods can bind directly to the host network. In Compose, every exposed port must be mapped explicitly.
-- **S3 virtual-hosted style** — AWS SDKs default to virtual-hosted bucket URLs (`bucket-name.s3:9000`). Compose DNS can't resolve dotted hostnames. Configure your app to use path-style access and use a `replacement` if needed.
-
-These are not bugs. These are the terms and conditions you accepted when you decided to commit perjury upon the Kubernetes temple.
+Large port ranges, hostNetwork mapping, S3 virtual-hosted DNS — these are Docker/Compose runtime limitations, not conversion bugs. See [Pitfalls — Docker/Compose gotchas](../pitfalls.md#dockercompose-gotchas) for the list, and [Limitations](../limitations.md) for what gets lost in translation.

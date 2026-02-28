@@ -1,6 +1,6 @@
 # dekube
 
-You deploy with Helm charts or helmfiles. Your users, your dev setup, or your NAS just need `docker compose up`. dekube generates `compose.yml` + reverse proxy config from your Kubernetes manifests — one source of truth, no second stack to maintain.
+You deploy with Helm charts or helmfiles. Your users, your dev setup, or your NAS just need `docker compose up`. dekube generates `compose.yml` + reverse proxy config from your Kubernetes manifests — same charts, same values, no second stack to maintain.
 
 If you just want it to work and don't care why, [kubernetes2simple](https://k2s.dekube.io/) will handle everything. If you want to understand what you're running and control what gets loaded, [helmfile2compose](https://helmfile2compose.dekube.io/docs/) is the distribution for you. If you're here, you want to understand the engine itself, write extensions, or build your own distribution.
 
@@ -29,10 +29,9 @@ Write extensions, maintain code quality, run the test suite.
 ## Reference
 
 - **[Extension catalogue](catalogue.md)** — the Eight Monks, third-party extensions, the full bestiary
-- **[Troubleshooting](troubleshooting.md)** — when the cursed lands fight back
+- **[Pitfalls](pitfalls.md)** — null-safe YAML, `sys.modules`, build system gotchas
 - **[Limitations](limitations.md)** — what gets lost in translation
 - **[Roadmap](roadmap.md)** — future plans (and past hubris)
-- **[Journal](journal.md)** — the full record of what was done, and in what order
 - **[About](about.md)** — the complete and unhinged explanation
 
 ## The ecosystem
