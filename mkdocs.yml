@@ -1,6 +1,6 @@
-site_name: dekube
+site_name: dekube — Convert Kubernetes to Docker Compose
 site_url: https://docs.dekube.io/
-site_description: "Generate compose.yml from your Kubernetes manifests. Same charts, same values, no second stack to maintain."
+site_description: "Convert Kubernetes manifests to Compose. Transform Helm charts, helmfiles, and K8s YAML into a working compose.yml. Engine docs, extension guides, architecture."
 repo_url: https://github.com/dekubeio/dekube-engine
 repo_name: dekubeio/dekube-engine
 
@@ -66,5 +66,10 @@ markdown_extensions:
   - pymdownx.details
   - toc:
       permalink: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/dekubeio
 
 copyright: Public domain. No rights reserved. No tentacle returns. (Built with <a href="https://squidfunk.github.io/mkdocs-material/">MkDocs Material</a>)

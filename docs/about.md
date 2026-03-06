@@ -2,7 +2,7 @@
 
 Architect here. This project is an aberration. I am unreasonably proud of it.
 
-Fourteen days to reinvent the world. Then a fifteenth to look at it, realise it needed a name, and spend an entire week planning a rebrand — designing four static sites, writing design documents, debating tone, and ultimately purchasing an overpriced `.io` domain for a project that converts Kubernetes manifests into docker-compose files. A domain that costs more per year than the project has dependencies.
+Fourteen days to reinvent the world. Then a fifteenth to look at it, realise it needed a name, and spend an entire week planning a rebrand — designing four static sites, writing design documents, debating tone, and ultimately purchasing an overpriced `.io` domain for a project that converts Kubernetes manifests into Docker Compose files. A domain that costs more per year than the project has dependencies.
 
 Of course, the better name — **dekompose** — only came to mind *after* the rebrand was complete. de-K(ubernetes) + compose, the lexical inverse of [Kompose](https://kompose.io/), and "decompose" as a double meaning. Also already taken, more or less. Madness never arrives on schedule.
 
@@ -12,7 +12,7 @@ Of course, the better name — **dekompose** — only came to mind *after* the r
 
 ## TL;DR
 
-Using Kubernetes manifests as an intermediate representation to generate a docker-compose is absolutely using an ICBM to kill flies. And then the ICBM grew an extension system, a package manager, a distribution model, and a regression suite — and now it can reach Mars, even though there are no flies there.
+Using Kubernetes manifests as an intermediate representation to generate a Docker Compose is absolutely using an ICBM to kill flies. And then the ICBM grew an extension system, a package manager, a distribution model, and a regression suite — and now it can reach Mars, even though there are no flies there.
 
 It was entirely vibe-coded. It reinvented Kubernetes. It has tentacles. It has complete documentation. It scores well on every linter. It should not exist, and yet it does, and it works oh so well. Still fewer dependencies than a fresh `create-react-app`.
 
@@ -28,15 +28,15 @@ The idea itself is the aberration. Not the scope creep — that came later, and 
 
 Kubernetes manifests encode intentions for a distributed orchestrator. They describe pods that get scheduled across nodes, services that route through kube-proxy, volumes that get provisioned by CSI drivers, certificates that get issued by controllers watching CRDs. Every field assumes a control plane is listening. Every resource assumes a reconciliation loop will eventually make the world match the spec.
 
-docker-compose describes containers on a single host.
+Compose describes containers on a single host.
 
 Using the first as an intermediate representation to generate the second is like translating a space shuttle launch checklist into instructions for a paper airplane. The paper airplane will fly — but you'll spend most of your time figuring out what "verify LOX tank pressurization" means when you don't have a LOX tank. Or oxygen. Or a launch pad.
 
-That's what dekube does. It reads Kubernetes manifests — the launch checklist — and produces docker-compose files — the paper airplane. And every single complication in this project is a direct, inevitable consequence of that premise. You want to convert Deployments? You need to understand init containers, sidecar injection, volume claim templates. You want to handle Ingresses? You need to rewrite annotations from controllers you've never met. You want CRDs? You're now emulating operators. You want Certificates? You're now a fake CA. You want Helm charts that talk to the apiserver at install time? You're now faking a kube-apiserver. None of this is scope creep. All of it was *implied* the moment someone said "convert Kubernetes to Compose." The ICBM was always in the blueprint — we just didn't read the fine print.
+That's what dekube does. It reads Kubernetes manifests — the launch checklist — and produces Docker Compose files — the paper airplane. And every single complication in this project is a direct, inevitable consequence of that premise. You want to convert Deployments? You need to understand init containers, sidecar injection, volume claim templates. You want to handle Ingresses? You need to rewrite annotations from controllers you've never met. You want CRDs? You're now emulating operators. You want Certificates? You're now a fake CA. You want Helm charts that talk to the apiserver at install time? You're now faking a kube-apiserver. None of this is scope creep. All of it was *implied* the moment someone said "convert Kubernetes to Compose." The ICBM was always in the blueprint — we just didn't read the fine print.
 
 Sound familiar? Ryan Dahl said "I can run JavaScript on a server" — the language that was designed to validate form fields and animate banner ads, repurposed as a systems runtime. The idea was the aberration; `node_modules` was the consequence. GitHub said "what if a desktop app was just a browser" — the engine that was designed to render documents, repurposed as an application framework. The idea was the aberration; 400MB text editors were the consequence. Docker said "we already have containers, we can orchestrate" — the tool that was designed to run processes, repurposed as a cluster scheduler. The idea was the aberration; Swarm's quiet death was the consequence. And I said "Kubernetes manifests are just YAML, I can reshape them" — the format that was designed for a distributed control plane, repurposed as a Compose generator. The idea is the aberration. Everything else is just the invoice.
 
-The first time someone asked for a docker-compose, I ignored the request. The second time, I built a script and ported two open source platforms. It worked. It should not have worked. But it did, and that was the real danger — because a working aberration is harder to kill than a failed one.
+The first time someone asked for a Docker Compose, I ignored the request. The second time, I built a script and ported two open source platforms. It worked. It should not have worked. But it did, and that was the real danger — because a working aberration is harder to kill than a failed one.
 
 Despite the dark jokes everywhere — despite the desecration, the heresy, the Necronomicon quotes that started writing themselves around session three — it works. It works *well*. It is architected. It is pluggable. It handles real-world helmfiles with dozens of services, init containers, sidecars, CRDs, cross-namespace secrets, backend TLS, and ingress annotations from controllers it has never met. And it might be genuinely useful to someone who isn't me.
 
@@ -134,7 +134,7 @@ I alone — with the help of an unsuspecting yet remarkably capable Claude agent
 
 ### The point
 
-A vibe-coded heresy about converting Kubernetes manifests to docker-compose ships complete documentation. Your project should as well. You surely have more people. You have a more noble goal. You also probably care a lot more about your beautifully handcrafted nugget than I do about this squishy abomination.
+A vibe-coded heresy about converting Kubernetes manifests to Docker Compose ships complete documentation. Your project should as well. You surely have more people. You have a more noble goal. You also probably care a lot more about your beautifully handcrafted nugget than I do about this squishy abomination.
 
 And yet — here we are. A heresy with full docs, and an orthodoxy with "join our Discord for support." An ICBM with a user manual, and actual spaceships with a Post-it note on the cockpit. We're not better engineers. We're not more virtuous. We just wrote it down — because the heretic knows nobody will believe him otherwise.
 
