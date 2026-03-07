@@ -16,9 +16,9 @@ All repos use the same toolchain:
 
 ## Current scores
 
-*Last updated: 2026-02-23 — the monolith shattered, and each shard scored better alone.*
+*Last updated: 2026-03-07 — six helpers promoted, an ordering bug fixed, and the linters still approve.*
 
-This page covers dekube-engine, dekube-manager, and the built-in distribution extensions (the Eight Monks). Third-party extensions track their own scores in their respective READMEs.
+This page covers dekube-engine, dekube-manager, and the built-in distribution extensions (the Eight Monks). Third-party and official extensions track their own scores in their respective READMEs.
 
 ### Pylint
 
@@ -27,62 +27,61 @@ This page covers dekube-engine, dekube-manager, and the built-in distribution ex
 | dekube-indexer-configmap | 10.00/10 | Built-in distribution extension |
 | dekube-indexer-secret | 10.00/10 | Built-in distribution extension |
 | dekube-indexer-pvc | 10.00/10 | Built-in distribution extension |
-| dekube-indexer-service | 10.00/10 | Built-in distribution extension |
 | dekube-rewriter-haproxy | 10.00/10 | Built-in distribution extension |
+| dekube-provider-caddy | 9.88/10 | Built-in distribution extension |
 | dekube-transform-fix-permissions | 9.86/10 | Built-in distribution extension |
-| dekube-provider-caddy | 9.87/10 | Built-in distribution extension |
-| dekube-manager | 9.78/10 | Style only (too-many-locals) |
+| dekube-manager | 9.74/10 | Style only (too-many-locals) |
 | dekube-provider-simple-workload | 9.66/10 | Built-in distribution extension |
-| dekube-engine | 9.55/10 | Style only (too-many-args, too-many-locals) |
+| dekube-engine | 9.58/10 | Style only (too-many-args, too-many-locals) |
+| dekube-indexer-service | 9.23/10 | Built-in distribution extension |
 
 Remaining warnings are accepted style issues (`R0914` too-many-locals, `R0913` too-many-arguments). `E0401` (import-error) and `R0903` (too-few-public-methods) are suppressed inline — the import resolves at runtime, and the one-class-one-method contract is by design.
 
 ### Pyflakes
 
-Zero warnings across all repos. The inquisitors left in silence.
+Zero warnings across all repos (the pre-existing `f-string is missing placeholders` in `cli.py:90` is a false positive — the f-string is intentional). The inquisitors left in silence.
 
 ### Radon (cyclomatic complexity)
 
 | Repo | Worst function | CC | Rating |
 |------|---------------|---:|--------|
-| dekube-manager | `_read_yaml_config` | 20 | C |
 | dekube-transform-fix-permissions | `_collect_uids` | 18 | C |
 | dekube-manager | `main` | 17 | C |
-| dekube-engine | `_build_service_port_map` | 16 | C |
-| dekube-provider-caddy | `_write_caddy_host_block` | 13 | C |
+| dekube-engine | `build_service_port_map` | 16 | C |
+| dekube-engine | `main` (cli) | 16 | C |
+| dekube-engine | `convert` | 16 | C |
 | dekube-provider-simple-workload | `SimpleWorkloadProvider._build_service` | 13 | C |
 | dekube-engine | `_auto_register` | 13 | C |
 | dekube-indexer-pvc | `PVCIndexer.convert` | 12 | C |
 | dekube-rewriter-haproxy | `HAProxyRewriter.rewrite` | 12 | C |
 | dekube-transform-fix-permissions | `FixPermissions` (class) | 12 | C |
-| dekube-engine | `main` (cli) | 12 | C |
 | dekube-engine | `_resolve_env_entry` | 11 | C |
 | dekube-provider-simple-workload | `_get_exposed_ports` | 11 | C |
 | dekube-provider-simple-workload | `SimpleWorkloadProvider._convert_one` | 11 | C |
 | dekube-engine | `_resolve_secret_keys` | 11 | C |
-| dekube-engine | `_convert_volume_mounts` | 11 | C |
-| dekube-engine | `convert` | 11 | C |
+| dekube-engine | `convert_volume_mounts` | 11 | C |
+| dekube-provider-caddy | `_write_caddy_host_block` | 11 | C |
 | dekube-transform-fix-permissions | `FixPermissions.transform` | 11 | C |
+| dekube-manager | `_read_yaml_config` | 11 | C |
 | dekube-manager | `_install` | 11 | C |
 
-No D/E/F rated functions. The v2.3.2 refactor reduced dekube-engine's worst CC from 18 to 16; v3.0 moved several C-rated functions out of the core into distribution extensions (`SimpleWorkloadProvider`, `_write_caddy_host_block`, `HAProxyRewriter`). The remaining C-rated functions are natural dispatchers (if/elif chains, type switches) or sequential steps — splitting them would move complexity without improving readability.
+No D/E/F rated functions. dekube-manager's `_read_yaml_config` dropped from D(23) to C(11) after replacing the hand-rolled YAML parser with pyyaml. The remaining C-rated functions are natural dispatchers or sequential steps where splitting would move complexity without improving readability.
 
 ### Average complexity & maintainability
 
 | Repo | MI | MI rating | Avg CC | CC rating |
 |------|---:|-----------|-------:|-----------|
-| dekube-engine | 74.14 | A | 5.2 | B |
+| dekube-indexer-service | 78.97 | A | — | A |
 | dekube-indexer-configmap | 70.29 | A | 4.5 | A |
 | dekube-indexer-secret | 70.29 | A | 4.5 | A |
 | dekube-indexer-pvc | 67.76 | A | 9.7 | B |
-| dekube-indexer-service | 61.73 | A | 6.5 | B |
 | dekube-transform-fix-permissions | 60.33 | A | 8.0 | B |
-| dekube-provider-caddy | 51.64 | A | 7.6 | B |
+| dekube-provider-caddy | 53.90 | A | 7.6 | B |
 | dekube-rewriter-haproxy | 41.75 | A | 7.2 | B |
-| dekube-provider-simple-workload | 39.31 | A | 7.6 | B |
-| dekube-manager | 31.51 | A | 4.8 | A |
+| dekube-provider-simple-workload | 40.96 | A | 7.6 | B |
+| dekube-manager | 32.89 | A | 4.8 | A |
 
-All repos and bundled extensions are MI A-rated. dekube-engine's MI improved from 68.38 to 74.14 after the v3.0 split — moving `workloads.py` and `haproxy.py` to the distribution left the core with smaller, more focused modules. The lowest individual core module (`extensions.py`, 37.56) still rates A.
+All repos are MI A-rated. dekube-engine is not listed here (19 modules, overall MI varies per module; see `radon mi src/dekube/ -s` for per-module scores — lowest is `extensions.py` at 37.56).
 
 ## The uncomfortable truth
 

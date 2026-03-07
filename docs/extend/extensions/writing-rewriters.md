@@ -1,6 +1,6 @@
 # Writing rewriters
 
-An ingress rewriter translates controller-specific Ingress annotations into ingress entry dicts, consumed by whichever `IngressProvider` is configured in the distribution. Each rewriter targets a specific ingress controller — dispatched by `ingressClassName` or annotation prefix.
+An ingress rewriter translates controller-specific Ingress annotations into provider-agnostic ingress entry dicts, consumed by whichever `IngressProvider` is configured in the distribution. Each rewriter targets a specific ingress controller — dispatched by `ingressClassName` or annotation prefix.
 
 > *The gatekeepers of old each bore a different sigil, yet all opened the same threshold. The pilgrim need not know the sigil — only declare which gate he approaches, and the keeper shall answer in kind.*
 >
@@ -59,11 +59,13 @@ Each entry dict returned by `rewrite()` must have:
 | `server_ca_secret` | `str` | no | Secret name containing CA cert for backend TLS |
 | `server_sni` | `str` | no | SNI server name for backend TLS |
 | `strip_prefix` | `str` | no | Path prefix to strip before proxying. On multi-path rules, scope it to the matching path — don't apply a global annotation blindly to every entry. |
-| `extra_directives` | `list[str]` | no | Provider-specific directive strings (see below) |
+| `response_headers` | `dict[str, str]` | no | Headers to add to responses (e.g. CORS headers, security headers) |
+| `max_body_size` | `str` | no | Max client body size (e.g. `"100M"`) |
+| `extra_directives` | `list[str]` | no | **Deprecated.** Provider-specific raw directives. See below. |
 
-### `extra_directives`
+### Structured fields vs `extra_directives`
 
-A list of provider-specific directive strings injected into the generated config. With the default `CaddyProvider`, these are raw Caddy directives inserted into the host block — after `uri strip_prefix` and before `reverse_proxy`, which places them in the right Caddy order for directives like `header`, `rate_limit`, `basic_auth`, `forward_auth`, `request_body`, etc. Other `IngressProvider` implementations may interpret these differently or ignore them.
+Prefer `response_headers` and `max_body_size` over `extra_directives`. Structured fields are provider-agnostic — every `IngressProvider` (Caddy, Nginx, future providers) can consume them. `extra_directives` was Caddy-specific syntax that other providers couldn't interpret.
 
 ```python
 entries.append({
@@ -71,12 +73,15 @@ entries.append({
     "path": "/",
     "upstream": "app:8080",
     "scheme": "http",
-    "extra_directives": [
-        "header X-Frame-Options DENY",
-        "rate_limit {remote.ip} 100r/m",
-    ],
+    "response_headers": {
+        "X-Frame-Options": "DENY",
+        "Access-Control-Allow-Origin": "*",
+    },
+    "max_body_size": "100M",
 })
 ```
+
+`extra_directives` still works — the CaddyProvider reads it as a fallback for third-party rewriters that haven't migrated. New rewriters should use structured fields exclusively.
 
 ## How dispatch works
 

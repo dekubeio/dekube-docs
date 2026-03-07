@@ -77,6 +77,25 @@ def convert(self, _kind, manifests, ctx):
 
 Each Ingress manifest is matched against loaded `IngressRewriter` classes. The rewriter translates controller-specific annotations into a list of entry dicts (see [Writing rewriters](writing-rewriters.md) for the entry format). Your provider then consumes those entries to build the service and config.
 
+## Entry format
+
+Each entry dict produced by rewriters has these fields:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `host` | `str` | yes | Hostname (e.g. `api.example.com`) |
+| `path` | `str` | yes | URL path (e.g. `/api/`, `/`) |
+| `upstream` | `str` | yes | Backend address (`host:port`) |
+| `scheme` | `str` | yes | `http` or `https` (backend protocol) |
+| `strip_prefix` | `str \| None` | no | Path prefix to strip before proxying |
+| `server_ca_secret` | `str` | no | Secret name containing CA cert for backend TLS |
+| `server_sni` | `str` | no | SNI hostname for backend TLS |
+| `response_headers` | `dict[str, str]` | no | Headers to add to responses |
+| `max_body_size` | `str` | no | Max client body size (e.g. `"100M"`) |
+| `extra_directives` | `list[str]` | no | **Deprecated.** Provider-specific raw directives (Caddy syntax). Kept for third-party rewriter backward compat. |
+
+Providers should read `response_headers` and `max_body_size` first, then fall back to `extra_directives` for backward compat with third-party rewriters that haven't migrated yet.
+
 ## Reference: CaddyProvider
 
 The built-in `CaddyProvider` (in [dekube-provider-caddy](https://github.com/dekubeio/dekube-provider-caddy)) is the reference implementation:

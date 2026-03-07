@@ -6,13 +6,7 @@ For the emulation boundary — what can cross the bridge and what can't — see 
 
 ## Next
 
-### Nginx ingress provider
-
-An `IngressProvider` that produces an Nginx reverse proxy service + `nginx.conf` instead of Caddy. For users who need Nginx specifically — corporate environments, existing Nginx expertise, or setups where Caddy's automatic TLS isn't wanted. The rewriter already exists ([dekube-rewriter-nginx](https://github.com/dekubeio/dekube-rewriter-nginx)); this would be the provider counterpart. See [Writing ingress providers](extend/extensions/writing-ingressproviders.md) for the contract.
-
-### Overrides vs transforms ordering
-
-`overrides:` currently runs *before* transforms, so services created by transforms (like `fix-permissions`) can't be overridden. Either overrides need to run after transforms, or transforms need to check `enabled` themselves.
+*(Nothing here — the void is sated, for now.)*
 
 ## Someday
 
@@ -24,13 +18,15 @@ The Kubernetes [Gateway API](https://gateway-api.sigs.k8s.io/) is the eventual s
 
 Named pipeline hooks (`post_aliases`, `pre_write`, etc.) for extensions. Not needed yet — converters + transforms cover known cases. Revisit if a third pattern shows up. So far, two patterns have shown up. The third is watching.
 
-### Promote `_`-prefixed helpers to public API
-
-Several conversion primitives exported by dekube-engine (`_convert_command`, `_convert_volume_mounts`, `_build_alias_map`, `_build_service_port_map`, `_resolve_named_port`) are used by bundled extensions and useful to any third-party provider or indexer. They're currently `_`-prefixed (historical — they lived in the monolith before the split) but exported in `__all__`. Drop the underscore, document them in the pacts API, remove `_build_vol_map` (unused outside `_convert_volume_mounts`).
-
 ### Extension compatibility matrix
 
 Extension manifests with `core_version_min` / `core_version_max_tested`. Manager warns/errors on mismatch. Today only extension-vs-extension incompatibility is checked — extension-vs-core version compat is not.
+
+### Additional structured ingress fields
+
+Ingress entries currently support `response_headers` and `max_body_size` as structured, provider-agnostic fields. Other annotations exist in the wild — `auth-url` / `auth-signin` (external auth), `limit-rps` (rate limiting), `permanent-redirect`, `temporal-redirect`, etc. Each one would need a structured field in the entry contract, then implementation in every ingress provider.
+
+This is inherently a losing game: Kubernetes ingress controllers have dozens of annotations, each controller invents its own, and we're flattening all of that into a compose reverse proxy that was never designed to speak this language. New structured fields will be added as real-world projects hit the gap — not preemptively. `extra_directives` remains as a deprecated, provider-specific escape hatch for anything not yet structured.
 
 ### helmfile2swarm distribution
 

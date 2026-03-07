@@ -30,15 +30,24 @@ from dekube import get_ingress_class       # resolve ingressClassName + ingress_
 from dekube import resolve_backend         # v1/v1beta1 backend → upstream dict
 from dekube import apply_replacements      # apply user-defined string replacements
 from dekube import resolve_env             # resolve env/envFrom into flat list
-from dekube import _secret_value           # decode a Secret key (base64 or plain)
+from dekube import secret_value             # decode a Secret key (base64 or plain)
+
+# K8s-to-compose conversion primitives (stable API)
+from dekube import convert_command          # K8s command/args → compose entrypoint/command
+from dekube import convert_volume_mounts    # volumeMounts → compose volume strings
+from dekube import build_alias_map          # K8s Service names → compose service names
+from dekube import build_service_port_map   # (service, port) → container port
+from dekube import resolve_named_port       # named port → numeric containerPort
 ```
 
-These are the **pacts** — the [sacred contracts](../../understand/engine.md#pacts--the-sacred-contracts) — and are stable across minor versions. Both import paths work:
+These are all stable across minor versions. The base classes, result types, and helpers above the comment line are **pacts** — the [sacred contracts](../../understand/engine.md#pacts--the-sacred-contracts). Both import paths work for them:
 
 ```python
 from dekube import ConvertContext           # via re-export
 from dekube.pacts import ConvertContext     # explicit
 ```
+
+The conversion primitives (`convert_command`, `convert_volume_mounts`, `build_alias_map`, `build_service_port_map`, `resolve_named_port`) and `IngressProvider` live in `dekube.core` — import them from `dekube` only.
 
 - **`ConverterResult`** — return type for converters and indexers. One field: `ingress_entries` (list). Use when your extension doesn't produce compose services.
 - **`ProviderResult`** — return type for providers. Two fields: `services` (dict) and `ingress_entries` (list, inherited from `ConverterResult`).
@@ -51,9 +60,17 @@ from dekube.pacts import ConvertContext     # explicit
 - **`resolve_backend(path_entry, manifest, ctx)`** — resolves a v1/v1beta1 Ingress backend to `{svc_name, compose_name, container_port, upstream, ns}`.
 - **`apply_replacements(text, replacements)`** — applies user-defined `replacements` (from `ctx.replacements`) to a string.
 - **`resolve_env(container, configmaps, secrets, workload_name, warnings, replacements=None, service_port_map=None)`** — resolves a container's `env` and `envFrom` into a flat `list[dict]` of `{name, value}` pairs.
-- **`_secret_value(secret, key)`** — decodes a single key from a K8s Secret dict. Handles both `stringData` (plain text) and `data` (base64-decoded). Returns `str | None`. Useful for converters that need to read Secret values injected by other converters (e.g. reading a database password from a cert-manager-generated secret). The underscore prefix is historical — the function is part of the stable pacts API.
+- **`secret_value(secret, key)`** — decodes a single key from a K8s Secret dict. Handles both `stringData` (plain text) and `data` (base64-decoded). Returns `str | None`. Useful for converters that need to read Secret values injected by other converters (e.g. reading a database password from a cert-manager-generated secret).
+- **`convert_command(container, env_dict)`** — converts K8s `command`/`args` to compose `entrypoint`/`command` with `$(VAR)` resolution and `$VAR` escaping.
+- **`convert_volume_mounts(volume_mounts, pod_volumes, pvc_names, config, workload_name, warnings, ...)`** — converts `volumeMounts` to compose volume strings, handling PVC, ConfigMap, Secret, and emptyDir mounts.
+- **`build_alias_map(manifests, services_by_selector)`** — builds a map of K8s Service names to compose service names (ClusterIP + ExternalName resolution).
+- **`build_service_port_map(manifests, services_by_selector)`** — builds a map of `(service_name, service_port)` to `container_port` for port remapping.
+- **`resolve_named_port(name, container_ports)`** — resolves a named port (e.g. `'http'`) to its numeric `containerPort`.
 
-The other `_`-prefixed functions (`_apply_port_remap`, `_apply_alias_map`, etc.) still exist but may change between versions. Pin your dekube-engine version if you depend on them. Transforms in particular should avoid importing from the core — see [Writing transforms](writing-transforms.md#self-contained--no-core-imports).
+!!! note "Deprecated `_`-prefixed aliases"
+    The old `_secret_value`, `_convert_command`, `_convert_volume_mounts`, `_build_alias_map`, `_build_service_port_map`, `_resolve_named_port` names still work (exported in `__all__`) for backward compatibility. Prefer the unprefixed names in new code.
+
+Internal functions (`_apply_port_remap`, `_apply_alias_map`, `_build_vol_map`, etc.) are not part of the stable API and may change between versions. Pin your dekube-engine version if you depend on them. Transforms in particular should avoid importing from the core — see [Writing transforms](writing-transforms.md#self-contained--no-core-imports).
 
 ## Quickstart: writing a converter from scratch
 

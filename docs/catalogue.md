@@ -38,6 +38,33 @@ If your helmfile only uses standard Kubernetes resources, the monks are all you 
 
 The four indexers populate `ConvertContext` lookups so that later stages can resolve ConfigMap keys, Secret references, PVC claims, and Service ports. The Builder turns workloads into compose services. The Herald translates HAProxy ingress annotations, the Gatekeeper assembles them into a Caddy reverse proxy. The Custodian runs last — it scans for non-root containers and generates a busybox init service that fixes bind mount permissions.
 
+## Ingress providers
+
+Ingress providers consume ingress entries (produced by rewriters) and generate the actual reverse proxy service + configuration file. The built-in Caddy provider ships with the distribution — it handles all ingress entries by default. If Caddy doesn't fit your setup, an Nginx provider is available as an alternative.
+
+For building your own, see [Writing ingress providers](extend/extensions/writing-ingressproviders.md). The contract is straightforward: receive a list of ingress entries, return a compose service dict and write your config file.
+
+### nginx-provider
+
+| | |
+|---|---|
+| **Repo** | [dekube-provider-nginx](https://github.com/dekubeio/dekube-provider-nginx) |
+| **Dependencies** | none |
+| **Produces** | compose services + `nginx.conf` |
+| **Status** | untested |
+
+The alternative gate. Same ingress entries, different keeper. Generates an `nginx.conf` with upstream blocks, `proxy_pass` directives, and optional TLS (ACME via certbot, self-signed, or user-provided certs). Reads `response_headers`, `max_body_size`, `strip_prefix` from the structured entry format — no Caddy syntax leaks through.
+
+Three TLS modes: `extensions.nginx.email` triggers certbot with ACME challenges, `extensions.nginx.tls_internal: true` generates self-signed certs via openssl, `extensions.nginx.tls_cert_path` mounts user-provided certificates. Without any TLS config, plain HTTP on port 80.
+
+Untested in production. The Gatekeeper (Caddy) remains the recommended default. Use this if you need nginx specifically or if Caddy's automatic HTTPS doesn't suit your environment.
+
+```bash
+python3 dekube-manager.py nginx-provider
+```
+
+---
+
 ## Providers
 
 Providers produce compose services — they emulate what a K8s controller would have created as running workloads. Install them via [dekube-manager](https://manager.dekube.io/docs/).
@@ -178,12 +205,6 @@ Detects Bitnami images by name, then: replaces Redis entirely with stock `redis:
 ```bash
 python3 dekube-manager.py bitnami
 ```
-
-## Ingress providers
-
-Ingress providers consume ingress entries (produced by rewriters) and generate the actual reverse proxy service + configuration file. Caddy is the only built-in provider — it ships with the distribution and handles all ingress entries by default. There are no third-party ingress providers yet.
-
-If Caddy doesn't fit your setup (you already run nginx/Traefik/envoy as your local proxy, or you need features Caddy doesn't expose), you can [write your own ingress provider](extend/extensions/writing-ingressproviders.md). The contract is straightforward: receive a list of ingress entries, return a compose service dict and write your config file.
 
 ## Ingress rewriters
 

@@ -8,6 +8,28 @@
 
 ---
 
+## Public helpers, ordering fix, structured entries, Nginx provider {#helpers-ordering-entries-nginx}
+
+*2026-03-07* · `engine: v1.3.0 · helmfile2compose: v3.1.2 · kubernetes2simple: v1.0.2`
+
+Four changes shipped together — three from the roadmap, one new repo.
+
+??? abstract "TL;DR"
+    - `_convert_command`, `_convert_volume_mounts`, `_build_alias_map`, `_build_service_port_map`, `_resolve_named_port`, `_secret_value` promoted to public API (no underscore). Old names kept as deprecated aliases.
+    - `overrides:` now runs *after* transforms, so transform-created services (e.g. fix-permissions busybox) can be overridden in `dekube.yaml`.
+    - Ingress entries gain structured fields (`response_headers`, `max_body_size`) instead of Caddy-specific `extra_directives`. The Caddy provider reads both (backward compat for third-party rewriters).
+    - New repo: `dekube-provider-nginx` — Nginx reverse proxy provider with plain HTTP, ACME/certbot, self-signed, and user-provided TLS modes.
+
+**Promote helpers.** Six functions that built-in and third-party extensions have been using since v2 dropped the underscore prefix. The `_` was historical — they lived in the monolith before the modular split. Now they're officially part of the pacts API. `_build_vol_map` stays internal (only used by `convert_volume_mounts`). Deprecated aliases in `__all__` ensure nothing breaks.
+
+**Fix ordering.** `_apply_overrides()` moved from before transforms to after. The fix-permissions transform creates a busybox service that users couldn't override — now they can. Simple one-line move, but the ordering matters.
+
+**Structured entries.** Ingress rewriters previously stuffed Caddy-syntax directives into `extra_directives`. The nginx rewriter now produces `response_headers` (dict) and `max_body_size` (str). The Caddy provider reads structured fields first, falls back to `extra_directives` for third-party compat. No `raw_directives` escape hatch — YAGNI until proven otherwise.
+
+**Nginx provider.** `dekube-provider-nginx` — an `IngressProvider` that produces `nginx.conf` + an `nginx` compose service. Three TLS modes: certbot ACME (with sidecar), self-signed (openssl in entrypoint), user-provided certs. Plain HTTP when no TLS config is set. Registered in dekube-manager as `nginx-provider`, not in any distribution by default.
+
+---
+
 ## The Rebrand — h2c becomes dekube {#the-rebrand}
 
 *2026-02-27* · `engine: v1.2.1 · helmfile2compose: v3.1.1 · kubernetes2simple: v1.0.1 · manager: all repos renamed`
