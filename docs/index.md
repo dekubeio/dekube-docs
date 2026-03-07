@@ -28,6 +28,8 @@ Write extensions, maintain code quality, run the test suite.
 
 ## Reference
 
+- **[CLI reference](reference/cli.md)** — command-line flags
+- **[Configuration reference](reference/config.md)** — full `dekube.yaml` schema
 - **[Extension catalogue](catalogue.md)** — the Eight Monks, third-party extensions, the full bestiary
 - **[Pitfalls](pitfalls.md)** — null-safe YAML, `sys.modules`, build system gotchas
 - **[Limitations](limitations.md)** — what gets lost in translation

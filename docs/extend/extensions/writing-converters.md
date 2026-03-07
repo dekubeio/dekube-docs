@@ -21,23 +21,25 @@ A converter class must have:
 2. **`convert(kind, manifests, ctx)`** — called once per kind, returns a `ConvertResult`
 
 ```python
-from dekube import ProviderResult, Provider
+from dekube import Converter, ConverterResult
 
-class MyConverter(Provider):
+class MyConverter(Converter):
     kinds = ["MyCustomResource"]
+    priority = 100
 
     def convert(self, kind, manifests, ctx):
-        services = {}
         for m in manifests:
             name = m.get("metadata", {}).get("name", "?")
-            spec = m.get("spec", {})
-            services[name] = {
-                "image": spec.get("image", "mydefault:latest"),
-                "restart": "always",
-                "environment": {"MY_VAR": spec.get("myField", "default")},
+            spec = m.get("spec") or {}
+            # Inject a synthetic Secret for downstream converters
+            ctx.secrets[f"{name}-credentials"] = {
+                "metadata": {"name": f"{name}-credentials"},
+                "stringData": {"password": spec.get("password", "changeme")},
             }
-        return ProviderResult(services=services)
+        return ConverterResult()
 ```
+
+If your converter produces compose services, subclass `Provider` instead and return `ProviderResult` — see [Writing providers](writing-providers.md).
 
 ### Return types
 
@@ -67,10 +69,22 @@ The conversion context passed to every converter. Key attributes:
 | `ctx.replacements` | `list[dict]` | User-defined string replacements |
 | `ctx.alias_map` | `dict` | Service alias map (K8s Service name -> workload name) |
 | `ctx.service_port_map` | `dict` | Service port map ((svc_name, port) -> container_port) |
-| `ctx.fix_permissions` | `dict[str, int]` | Legacy field (kept for backwards compatibility). The built-in [fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) transform now handles permission fixing by scanning K8s manifests and final compose volumes directly. |
+| `ctx.fix_permissions` | `dict[str, int]` | Legacy field (kept for backwards compatibility). Previously used to track PVC claim → UID mappings for permission fixing. The built-in [fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) transform now handles this by scanning K8s manifests and final compose volumes directly. |
 | `ctx.services_by_selector` | `dict` | Index of K8s Services by name. Each entry has `name`, `namespace`, `selector`, `type`, `ports`. Used to resolve Services to compose names, generate network aliases, and build port maps. **Writable** — converters should register runtime-created Services here. |
 | `ctx.pvc_names` | `set[str]` | Names of PersistentVolumeClaims discovered in manifests. Used to distinguish PVC mounts from other volume types during conversion. |
-| `ctx.extension_config` | `dict` | Per-converter config section from `dekube.yaml`. Set automatically before each `convert()` call, keyed by the converter's `name` attribute (e.g. `caddy` → `extensions.caddy` in config). Empty dict if not configured. |
+| `ctx.manifests` | `dict[str, list]` | All parsed K8s manifests, keyed by kind (e.g. `{"Deployment": [...], "Service": [...]}`). Read-only — useful for transforms or converters that need to inspect manifests outside their own `kinds`. |
+| `ctx.first_run` | `bool` | `True` if `dekube.yaml` didn't exist before this run. Used to gate auto-population of volumes and excludes. |
+| `ctx.extension_config` | `dict` | Per-converter config section from `dekube.yaml`. Set automatically before each `convert()` call, keyed by the converter's `name` attribute. Empty dict if not configured. Configured in `dekube.yaml` under `extensions.<name>`: |
+
+```yaml
+# dekube.yaml
+extensions:
+  my-extension:
+    my_key: my_value    # → ctx.extension_config["my_key"]
+    enabled: false       # → extension is loaded but never called
+```
+
+See [Configuration reference](../../reference/config.md#per-extension-config-extensions) for the full schema.
 
 ### Priority
 

@@ -1,4 +1,4 @@
-# Extensions
+# Extension catalogue
 
 Extensions are external modules that extend helmfile2compose beyond its built-in capabilities. Install them via [dekube-manager](https://manager.dekube.io/docs/) or manually with `--extensions-dir`.
 
@@ -6,7 +6,7 @@ CRDs are K8s entities that don't speak compose — exiles from a world with cont
 
 ## Extension types
 
-There are five extension types, all loaded from the same `--extensions-dir`:
+There are six extension types, all loaded from the same `--extensions-dir`:
 
 | Type | Interface | Purpose | Naming convention |
 |------|-----------|---------|-------------------|

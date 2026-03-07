@@ -55,6 +55,88 @@ from dekube.pacts import ConvertContext     # explicit
 
 The other `_`-prefixed functions (`_apply_port_remap`, `_apply_alias_map`, etc.) still exist but may change between versions. Pin your dekube-engine version if you depend on them. Transforms in particular should avoid importing from the core — see [Writing transforms](writing-transforms.md#self-contained--no-core-imports).
 
+## Quickstart: writing a converter from scratch
+
+A step-by-step walkthrough — from an empty file to a working, testable extension.
+
+**Scenario:** You want to handle a `RedisCluster` CRD that produces a Redis compose service.
+
+### 1. Create the file
+
+```
+dekube-provider-redis-cluster/
+├── redis_cluster.py
+└── README.md
+```
+
+### 2. Write the extension
+
+```python
+# redis_cluster.py
+from dekube import Provider, ProviderResult
+
+class RedisClusterProvider(Provider):
+    kinds = ["RedisCluster"]
+    name = "redis-cluster"
+
+    def convert(self, kind, manifests, ctx):
+        services = {}
+        for m in manifests:
+            name = m.get("metadata", {}).get("name", "redis")
+            spec = m.get("spec") or {}
+            ns = m.get("metadata", {}).get("namespace", "default")
+            services[name] = {
+                "image": f"redis:{spec.get('version', '7')}-alpine",
+                "restart": "always",
+                "command": ["redis-server", "--requirepass", spec.get("password", "changeme")],
+            }
+            # Register the Service so network aliases are generated
+            ctx.services_by_selector[name] = {
+                "name": name, "namespace": ns,
+                "selector": {}, "type": "ClusterIP",
+                "ports": [{"port": 6379, "targetPort": 6379}],
+            }
+        return ProviderResult(services=services)
+```
+
+### 3. Test locally
+
+Create a test manifest:
+
+```yaml
+# /tmp/test-manifests/redis.yaml
+apiVersion: redis.example.com/v1
+kind: RedisCluster
+metadata:
+  name: my-redis
+  namespace: cache
+spec:
+  version: "7"
+  password: s3cret
+```
+
+Run with the distribution:
+
+```bash
+python3 helmfile2compose.py \
+  --from-dir /tmp/test-manifests \
+  --extensions-dir ./dekube-provider-redis-cluster \
+  --output-dir /tmp/output
+```
+
+Check the output:
+
+```bash
+cat /tmp/output/compose.yml
+# Should contain a my-redis service with redis:7-alpine
+```
+
+### 4. Publish
+
+Create a GitHub repo, tag a release, and submit a PR to [dekube-manager's `extensions.json`](https://github.com/dekubeio/dekube-manager). See [Publishing](#publishing) below.
+
+---
+
 ## Testing locally
 
 All extension types are loaded from the same `--extensions-dir`. The loader detects each type automatically — converters, transforms, and rewriters can coexist in the same directory.
