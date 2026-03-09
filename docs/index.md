@@ -2,6 +2,11 @@
 
 You deploy with Helm charts or helmfiles. Your users, your dev setup, or your NAS just need `docker compose up`. dekube generates `compose.yml` + reverse proxy config from your Kubernetes manifests — same charts, same values, no second stack to maintain.
 
+??? info "Disclaimer: AI-generated code"
+    This project was built by a human with AI as a typewriter. The architecture, design decisions, and scope creep are entirely human. The code was typed by Claude. Not entirely vibe-coded — but definitely not handwritten. For the full existential crisis, see [About](about.md).  
+    Sloppiness has been [actively fought](extend/code-quality.md#active-measures-against-sloppiness) (or at least, I'm trying to).
+
+
 If you just want it to work and don't care why, [kubernetes2simple](https://k2s.dekube.io/) will handle everything. If you want to understand what you're running and control what gets loaded, [helmfile2compose](https://helmfile2compose.dekube.io/docs/) is the distribution for you. If you're here, you want to understand the engine itself, write extensions, or build your own distribution.
 
 > *And lo, the architect who sought to render the celestial rites in common tongue found himself building a second heaven. "I have translated," he proclaimed, standing in a temple whose pillars bore the same glyphs as the first. The old gods smiled, for one does not carry fire without becoming a hearth.*
@@ -49,7 +54,7 @@ Write extensions, maintain code quality, run the test suite.
 
 ## License
 
-Public domain; entirely vibe-coded.
+Public domain; AI-typed, human insanity-designed.
 
 ---
 

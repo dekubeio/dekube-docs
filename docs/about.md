@@ -14,7 +14,7 @@ Of course, the better name — **dekompose** — only came to mind *after* the r
 
 Using Kubernetes manifests as an intermediate representation to generate a Docker Compose is absolutely using an ICBM to kill flies. And then the ICBM grew an extension system, a package manager, a distribution model, and a regression suite — and now it can reach Mars, even though there are no flies there.
 
-It was entirely vibe-coded. It reinvented Kubernetes. It has tentacles. It has complete documentation. It scores well on every linter. It should not exist, and yet it does, and it works oh so well. Still fewer dependencies than a fresh `create-react-app`.
+It was built by a human with AI as a typewriter. Not vibe-coded — every architectural decision, every layer of complexity, every "should we?" was human. The AI just typed faster than I could. It reinvented Kubernetes. It has tentacles. It has complete documentation. It scores well on every linter. It should not exist, and yet it does, and it works oh so well. Still fewer dependencies than a fresh `create-react-app`.
 
 What follows is the complete and unhinged explanation of how we got here. It comes in two parts: [Part I](#part-i--the-confession) is the existential crisis — how a single autistic engineer with a Claude Teams plan rebuilt the world in fourteen days. [Part II](#part-ii--the-indictment) is the part where I stop apologising and start pointing fingers at the state of open source documentation. If you want to skip the self-flagellation and go straight to my dismay about the industry, [jump to Part II](#part-ii--the-indictment).
 
@@ -52,7 +52,7 @@ It is entirely in the public domain, as every AI-written software should be. It 
 
 The aberration is the idea. What follows is entirely my fault.
 
-Here is the thing nobody warns you about with vibe coding: the AI never says no.
+Here is the thing nobody warns you about when working with AI: it never says no.
 
 It never says "this is getting too complex." It never says "maybe we should stop here." It never pushes back on scope. You ask for an extension system, you get an extension system. You ask for a package manager, you get a package manager. You ask for a distribution model with auto-registration and duplicate kind detection and a build pipeline that concatenates twenty modules into a single file — you get exactly that, in one session, working on the first try. Every feature request is met with enthusiasm and competence. There is no friction.
 
@@ -68,7 +68,7 @@ So you end up in your own personal arms race — alone. A bigger thing. A cleane
 
 The final escalation: v3.0.0 split the project into a bare engine with empty registries, and a distribution that bundles extensions and populates those registries via auto-discovery. A core that parses everything and converts nothing. A distribution that wires in the converters, the rewriters, the providers — the opinions. Third-party extensions plug into the core's contracts, comprising a full ecosystem as defined by scope creep. The agent delivered it in one session. Working on the first try. Of course.
 
-I don't regret it. The scope creep wasn't caused by the tool — I invented every layer of complexity myself. But the tool made each layer *trivially easy* to build, and that's a different kind of danger. There was never a moment where the implementation cost forced me to reconsider the design. The complexity was always mine; the execution was always effortless. Some people will stop on form, not content. They'll see "vibe-coded" and move on. Their loss. Judge it by its output, not its origin.
+I don't regret it. The scope creep wasn't caused by the tool — I invented every layer of complexity myself. But the tool made each layer *trivially easy* to build, and that's a different kind of danger. There was never a moment where the implementation cost forced me to reconsider the design. The complexity was always mine; the execution was always effortless. Some people will stop on form, not content. They'll see "AI-assisted" and move on. Their loss. Judge it by its output, not its origin.
 
 The [roadmap](roadmap.md) still has items. Each one is a small step — that's how it always worked, one reasonable brick at a time, until the wall was taller than the builder.
 
@@ -140,7 +140,7 @@ I alone — with the help of an unsuspecting yet remarkably capable Claude agent
 
 ### The point
 
-A vibe-coded heresy about converting Kubernetes manifests to Docker Compose ships complete documentation. Your project should as well. You surely have more people. You have a more noble goal. You also probably care a lot more about your beautifully handcrafted nugget than I do about this squishy abomination.
+An AI-typed heresy about converting Kubernetes manifests to Docker Compose ships complete documentation. Your project should as well. You surely have more people. You have a more noble goal. You also probably care a lot more about your beautifully handcrafted nugget than I do about this squishy abomination.
 
 And yet — here we are. A heresy with full docs, and an orthodoxy with "join our Discord for support." An ICBM with a user manual, and actual spaceships with a Post-it note on the cockpit. We're not better engineers. We're not more virtuous. We just wrote it down — because the heretic knows nobody will believe him otherwise.
 

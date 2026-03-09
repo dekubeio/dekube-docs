@@ -1,6 +1,6 @@
 # Code quality
 
-A project born from desecration, vibe-coded across multiple sessions, whose primary architectural document is a fake Lovecraftian grimoire — has no business passing a linter. It passes every single one. That's somehow worse.
+A project born from desecration, built with AI across multiple sessions, whose primary architectural document is a fake Lovecraftian grimoire — has no business passing a linter. It passes every single one. That's somehow worse.
 
 > *The inquisitors arrived at dawn, instruments of measurement in hand, expecting to find the temple in ruin. Instead they found the walls straight, the columns load-bearing, and the altar — though undeniably profane — structurally sound. They left in silence, more disturbed than when they came.*
 >
@@ -14,7 +14,21 @@ All repos use the same toolchain:
 - **[pyflakes](https://github.com/PyCQA/pyflakes)** — fast, zero-config, no false positives. Must be clean.
 - **[radon](https://radon.readthedocs.io/)** — cyclomatic complexity. Target: no function rated D or worse. C-rated functions are tolerated when they're natural dispatchers or sequential logic that wouldn't benefit from splitting. Current worst: `_read_yaml_config` (20) and `_collect_uids` (18), both C.
 
-## Current scores
+## Active measures against sloppiness
+
+AI-generated code is sloppy by default. Left unchecked, it drifts — unused imports, redundant guards, subtly wrong assumptions, patterns applied mechanically without understanding context. This project fights that with four layers:
+
+1. **Linters on every change.** pylint, pyflakes, and radon run after every session. Not in CI — in the conversation. The AI is told to lint before declaring victory. Real issues are fixed immediately; style warnings are accepted when they're just style.
+
+2. **Aggressive CLAUDE.md instructions.** Each repo has a `CLAUDE.md` that encodes project-specific invariants: null-safe YAML access patterns, duck typing dispatch rationale, naming conventions, what not to touch. The AI reads these on every session start. They act as guardrails against the AI's tendency to "improve" things that work.
+
+3. **Regular self-audits.** Periodic sessions dedicated to linting, complexity review, and reading the code with fresh eyes. Not feature work — pure inspection. Most v2.3.1 null-safety fixes came from one such session.
+
+4. **Adversarial cross-LLM review.** A rival model (Gemini) audits the codebase cold, with targeted prompts per layer. Findings are verified against actual code before any fix is applied. Signal-to-noise is low (~30%), but the signal is real — bugs that survived months of single-model review. See the [journal entry](../journal.md#twin-stars-audit) for the full accounting.
+
+The tentacles have always been in the [idea](../about.md#the-aberration), not in the code — which works remarkably well. These measures exist to keep it that way.
+
+
 
 *Last updated: 2026-03-07 — six helpers promoted, an ordering bug fixed, and the linters still approve.*
 
