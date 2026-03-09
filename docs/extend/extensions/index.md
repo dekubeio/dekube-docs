@@ -2,6 +2,14 @@
 
 Before writing an extension, make sure you're familiar with [Concepts](../../understand/concepts.md) (design philosophy, emulation boundary) and [Architecture](../../understand/architecture.md) (converter pipeline, dispatch loop). A look at [Code quality](../code-quality.md) is also recommended — the bar is higher than the project's origins would suggest.
 
+## Which extension type do I need?
+
+- **My K8s manifests contain a CRD that dekube doesn't know about** → write a [**Converter**](writing-converters.md) (resource-only) or a [**Provider**](writing-providers.md) (if it should produce compose services)
+- **I need to populate `ctx` lookups from K8s manifests without producing compose services** → write an [**Indexer**](writing-converters.md#indexers) (subclass of `IndexerConverter`)
+- **The compose output is correct but I need to post-process it** (rewrite env vars, inject services, fix permissions) → write a [**Transform**](writing-transforms.md)
+- **My cluster uses an ingress controller whose annotations aren't supported** → write an [**Ingress rewriter**](writing-rewriters.md)
+- **I want to replace Caddy with a different reverse proxy** → write an [**Ingress provider**](writing-ingressproviders.md)
+
 ## Extension types
 
 | Type | Interface | Page | Naming convention |

@@ -10,18 +10,23 @@ Converters answer the question "what does this K8s manifest become in compose?" 
 
 ## The contract
 
-A transform class must have:
+Transforms use duck typing — no base class. The extension loader detects a transform by checking for a `transform()` method **and** the absence of a `kinds` attribute (which would make it a converter). This keeps transform files minimal and independent of the engine's class hierarchy.
 
-1. **`transform(compose_services, ingress_entries, ctx)`** — called once after all converters, mutates in place
-2. **No `kinds` attribute** — this is what the loader uses to distinguish transforms from converters
+| Attribute | Required | Description |
+|-----------|----------|-------------|
+| `transform(self, compose_services, ingress_entries, ctx)` | **yes** | Called once after all converters. Mutates in place, no return value. |
+| `kinds` | **must be absent** | Presence of `kinds` makes the loader treat the class as a converter. |
+| `priority` | optional | `int`, default 1000. Lower = earlier. |
+| `name` | optional | `str`. Used to match `extensions.<name>.enabled: false` in `dekube.yaml`. |
 
 ```python
 class MyTransform:
+    name = "my-transform"
     priority = 1000  # optional, default 1000, lower = earlier
 
     def transform(self, compose_services, ingress_entries, ctx):
         for svc_name, svc in compose_services.items():
-            env = svc.get("environment", {})
+            env = svc.get("environment") or {}
             # ... post-processing logic
 ```
 

@@ -120,4 +120,30 @@ class MyConverter:
         return self._process_main(manifests, ctx)
 ```
 
+## Indexers {#indexers}
+
+An indexer is a converter that populates `ConvertContext` lookups without producing compose services. The four bundled indexers (configmap, secret, pvc, service) handle standard K8s kinds, but you can write your own for any kind you need indexed.
+
+Subclass `IndexerConverter` instead of `Converter` — the only difference is the default priority (50 instead of 1000), which ensures indexers run before converters and providers that depend on their data.
+
+```python
+from dekube import IndexerConverter, ConverterResult
+
+class MyResourceIndexer(IndexerConverter):
+    kinds = ["MyResource"]
+    name = "my-resource-indexer"
+
+    def convert(self, kind, manifests, ctx):
+        for m in manifests:
+            name = (m.get("metadata") or {}).get("name", "")
+            spec = m.get("spec") or {}
+            # Populate ctx so downstream converters/providers can use this data
+            ctx.configmaps[f"{name}-generated"] = {
+                "data": spec.get("config") or {},
+            }
+        return ConverterResult()
+```
+
+Same contract as converters — `kinds`, `convert()`, `ConverterResult`. The distinction is semantic: indexers feed `ctx`, converters transform resources.
+
 See [Writing extensions](index.md) for testing, repo structure, publishing, and available imports.
