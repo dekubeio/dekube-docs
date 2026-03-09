@@ -78,6 +78,30 @@ Transforms have full access to `compose_services`, `ingress_entries`, and `ctx`.
 - **Modify files on disk** — `ctx.output_dir` points to the output directory where configmaps and secrets have already been written
 - **Read context** — `ctx.alias_map`, `ctx.services_by_selector`, `ctx.config` are all available for decision-making
 
+### Interaction with fix-permissions
+
+The `fix-permissions` transform (bundled in helmfile2compose, priority 8000) generates a `chown` service for non-root containers with bind-mounted volumes. It reads the UID from the Kubernetes manifest's `securityContext.runAsUser` and compares the manifest image with the compose service image.
+
+If your transform **changes the image** of a service, fix-permissions will detect the mismatch and skip the service — the manifest UID is no longer reliable. A warning is logged. This is the safe default: no incorrect chown is better than a wrong one.
+
+To restore the chown with the correct UID, set `user:` on the compose service:
+
+```python
+def transform(self, compose_services, ingress_entries, ctx):
+    svc = compose_services.get("my-service")
+    if svc:
+        svc["image"] = "custom-image:latest"
+        svc["user"] = "999"  # fix-permissions will chown to this UID
+```
+
+fix-permissions resolves the effective UID in this order:
+
+1. **`user:` on the compose service** — always wins (set by transform or user override)
+2. **Manifest UID** — used only if the image hasn't changed
+3. **Skip** — image changed, no `user:` set → warning, no chown
+
+This means your transform doesn't *have to* set `user:` — fix-permissions degrades gracefully. But if you know the UID, setting it is the right thing to do.
+
 ### Example: strip network aliases
 
 The [`flatten-internal-urls`](../../catalogue.md#flatten-internal-urls) transform is the reference implementation. Its core logic (simplified — the real implementation uses module-level functions, not methods):

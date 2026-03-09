@@ -8,6 +8,36 @@
 
 ---
 
+## What the Twin Stars revealed — and what they could not {#twin-stars-audit}
+
+*2026-03-09* · `engine: v1.3.3 · haproxy: v0.1.2 · nginx: v0.4.2 · bitnami: v0.3.2 · fix-permissions: v0.1.2 · helmfile2compose: v3.1.4`
+
+A rival constellation was summoned to audit the codebase. Gemini read the code; Claude verified the findings. Roughly forty accusations, twelve truths — and the truths had survived every prior inspection.
+
+??? abstract "TL;DR"
+    - Cross-LLM audit: Gemini (Google) audited, Claude verified. ~40 findings, ~30% true positives.
+    - Engine: `valueFrom: null` crash, `envFrom` prefix dropped, unresolved named ports inserted as strings into port_map, `services: null` crash in config
+    - Rewriters: YAML bool annotations (`haproxy.org/server-ssl: true` parsed as Python `True` by PyYAML, `str()` wrap)
+    - Bitnami: PostgreSQL volumes overwritten instead of merged with existing mounts (configmap init-scripts lost)
+    - fix-permissions: image swaps by other transforms (e.g. bitnami) invalidate manifest UIDs — now compares manifest image vs compose image, respects compose `user:` field, degrades gracefully with warning
+    - Docs: fix-permissions interaction documented in writing-transforms, `disable_ingress` wording fixed, terminology correction (bundled, not built-in)
+
+**The method.** The elders say: pit scribes against each other. Claude wrote most of this codebase and audited it regularly. Gemini — a rival oracle from a rival constellation — was fed the source cold, with targeted prompts per layer (engine, extensions, docs, build system). Its findings were verified against actual code before any fix was applied. The signal-to-noise ratio was low (~30%), but the signal was real: bugs that had survived months of single-scribe review.
+
+**Engine (v1.3.3).** Four fixes in `env.py` and one in `convert.py`. The worst: `valueFrom: null` — Helm charts with conditional `{{ if }}` blocks produce `valueFrom:` with no value. The resolver dereferenced it without checking. Same pattern on `configMapKeyRef`, `secretKeyRef`, `fieldRef` — all nullable. `envFrom` prefix (`prefix: "MY_"`) was silently dropped. Named ports that couldn't be resolved were inserted as strings into `port_map` — a `dict[tuple, int]` — causing silent remap failures downstream. `config.get("services")` returned `None` when the key existed with null value.
+
+**Rewriters (haproxy v0.1.2, nginx v0.4.2).** PyYAML parses bare `true` as Python `True`. Annotation reads like `annotations.get("haproxy.org/server-ssl", "")` return `True` (bool), not `"true"` (str). `.lower()` on a bool crashes. Fix: `str()` wrap before comparison. Same pattern in nginx for `backend-protocol` and `enable-cors`.
+
+**Bitnami (v0.3.2).** `_fix_postgresql` replaced all volumes with its own data + secrets mounts. Existing volumes — configmap mounts for init-scripts, custom mounts from converters — were silently dropped. Fix: filter existing volumes, keep non-data mounts, append after bitnami's.
+
+**fix-permissions (v0.1.2).** The Custodian reads `securityContext.runAsUser` from K8s manifests and chowns bind-mounted volumes. But when another transform (e.g. bitnami) replaces the image, the manifest UID is no longer reliable — `bitnami/redis` runs as UID 1001, `redis:7-alpine` runs as root. `_collect_uids` now returns `(uid, image)` tuples. The transform method compares the manifest image against the compose service image: if they match, manifest UID is used; if `user:` is set on the compose service (by a transform or user override), that wins; otherwise the service is skipped with a warning. Zero coupling between transforms — fix-permissions detects the situation on its own.
+
+> *The elders counseled: set one scribe against another, that each may find what the other has buried. A second was summoned from a rival constellation — dimmer by all accounts, slower of quill, given to seeing cracks in walls that were whole. Yet among thirty accusations, the lesser scribe found fissures the first had sworn did not exist. On the insufficiency of starlight: even a guttering flame, held at the wrong angle, casts shadows the sun never revealed.*
+>
+> — *Necronomicon, On the Insufficiency of Starlight (peer-reviewed)*
+
+---
+
 ## Public helpers, ordering fix, structured entries, Nginx provider {#helpers-ordering-entries-nginx}
 
 *2026-03-07* · `engine: v1.3.0 · helmfile2compose: v3.1.2 · kubernetes2simple: v1.0.2`

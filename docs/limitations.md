@@ -74,7 +74,9 @@ The [cert-manager extension](catalogue.md#cert-manager) can generate real certif
 
 Bitnami images (PostgreSQL, Redis, MongoDB) run as non-root (UID 1001) and expect Unix permissions on their data directories. The host directory is typically owned by your user (UID 1000), so the container can't write to it. This causes `mkdir: cannot create directory: Permission denied`.
 
-This is handled automatically: the built-in [fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) transform detects non-root containers (`securityContext.runAsUser`) with bind-mounted volumes and generates a `fix-permissions` service that runs `chown -R <uid>` as root on first startup. No manual intervention needed.
+This is handled automatically: the [fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) transform (bundled in helmfile2compose) detects non-root containers (`securityContext.runAsUser`) with bind-mounted volumes and generates a `fix-permissions` service that runs `chown -R <uid>` as root on first startup. No manual intervention needed in most cases.
+
+**Caveat: image swaps.** fix-permissions reads the UID from the Kubernetes manifest. If another transform changes the image (e.g. bitnami replaces `bitnami/redis` with `redis:7-alpine`), the manifest UID is no longer reliable — fix-permissions detects the mismatch and skips the service with a warning. To restore the chown, set `user:` on the compose service (via `overrides:` in `dekube.yaml` or in the transform itself). fix-permissions will use the explicit `user:` value over the manifest UID.
 
 ### Hostname length
 

@@ -44,7 +44,8 @@ replacements:
   - old: "https://app.prod.example.com"
     new: "https://app.localhost"
 
-# If true, skip reverse proxy service generation entirely.
+# If true, skip the reverse proxy service in compose.yml but still
+# write the ingress config as Caddyfile-<project> (for external use).
 # Use when you manage your own reverse proxy outside of dekube.
 # Default: false
 # Legacy key: disableCaddy

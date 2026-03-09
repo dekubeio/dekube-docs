@@ -81,9 +81,25 @@ convert.py        ← pacts, all core modules, _auto_register()
 
 Module-level mutable state lives in `core/convert.py` (`_CONVERTERS`, `_TRANSFORMS`, `CONVERTED_KINDS`) and `core/ingress.py` (`_REWRITERS`). In the distribution model, `_auto_register()` populates these registries from all classes found in the concatenated script's globals.
 
+The conversion pipeline runs in a fixed order: converters → transforms → overrides. Overrides from `dekube.yaml` apply *after* transforms, so user config always wins over transform-produced output. This means a transform can create or modify a service, and the user can still override any field on it. Extension developers should not assume their transform output is final — it's not. This ordering was introduced in engine v1.3.0.
+
 ### `io/` — input/output
 
 Parsing, config, and output writing. No conversion logic — just plumbing between the filesystem and the core.
+
+#### Namespace inference
+
+Helm charts don't always set `metadata.namespace` on every resource — many rely on Helm's `--namespace` flag at install time. When dekube parses rendered manifests, some resources end up without a namespace. This matters because compose network aliases use the namespace to build FQDN variants (`svc.ns.svc.cluster.local`). No namespace → no FQDNs → cross-service references by FQDN silently break.
+
+`parsing.py` solves this with a three-phase inference strategy, where each phase fills gaps left by the previous:
+
+1. **Sibling inference** — every manifest is tagged with its release directory (`_h2c_release_dir`, the first path component under the rendered output). If *any* manifest in the same release dir has a namespace, all siblings inherit it. This works because a single Helm release always targets one namespace.
+
+2. **Release/namespace matching** — the release name is extracted from the directory name (format: `helmfile.yaml-<hash>-<release-name>`). If that name matches a known namespace (seen in a `Namespace` resource or another manifest's `metadata.namespace`), it's assigned. Covers the common case where the release and namespace share a name.
+
+3. **`helmfile list` fallback** — when using `--helmfile-dir`, the engine runs `helmfile list --output json` before rendering. This gives a definitive release → namespace mapping straight from the helmfile. Only available in this mode — `--from-dir` skips it since there's no helmfile to query.
+
+When inference fails entirely for a service, the engine emits a warning: *"service 'X' has no FQDN aliases (namespace unknown)"*. The fix is either adding `metadata.namespace` in the chart templates, or using `--helmfile-dir` so phase 3 can kick in.
 
 ## Build artifacts
 
