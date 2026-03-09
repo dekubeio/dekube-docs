@@ -256,6 +256,10 @@ Extensions that live outside the dekubeio org. They follow the same contracts an
 ### fake-apiserver
 A transform that breaches [the wall](understand/concepts.md#the-emulation-boundary). For applications that require a live kube-apiserver at runtime — leader election, service discovery via API, in-cluster auth — this extension provides one. What it does, how it does it, and why you should not use it are documented in the [repo itself](https://github.com/baptisterajaut/dekube-fakeapi). No further instructions will be given here. The catalogue acknowledges its existence; it does not condone it.
 
+## Something not working?
+
+If an extension misbehaves, open an issue on its own repo — each one is linked in the tables above. If you're not sure whether the problem is in the extension or in the engine, use [helmfile2compose](https://github.com/dekubeio/helmfile2compose/issues) — I'll triage.
+
 ## Writing your own
 
 - **[Writing converters](extend/extensions/writing-converters.md)** — the generic interface: `kinds`, `convert()`, `ConvertResult`, `ConvertContext`

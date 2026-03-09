@@ -56,6 +56,8 @@ Write extensions, maintain code quality, run the test suite.
 
 Public domain; AI-typed, human insanity-designed.
 
+Something broken? Open an issue on [dekube-engine](https://github.com/dekubeio/dekube-engine/issues) (engine/contracts), the relevant [extension repo](catalogue.md), or [helmfile2compose](https://github.com/dekubeio/helmfile2compose/issues) (everything else — I'll triage).
+
 ---
 
 *Looking for the full record of what was done, and in what order? The [cursed journal](journal.md) remembers.*

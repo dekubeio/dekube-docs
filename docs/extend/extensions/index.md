@@ -6,6 +6,9 @@ So you want to teach dekube a new heresy. Take a moment to reconsider. Then, hav
 >
 > — *Book of Eibon, On Open Extension Points (one assumes)*
 
+!!! tip "Something broken?"
+    If the engine contract doesn't behave as documented, or if you hit a bug while developing an extension, open an issue on [dekube-engine](https://github.com/dekubeio/dekube-engine/issues). If the problem is in a bundled extension (one of the Eight Monks), file it on the extension's own repo — each one is linked in the [catalogue](../../catalogue.md). Not sure where the bug lives? Use [helmfile2compose](https://github.com/dekubeio/helmfile2compose/issues) — I'll triage.
+
 ## Which extension type do I need?
 
 - **My K8s manifests contain a CRD that dekube doesn't know about** → write a [**Converter**](writing-converters.md) (resource-only) or a [**Provider**](writing-providers.md) (if it should produce compose services)
