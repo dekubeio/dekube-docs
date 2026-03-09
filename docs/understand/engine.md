@@ -93,13 +93,19 @@ Helm charts don't always set `metadata.namespace` on every resource — many rel
 
 `parsing.py` solves this with a three-phase inference strategy, where each phase fills gaps left by the previous:
 
-1. **Sibling inference** — every manifest is tagged with its release directory (`_h2c_release_dir`, the first path component under the rendered output). If *any* manifest in the same release dir has a namespace, all siblings inherit it. This works because a single Helm release always targets one namespace.
+1. **Sibling inference** — every manifest is tagged with its release directory (`_release_dir`, the first path component under the rendered output). If *any* manifest in the same release dir has a namespace, all siblings inherit it. This works because a single Helm release always targets one namespace.
 
 2. **Release/namespace matching** — the release name is extracted from the directory name (format: `helmfile.yaml-<hash>-<release-name>`). If that name matches a known namespace (seen in a `Namespace` resource or another manifest's `metadata.namespace`), it's assigned. Covers the common case where the release and namespace share a name.
 
 3. **`helmfile list` fallback** — when using `--helmfile-dir`, the engine runs `helmfile list --output json` before rendering. This gives a definitive release → namespace mapping straight from the helmfile. Only available in this mode — `--from-dir` skips it since there's no helmfile to query.
 
 When inference fails entirely for a service, the engine emits a warning: *"service 'X' has no FQDN aliases (namespace unknown)"*. The fix is either adding `metadata.namespace` in the chart templates, or using `--helmfile-dir` so phase 3 can kick in.
+
+To disable namespace inference entirely, set `infer_namespaces: false` in `dekube.yaml` (see [config reference](../reference/config.md#full-schema)).
+
+I'd have liked to KISS this and apply GIGO — the engine is supposed to be transparent, dispatch manifests, and not have opinions. But even MinIO's main chart fails to set `metadata.namespace` on all its resources, and it's far from alone. This is probably the most "magical" and opinionated mechanism in a layer that was designed to do neither. The opt-out exists for when you'd rather fix your charts than have the engine guess.
+
+Conceptually, this could have been an indexer — a ninth monk that populates context before the others run. It wasn't extracted because no distribution has a reason to remove it, no alternative implementation makes sense, and the mechanism is feature-complete. Adding indirection for a component that will never be swapped is the opposite of KISS.
 
 ## Build artifacts
 

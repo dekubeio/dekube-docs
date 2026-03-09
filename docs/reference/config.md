@@ -51,6 +51,12 @@ replacements:
 # Legacy key: disableCaddy
 disable_ingress: false
 
+# If false, skip namespace inference entirely. Manifests without
+# metadata.namespace will stay namespace-less — no FQDN aliases.
+# Useful if your charts already set namespaces on all resources.
+# Default: true
+infer_namespaces: true
+
 # Map custom ingressClassName values to canonical rewriter names.
 # Without this, custom class names won't match any rewriter.
 # Legacy key: ingressTypes
@@ -111,6 +117,7 @@ extensions:
 | `exclude` | `list[str]` | `[]` | Workload names to skip. Supports `fnmatch` wildcards. |
 | `replacements` | `list[dict]` | `[]` | String replacements: `[{old: "...", new: "..."}]`. Applied to env vars, ConfigMap files, and reverse proxy upstreams. |
 | `disable_ingress` | `bool` | `false` | Skip reverse proxy generation entirely. |
+| `infer_namespaces` | `bool` | `true` | Infer missing `metadata.namespace` from sibling manifests and helmfile metadata. Set to `false` if your charts already set namespaces on all resources. See [namespace inference](../understand/engine.md#namespace-inference). |
 | `ingress_types` | `dict[str, str]` | *(none)* | Custom `ingressClassName` → canonical rewriter name mapping. |
 | `network` | `str` | *(none)* | External compose network name. |
 | `overrides` | `dict` | *(none)* | Per-service compose overrides (deep-merged). |
