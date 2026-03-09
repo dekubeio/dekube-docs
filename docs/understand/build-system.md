@@ -93,15 +93,11 @@ If `dekube.py` (build artifact) exists in the current directory while running `P
 
 `CORE_MODULES` must be topological. A function defined in `core/env.py` that uses something from `pacts/helpers.py` requires `pacts/helpers.py` to appear earlier in the list. The smoke test catches this immediately — if the order is wrong, `--help` crashes on a `NameError`.
 
-### 3. Third-party detection is naive
-
-The import sorter checks `module == "yaml"` to identify third-party packages. If a new third-party dependency is added, update this check in both build scripts. Currently only `pyyaml` exists as a third-party dep.
-
-### 4. `_auto_register()` skips base classes and `_`-prefixed names
+### 3. `_auto_register()` skips base classes and `_`-prefixed names
 
 If you name an extension class `_MyConverter`, it won't be registered. If you create a new base class, add it to `_BASE_CLASSES` in `core/convert.py`.
 
-### 5. Duplicate kind detection is fatal
+### 4. Duplicate kind detection is fatal
 
 `_auto_register()` calls `sys.exit(1)` if two classes claim the same kind. This is intentional — silent conflicts are worse. If you see:
 
@@ -110,6 +106,10 @@ Error: kind 'Ingress' claimed by both CaddyProvider and MyIngressProvider
 ```
 
 ...one of them needs to go. A distribution can only have one handler per kind.
+
+### 5. Third-party import grouping is aesthetic
+
+The import sorter checks `module == "yaml"` to separate third-party imports from stdlib with a blank line (PEP 8 style). This is purely cosmetic — it affects formatting of the generated file, not execution. If an extension adds a new third-party dependency (e.g. `cryptography` via cert-manager), its imports land in the stdlib block. The output is ugly but works fine.
 
 ## Running locally
 

@@ -84,6 +84,12 @@ The conversion primitives (`convert_command`, `convert_volume_mounts`, `build_al
 
 Internal functions (`_apply_port_remap`, `_apply_alias_map`, `_build_vol_map`, etc.) are not part of the stable API and may change between versions. Pin your dekube-engine version if you depend on them. Transforms in particular should avoid importing from the core — see [Writing transforms](writing-transforms.md#self-contained--no-core-imports).
 
+## Input validation: not your problem
+
+The engine assumes its input manifests are valid Kubernetes YAML — it does [zero validation](../../understand/concepts.md#no-validation-by-design) and your extension shouldn't either. If a manifest is missing a field, has the wrong type, or references something that doesn't exist, that's a broken helmfile, not your bug. You don't need to guard against malformed input.
+
+If you *want* to handle edge cases gracefully in your extension, that's your call — but the engine won't help you. No schema validation, no error wrapping, no safety net. A missing key is a `KeyError` and that's fine.
+
 ## Quickstart: writing a converter from scratch
 
 From an empty file to a working extension. The ritual is short — the consequences are not.

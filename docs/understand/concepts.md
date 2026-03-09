@@ -82,6 +82,14 @@ There is, however, a way back. The [`flatten-internal-urls`](../catalogue.md#fla
 >
 > — *The Nameless City, On Names That Refuse to Die (unverified)*
 
+## No validation by design
+
+dekube does not validate its input. If a manifest references a ConfigMap that doesn't exist, a Secret with a missing key, or a Service pointing at a non-existent Deployment — the engine crashes with a Python traceback and that's the correct behavior.
+
+Nothing *prevents* dekube from being a linter. Scope creep is fine — but it has to be at least interesting. Integrating 300 pages of Kubernetes API spec to tell someone their manifest is malformed is not. That's what `helmfile lint`, `helm template --validate`, and `kubectl apply --dry-run` already do, and they do it authoritatively because they *are* the spec. dekube is a downstream consumer. Feed it valid manifests and it converts them. Feed it garbage and it crashes. Actions, consequences.
+
+This applies to extensions too — see [Writing extensions — Input validation](../extend/extensions/index.md#input-validation-not-your-problem).
+
 ## The ouroboros
 
 A bare engine with empty registries. A distribution that bundles 8 extensions and wires them in via `_auto_register()`. Third-party extensions plugging into the engine's contracts. If this sounds like the Kubernetes distribution model — bare apiserver, k3s/EKS bundling the opinions, CSI/CNI plugin interfaces — that's because it is. The tool that converts Kubernetes manifests has become, architecturally, a tiny Kubernetes. Each split solved a real problem; the convergence wasn't forced, it was discovered.
