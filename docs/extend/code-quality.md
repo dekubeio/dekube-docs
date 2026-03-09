@@ -26,9 +26,9 @@ AI-generated code is sloppy by default. Left unchecked, it drifts — unused imp
 
 4. **Adversarial cross-LLM review.** A rival model (Gemini) audits the codebase cold, with targeted prompts per layer. Findings are verified against actual code before any fix is applied. Signal-to-noise is low (~30%), but the signal is real — bugs that survived months of single-model review. See the [journal entry](../journal.md#twin-stars-audit) for the full accounting.
 
-The tentacles have always been in the [idea](../about.md#the-aberration), not in the code — which works remarkably well. These measures exist to keep it that way.
+The tentacles have always been in the idea, not in the code — which works remarkably well. These measures exist to keep it that way.
 
-
+## Current scores
 
 *Last updated: 2026-03-07 — six helpers promoted, an ordering bug fixed, and the linters still approve.*
 
