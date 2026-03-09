@@ -4,7 +4,7 @@ You deploy with Helm charts or helmfiles. Your users, your dev setup, or your NA
 
 ??? info "Disclaimer: AI-generated code"
     This project was built by a human with AI as a typewriter. The architecture, design decisions, and scope creep are entirely human. The code was typed by Claude. Not entirely vibe-coded — but definitely not handwritten. For the full existential crisis, see [About](about.md).  
-    Sloppiness has been [actively fought](extend/code-quality.md#active-measures-against-sloppiness) (or at least, I'm trying to).
+    Sloppiness has been [actively fought](extend/code-quality.md#aberrant-not-sloppy-we-hope) (or at least, I'm trying to).
 
 
 If you just want it to work and don't care why, [kubernetes2simple](https://k2s.dekube.io/) will handle everything. If you want to understand what you're running and control what gets loaded, [helmfile2compose](https://helmfile2compose.dekube.io/docs/) is the distribution for you. If you're here, you want to understand the engine itself, write extensions, or build your own distribution.

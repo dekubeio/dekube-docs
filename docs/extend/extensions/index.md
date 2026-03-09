@@ -1,6 +1,10 @@
 # Writing extensions
 
-Before writing an extension, make sure you're familiar with [Concepts](../../understand/concepts.md) (design philosophy, emulation boundary) and [Architecture](../../understand/architecture.md) (converter pipeline, dispatch loop). A look at [Code quality](../code-quality.md) is also recommended — the bar is higher than the project's origins would suggest.
+So you want to teach dekube a new heresy. Take a moment to reconsider. Then, having failed to reconsider, make sure you're familiar with [Concepts](../../understand/concepts.md) (design philosophy, emulation boundary) and [Architecture](../../understand/architecture.md) (converter pipeline, dispatch loop). A look at [Code quality](../code-quality.md) is also recommended — the bar is higher than the project's origins would suggest.
+
+> *The acolyte approached the altar and asked: "May I add my own prayer to the liturgy?" The high priest did not refuse. The high priest never refuses. That is the problem.*
+>
+> — *Book of Eibon, On Open Extension Points (one assumes)*
 
 ## Which extension type do I need?
 
@@ -82,7 +86,7 @@ Internal functions (`_apply_port_remap`, `_apply_alias_map`, `_build_vol_map`, e
 
 ## Quickstart: writing a converter from scratch
 
-A step-by-step walkthrough — from an empty file to a working, testable extension.
+From an empty file to a working extension. The ritual is short — the consequences are not.
 
 **Scenario:** You want to handle a `RedisCluster` CRD that produces a Redis compose service.
 

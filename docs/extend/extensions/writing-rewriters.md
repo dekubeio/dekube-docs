@@ -1,10 +1,12 @@
 # Writing rewriters
 
-An ingress rewriter translates controller-specific Ingress annotations into provider-agnostic ingress entry dicts, consumed by whichever `IngressProvider` is configured in the distribution. Each rewriter targets a specific ingress controller — dispatched by `ingressClassName` or annotation prefix.
+Every ingress controller invented its own annotation language. HAProxy puts path rewrites in `haproxy.org/path-rewrite`. Nginx puts them in `nginx.ingress.kubernetes.io/rewrite-target`. Traefik decided annotations were beneath it and uses CRDs instead (but also supports annotations, because consistency is for the weak). A rewriter translates one controller's dialect into provider-agnostic ingress entries that any `IngressProvider` can consume.
 
 > *The gatekeepers of old each bore a different sigil, yet all opened the same threshold. The pilgrim need not know the sigil — only declare which gate he approaches, and the keeper shall answer in kind.*
 >
 > — *Cultes des Goules, On the Many Gates (on good authority)*
+
+The contract is small — three methods, one name — because the hard part isn't the interface. The hard part is reading the annotations of an ingress controller you didn't choose, translating semantics that were never designed to be portable, and producing something that a completely different reverse proxy can understand. The contract just gives you a place to put that suffering.
 
 ## The contract
 

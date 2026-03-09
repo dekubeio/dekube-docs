@@ -14,19 +14,21 @@ All repos use the same toolchain:
 - **[pyflakes](https://github.com/PyCQA/pyflakes)** — fast, zero-config, no false positives. Must be clean.
 - **[radon](https://radon.readthedocs.io/)** — cyclomatic complexity. Target: no function rated D or worse. C-rated functions are tolerated when they're natural dispatchers or sequential logic that wouldn't benefit from splitting. Current worst: `_read_yaml_config` (20) and `_collect_uids` (18), both C.
 
-## Active measures against sloppiness
+## Aberrant, not sloppy (we hope)
 
-AI-generated code is sloppy by default. Left unchecked, it drifts — unused imports, redundant guards, subtly wrong assumptions, patterns applied mechanically without understanding context. This project fights that with four layers:
+AI-generated code rots. Not dramatically — not "the server is on fire" rot. The quiet kind. Unused imports that accumulate like dust. Guards that made sense three refactors ago. Patterns applied because the model saw them elsewhere, not because they belong here. Left alone, the temple doesn't collapse — it just slowly fills with cobwebs that nobody notices until something breaks at 3 AM.
 
-1. **Linters on every change.** pylint, pyflakes, and radon run after every session. Not in CI — in the conversation. The AI is told to lint before declaring victory. Real issues are fixed immediately; style warnings are accepted when they're just style.
+So the temple got inquisitors.
 
-2. **Aggressive CLAUDE.md instructions.** Each repo has a `CLAUDE.md` that encodes project-specific invariants: null-safe YAML access patterns, duck typing dispatch rationale, naming conventions, what not to touch. The AI reads these on every session start. They act as guardrails against the AI's tendency to "improve" things that work.
+**The inquisitors run after every session.** pylint, pyflakes, radon — not in CI, not in a weekly cron, but in the conversation itself. The AI is told to lint before declaring victory. It usually finds something. The something is usually its own fault.
 
-3. **Regular self-audits.** Periodic sessions dedicated to linting, complexity review, and reading the code with fresh eyes. Not feature work — pure inspection. Most v2.3.1 null-safety fixes came from one such session.
+**The scripture is carved into the walls.** Every repo has a `CLAUDE.md` that encodes what the AI must not forget between sessions: null-safe YAML patterns, duck typing rationale, naming conventions, what not to "improve." The AI reads these on every session start. Without them, it would helpfully refactor working code into something subtly different — same tests passing, different behavior in production. The guardrails exist because the oracle has no memory and infinite confidence.
 
-4. **Adversarial cross-LLM review.** A rival model (Gemini) audits the codebase cold, with targeted prompts per layer. Findings are verified against actual code before any fix is applied. Signal-to-noise is low (~30%), but the signal is real — bugs that survived months of single-model review. See the [journal entry](../journal.md#twin-stars-audit) for the full accounting.
+**The architect walks the halls.** Periodic sessions where no features are built — just reading, linting, questioning. Pure inspection. The v2.3.1 null-safety sweep (30+ fixes) came from one such walk. So did the realization that `_fix_postgresql` had been silently eating volumes for three versions.
 
-The tentacles have always been in the idea, not in the code — which works remarkably well. These measures exist to keep it that way.
+**A rival constellation was summoned.** Gemini — a competing oracle — was fed the codebase cold and told to find what Claude had missed. Forty accusations. Twelve truths. The truths had survived months of single-oracle review. The [journal](../journal.md#twin-stars-audit) has the full accounting. The lesson: even a lesser scribe, held at the wrong angle, casts shadows the sun never revealed.
+
+The tentacles have always been in the idea, not in the code. These rituals exist to keep it that way.
 
 ## Current scores
 
@@ -151,11 +153,11 @@ The linters approved. The executioner confirmed. The architect looked at what he
 >
 > — *Unaussprechlichen Kulten, On the Conservation of Complexity (unfortunately²)*
 
-## Code gotchas
+## The null that devours silently
 
-### Null-safe YAML access
+The one bug that keeps coming back. The one we fixed thirty times and found again.
 
-Python's `dict.get("key", default)` returns `default` only when the key is **absent**. When the key exists with an explicit `None` value (common in Helm charts with conditional `{{ if }}` blocks), `.get()` returns `None`, not the default.
+Helm charts with conditional `{{ if }}` blocks render absent fields as explicit `null`. Python's `.get("key", {})` returns the default only when the key is **absent**. When the key exists with value `None` — which is what YAML `null` becomes — `.get()` returns `None`, not your carefully chosen fallback. Your code receives the Void wearing absence as a mask.
 
 ```python
 # WRONG — returns None when key exists with null value
@@ -165,7 +167,7 @@ annotations = manifest.get("metadata", {}).get("annotations", {})
 annotations = manifest.get("metadata", {}).get("annotations") or {}
 ```
 
-This applies to any field that Helm may render as `null`: `annotations`, `ports`, `initContainers`, `securityContext`, `data`, `stringData`, `rules`, `selector`. Use `or {}` / `or []` for any `.get()` on a YAML field that could be explicitly null. v2.3.1 fixed 30+ instances of this across dekube-engine, nginx, and traefik.
+Every field that Helm may render as `null` is a trap: `annotations`, `ports`, `initContainers`, `securityContext`, `data`, `stringData`, `rules`, `selector`. Use `or {}` / `or []` on all of them. v2.3.1 fixed 30+ instances across dekube-engine, nginx, and traefik. v1.3.3 found four more that had survived. The null finds passages we didn't know existed.
 
 ## Running locally
 

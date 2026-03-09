@@ -16,7 +16,7 @@ annotations = manifest.get("metadata", {}).get("annotations") or {}
 
 This applies to any field that Helm may render as `null`: `annotations`, `ports`, `initContainers`, `securityContext`, `data`, `stringData`, `rules`, `selector`. Use `or {}` / `or []` for any `.get()` on a YAML field that could be explicitly null.
 
-See [Code quality — Code gotchas](extend/code-quality.md#code-gotchas) for the full history (v2.3.1 fixed 30+ instances).
+See [The null that devours silently](extend/code-quality.md#the-null-that-devours-silently) for the full history (v2.3.1 fixed 30+ instances).
 
 ## `sys.modules` and module identity
 

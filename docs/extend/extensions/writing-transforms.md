@@ -1,6 +1,6 @@
 # Writing transforms
 
-A transform is an extension that post-processes the final compose output — after converters have produced services, after network aliases have been injected, after hostname truncation. Transforms see the assembled result and reshape it. Overrides run *after* transforms, so transform-created services can be overridden in `dekube.yaml`.
+A transform sees the compose output after everyone else is done — converters have produced services, aliases have been injected, hostnames have been truncated — and decides what still needs to change. It can rewrite environment variables, inject services, strip aliases, fix permissions, or do anything else that doesn't fit in a converter's "one kind in, resources out" model. Overrides run *after* transforms, so even the transform's work can be overridden in `dekube.yaml`. Nothing is final until the user says so.
 
 Converters answer the question "what does this K8s manifest become in compose?" Transforms answer a different one: "now that everything is assembled, what needs to change?"
 
@@ -66,7 +66,7 @@ class LateTransform:
     priority = 2000  # runs after default (1000)
 ```
 
-Priority matters when multiple transforms are loaded and one depends on another's mutations.
+Priority matters when multiple transforms are loaded and one depends on another's mutations. In a system where every extension promised to be independent, it's remarkable how quickly they start depending on execution order.
 
 ## What transforms can do
 
@@ -79,6 +79,8 @@ Transforms have full access to `compose_services`, `ingress_entries`, and `ctx`.
 - **Read context** — `ctx.alias_map`, `ctx.services_by_selector`, `ctx.config` are all available for decision-making
 
 ### Interaction with fix-permissions
+
+Transforms can break each other's assumptions. Priority ordering helps, but when one transform rewrites what another inspects, the results depend on who runs first — and whether anyone anticipated the combination. The fix-permissions interaction is the canonical example.
 
 The `fix-permissions` transform (bundled in helmfile2compose, priority 8000) generates a `chown` service for non-root containers with bind-mounted volumes. It reads the UID from the Kubernetes manifest's `securityContext.runAsUser` and compares the manifest image with the compose service image.
 

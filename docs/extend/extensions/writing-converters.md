@@ -1,6 +1,6 @@
 # Writing converters
 
-A converter is an extension that teaches dekube how to handle specific Kubernetes resource kinds. Each converter is a single `.py` file with a converter class.
+A converter teaches dekube how to handle Kubernetes resource kinds it would otherwise skip with a warning and a shrug. You claim a `kind`, you get its manifests, you decide what they become in compose. One `.py` file, one class, one more thing the engine shouldn't know how to do but now does.
 
 > *To name a thing is to summon it. To teach another its name is to bind your fate to what answers.*
 >
@@ -8,10 +8,10 @@ A converter is an extension that teaches dekube how to handle specific Kubernete
 
 If your converter targets CRD kinds (replacing a K8s controller), see [Writing providers](writing-providers.md) for additional patterns (synthetic resources, network alias registration, cross-converter dependencies). For Ingress-specific reverse proxy backends, see [Writing ingress providers](writing-ingressproviders.md).
 
-Note: the distinction between converters (`dekube-converter-*`) and providers (`dekube-provider-*`) is enforced — `Provider` is a base class in `dekube.pacts.types`. Providers produce compose services; converters produce synthetic resources. Both use typed return contracts (`ConverterResult` / `ProviderResult`), but subclassing `Provider` signals your intent to the framework.
+The distinction between converters (`dekube-converter-*`) and providers (`dekube-provider-*`) is not a naming suggestion — it's enforced. `Provider` is a base class in `dekube.pacts.types`, and subclassing it tells the engine you intend to produce compose services. Get this wrong and your services vanish without a trace. Both use typed return contracts (`ConverterResult` / `ProviderResult`), and the framework trusts the contract more than your intentions.
 
-!!! warning "Services from non-Provider converters are discarded"
-    The dispatch loop ignores `services` returned by converters that don't subclass `Provider`. If your converter produces compose services, subclass `Provider` and return `ProviderResult`. Non-provider converters should return `ConverterResult` (which has no `services` field). The typed contracts enforce this at the API level.
+!!! warning "Services from non-Provider converters are silently dropped"
+    If your converter returns `services` without subclassing `Provider`, those services are silently discarded. No error. No warning. They just vanish from the output, and you spend an hour wondering why your compose file is empty. Subclass `Provider` and return `ProviderResult`. Non-provider converters should return `ConverterResult` (which has no `services` field). The typed contracts enforce this — and the engine enforces the contracts with the quiet cruelty of a system that was never designed to explain itself.
 
 ## The contract
 
@@ -43,7 +43,7 @@ If your converter produces compose services, subclass `Provider` instead and ret
 
 ### Return types
 
-Two return types, depending on whether your converter produces compose services:
+What you return determines what the engine does with your output — and what it quietly throws away. Two return types:
 
 - **`ConverterResult`** — one field: `ingress_entries` (list of dicts). For converters and indexers that don't produce services. Default: empty list.
 - **`ProviderResult`** — two fields: `services` (dict) and `ingress_entries` (list, inherited). For providers that produce compose services. Both default to empty.
@@ -55,7 +55,7 @@ Most converters return `ConverterResult()` (empty). Providers return `ProviderRe
 
 ### `ConvertContext` (`ctx`)
 
-The conversion context passed to every converter. Key attributes:
+The shared mutable state that every converter reads from — and writes to. This is how converters communicate: not through return values, but through side effects on a shared dict. Kubernetes had an API server for this. We have a Python object passed by reference. Same energy, fewer HTTP calls.
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
@@ -96,7 +96,7 @@ class CertManagerConverter:
     priority = 10  # runs first
 ```
 
-This matters when converters depend on each other's output (e.g. trust-manager needs cert-manager's generated secrets).
+This matters when converters depend on each other's output — which is temporal coupling in a system that was supposed to be "just extensions running independently." cert-manager must inject its secrets before trust-manager reads them. Get the priority wrong and trust-manager finds an empty `ctx.secrets`, produces an empty CA bundle, and every downstream TLS connection fails for reasons that have nothing to do with TLS.
 
 ### Multi-kind dispatch
 

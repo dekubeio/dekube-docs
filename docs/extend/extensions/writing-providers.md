@@ -1,6 +1,6 @@
 # Writing providers
 
-A provider is a converter that produces compose services from CRD kinds — emulating what a K8s controller would have done at runtime. Providers subclass `Provider` (from `dekube`) and share the same `kinds` + `convert()` interface as converters, but deal with additional patterns: injecting synthetic resources, registering services that the K8s controller would have created, and coordinating with other extensions through priority ordering.
+A provider emulates a Kubernetes controller — without the inconvenience of actually running one. It reads CRDs, pretends a reconciliation loop happened, and produces the compose services that the real controller would have created. Same manifests in, same services out, minus the control plane, the RBAC, and the existential purpose. Providers subclass `Provider` (from `dekube`) and share the same `kinds` + `convert()` interface as converters, but deal with additional patterns: injecting synthetic resources, registering services, and coordinating with other extensions through priority ordering.
 
 > *The priests were gone, yet the rituals continued. The faithful did not notice — for the incantations were spoken in the same tongue, and the sacrifices consumed in the same fire. Only the altar knew that the hands were different.*
 >
@@ -9,6 +9,8 @@ A provider is a converter that produces compose services from CRD kinds — emul
 Read [Writing converters](writing-converters.md) first for the base interface (`kinds`, `convert()`, `ConvertResult`, `ConvertContext`, priority, testing, publishing).
 
 ## Provider vs Converter
+
+A converter tells the engine what a CRD *means* — it reads manifests and injects synthetic resources for others to consume. A provider tells the engine what a CRD *does* — it pretends a controller ran and produces the compose services that controller would have created. The converter forges documents; the provider forges the entire bureaucracy.
 
 CRD extensions that **produce compose services** (i.e. return non-empty `ProviderResult.services`) should subclass `Provider`:
 
@@ -35,7 +37,7 @@ The distinction is enforced — `Provider` is a base class in `dekube.pacts.type
 
 ## Injecting synthetic resources
 
-Converters can inject synthetic Secrets or ConfigMaps into `ctx` for other converters or the existing volume-mount machinery to consume:
+This is where the forgery happens. Converters can fabricate K8s resources that never existed in any cluster — Secrets the operator would have generated, ConfigMaps the controller would have reconciled — and inject them into `ctx` as if they'd always been there. Downstream converters and the volume-mount machinery consume them without question.
 
 ### Secrets
 
@@ -127,12 +129,14 @@ The cert-manager converter injects synthetic Secrets into `ctx.secrets`. The tru
 
 ## The emulation boundary
 
-A CRD converter doesn't *run* the K8s controller — it *replaces* it. The controller watches CRDs, reconciles state, creates/updates resources. The converter reads the same CRDs once, at conversion time, and produces the final output directly.
+A CRD converter doesn't *run* the K8s controller — it *replaces* it. Where do you stop pretending? That's the question every provider author faces, and the answer is always "one step further than you planned."
+
+The controller watches CRDs, reconciles state, creates/updates resources. The converter reads the same CRDs once, at conversion time, and produces the final output directly. No watch. No loop. No "eventually consistent" — just "consistent, once, right now."
 
 This means:
 
-- **No reconciliation loop** — the converter runs once. If something changes, you re-run dekube.
-- **No runtime state** — the converter can't watch for changes or react to failures.
+- **No reconciliation loop** — the converter runs once. If something changes, you re-run dekube. The controller's patient vigil becomes a one-shot invocation.
+- **No runtime state** — the converter can't watch for changes or react to failures. What it produces is final.
 - **No side effects** — the converter shouldn't create containers or processes. It produces compose service definitions (providers) or synthetic resources (converters), or both.
 
-The goal is to produce the same *result* the controller would have produced, without the *process*. For most CRDs, this is straightforward — the CR is a declaration, and the controller's job is to materialize it. The converter does the same materialization, at a different time.
+The goal is to produce the same *result* the controller would have produced, without the *process*. For most CRDs, this is straightforward — the CR is a declaration, and the controller's job is to materialize it. The converter does the same materialization, at a different time. For the CRDs where this *isn't* straightforward — where the controller has opinions, state machines, or runtime decisions — see [the wall](../../understand/concepts.md#the-emulation-boundary) and decide how close you're willing to stand.

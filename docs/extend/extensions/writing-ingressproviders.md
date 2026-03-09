@@ -1,6 +1,6 @@
 # Writing ingress providers
 
-An ingress provider is the abstract base for reverse proxy backends. Subclasses implement `build_service()` and `write_config()` to produce a reverse proxy compose service and its configuration file.
+In Kubernetes, the ingress controller is a load-balanced, health-checked, horizontally scaled reverse proxy backed by an entire control plane. We replaced that steel bridge with an assembly of twigs — a single-instance reverse proxy on a single host, configured by a generated flat file. Don't expect a freight train to cross it. But you're here, reading this page, which means you've already accepted the premise. So let's build the best twigs we can.
 
 > *The gatekeeper was not merely a guard — he was the gate itself, the threshold, and the architect of the path beyond. When the temple replaced him, it did not hire a new guard. It built a new door.*
 >
@@ -8,11 +8,13 @@ An ingress provider is the abstract base for reverse proxy backends. Subclasses 
 
 ## What it is
 
-`IngressProvider` is an abstract class (subclass of `Provider`) that handles the entire Ingress conversion lifecycle. It lives in `dekube.core.ingress` internally, but extensions should import it from the pacts API:
+`IngressProvider` is an abstract class (subclass of `Provider`) that owns the entire Ingress conversion lifecycle — from raw manifests to a running reverse proxy with a config file. Everything flows through it. Every route, every TLS termination, every path rewrite ultimately becomes whatever your provider decides to emit. It lives in `dekube.core.ingress` internally, but extensions should import it from the pacts API.
+
+The lifecycle:
 
 1. Receives all `Ingress` manifests (via `convert()`)
 2. Dispatches each manifest to the first matching `IngressRewriter` (via `_find_rewriter()`)
-3. Collects all rewriter entries
+3. Collects all rewriter entries — the abstract routing rules, stripped of their controller-specific dialects
 4. Calls `build_service(entries, ctx)` to produce the reverse proxy compose service
 5. Calls `write_config(entries, output_dir, config)` to write the proxy config file
 
@@ -156,15 +158,15 @@ See the full implementation in [dekube-provider-caddy](https://github.com/dekube
 
 ## When to write one
 
-Write an `IngressProvider` when you want to replace the entire reverse proxy backend — Caddy with Traefik, Nginx Proxy Manager, HAProxy (as a proxy, not just a rewriter), etc.
+Write an `IngressProvider` when you want to replace the entire reverse proxy backend — Caddy with Traefik, Nginx Proxy Manager, HAProxy (as a proxy, not just a rewriter), etc. You're rebuilding the front door, not just changing the lock. Make sure you actually need a new door before committing to the carpentry.
 
-If you only need to translate a different ingress controller's annotations into entry dicts, write an [IngressRewriter](writing-rewriters.md) instead — that's much simpler.
+If you only need to translate a different ingress controller's annotations into entry dicts, write an [IngressRewriter](writing-rewriters.md) instead — that's much simpler, and much harder to break.
 
 ## Distribution-level vs external
 
-`IngressProvider` subclasses are *typically* bundled into distributions at build time via `build-distribution.py` — that's the intended pattern, since the ingress provider is a core architectural choice for a distribution.
+`IngressProvider` subclasses are *typically* bundled into distributions at build time via `build-distribution.py` — that's the intended pattern. The ingress provider isn't just another extension. It defines the shape of the output: Caddyfile or nginx.conf or traefik.yml. The gate defines the temple.
 
-That said, loading an `IngressProvider` from `--extensions-dir` works — the extension loader detects it as a converter (it has `kinds` and `convert()`), and the CLI scans for the active `IngressProvider` at runtime. It's just not the recommended path: the ingress provider shapes the entire output (Caddyfile vs nginx.conf vs traefik.yml), so shipping it as a loose external extension makes the setup fragile. Prefer building a [custom distribution](../../understand/distributions.md) instead.
+That said, loading an `IngressProvider` from `--extensions-dir` works — the extension loader detects it as a converter (it has `kinds` and `convert()`), and the CLI scans for the active `IngressProvider` at runtime. It's just not the recommended path: shipping your gateway as a loose extension means every user must remember to install it, and forgetting turns every Ingress manifest into a warning and a shrug. Prefer building a [custom distribution](../../understand/distributions.md) instead.
 
 ```
 my-distribution/
