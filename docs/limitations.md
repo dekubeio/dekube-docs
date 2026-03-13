@@ -30,13 +30,11 @@ Workarounds:
 
 ### Startup ordering
 
-Kubernetes init containers block the main container until they complete. In compose, init containers become separate services with `restart: on-failure` — they retry until they succeed, but nothing prevents the main container from starting concurrently and crash-looping until its dependencies are ready.
+Kubernetes init containers block the main container until they complete. In compose, init containers become separate services with `restart: on-failure`, and the main service declares `depends_on` with `condition: service_completed_successfully` — so Docker Compose starts the main container only after its init containers exit successfully.
 
-This works in practice (everything eventually converges), but expect noisy logs on first boot. Kubernetes solved this elegantly — init containers block, dependencies are declared, the scheduler respects the order. You chose to leave that behind.
+nerdctl compose ignores `depends_on` entirely, so on nerdctl the main container starts concurrently and crash-loops until its dependencies are ready. The `restart: on-failure` policy ensures everything converges eventually — expect noisy logs on first boot with nerdctl. On Docker Compose, startup ordering is correct out of the box.
 
-Why not `depends_on`? nerdctl compose ignores it entirely. Docker compose supports `condition: service_completed_successfully`, but relying on it would break nerdctl compatibility. Brute force retry works everywhere.
-
-Exception: sidecar containers use `depends_on` because `network_mode: container:<name>` needs the parent container to exist. nerdctl compose ignores the directive entirely — the sidecar starts concurrently and usually wins the race (the parent is heavier), but there is no ordering guarantee. If the sidecar starts first, it fails and retries. Same brute-force purgatory, different aisle.
+Sidecar containers also use `depends_on` because `network_mode: container:<name>` needs the parent container to exist. Same story: Docker Compose respects it, nerdctl ignores it and relies on brute-force retry.
 
 ### Sidecars and pod-level networking
 
@@ -78,6 +76,20 @@ This is handled automatically: the [fix-permissions](https://github.com/dekubeio
 
 **Caveat: image swaps.** fix-permissions reads the UID from the Kubernetes manifest. If another transform changes the image (e.g. bitnami replaces `bitnami/redis` with `redis:7-alpine`), the manifest UID is no longer reliable — fix-permissions detects the mismatch and skips the service with a warning. To restore the chown, set `user:` on the compose service (via `overrides:` in `dekube.yaml` or in the transform itself). fix-permissions will use the explicit `user:` value over the manifest UID.
 
+### Resource limits
+
+CPU/memory **limits** are translated to `deploy.resources.limits` (`memory` and `cpus`). **Requests** are ignored — compose has no concept of guaranteed vs burstable QoS classes; only hard limits exist.
+
+nerdctl compose ignores `deploy.resources` entirely. Docker Compose enforces them.
+
+### Probes and healthchecks
+
+Readiness and liveness probes are converted to compose `healthcheck` (readiness preferred, fallback to liveness). Supported probe types: `exec` (→ `CMD`), `httpGet` (→ `wget`), `tcpSocket` (→ `/dev/tcp`). Timing fields (`periodSeconds`, `timeoutSeconds`, `failureThreshold`, `initialDelaySeconds`) are mapped to their compose equivalents.
+
+Startup probes are not converted — compose has no equivalent concept (startup probes gate liveness checks, not readiness).
+
+nerdctl compose ignores `healthcheck` entirely. Docker Compose uses it with `depends_on` `condition: service_healthy`.
+
 ### Hostname length
 
 Linux hostnames are limited to 63 characters. Compose uses the service name as the container hostname. Services with names longer than 63 characters automatically get a truncated `hostname:` to avoid `sethostname: invalid argument` failures.
@@ -89,14 +101,6 @@ Safe to skip — but only because you already abandoned the cluster that would e
 ### Scaling and replicas
 
 Compose runs one instance of each service. HPA, replica counts (other than 0, which auto-skips the workload), and PodDisruptionBudgets are ignored. DaemonSets are converted as regular services (one instance, no node affinity or scheduling). This is a single-machine tool.
-
-### Resource limits
-
-CPU/memory requests and limits are ignored. Compose supports `mem_limit` / `cpus`, but translating K8s resource semantics (requests vs limits, burstable QoS) into compose constraints is more misleading than helpful.
-
-### Probes and healthchecks
-
-Liveness, readiness, and startup probes are not converted to compose `healthcheck`. The semantics differ enough that a blind translation would cause more problems than it solves (compose healthcheck only affects `depends_on` with `condition: service_healthy`, which we don't use anyway).
 
 ### Network isolation
 

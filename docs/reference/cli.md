@@ -78,3 +78,13 @@ On **subsequent runs** (`dekube.yaml` already exists):
 - Stale volume entries (config volumes not referenced by any PVC) emit a warning
 
 See [Configuration reference](config.md) for the full `dekube.yaml` schema.
+
+## Exit codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success — `compose.yml` and config files written |
+| `1` | Fatal error — invalid config, extension conflict, helmfile failure, etc. |
+| `2` | Empty output — no services generated. Not a crash, but nothing useful produced. Usually means all workloads were excluded or the input contained no convertible manifests. |
+
+Useful for scripting (`generate-compose.sh`, CI pipelines):

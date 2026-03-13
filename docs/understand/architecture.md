@@ -60,7 +60,7 @@ See [Writing converters](../extend/extensions/writing-converters.md) for the ful
 
 ### External transforms
 
-Loaded from the same `--extensions-dir` as converters. The loader distinguishes them automatically: classes with `transform()` and no `kinds` are transforms. Sorted by `priority` (lower = earlier, default 1000). Run after all converters, aliases, overrides, and hostname truncation — they see the final output.
+Loaded from the same `--extensions-dir` as converters. The loader distinguishes them automatically: classes with `transform()` and no `kinds` are transforms. Sorted by `priority` (lower = earlier, default 1000). Run after all converters, aliases, and hostname truncation, but **before** user overrides — so overrides always have the final say.
 
 See [Writing transforms](../extend/extensions/writing-transforms.md) for the full guide.
 
@@ -78,7 +78,7 @@ See [Writing rewriters](../extend/extensions/writing-rewriters.md) for the full 
 
 | K8s kind | Compose equivalent |
 |----------|-------------------|
-| DaemonSet / Deployment / StatefulSet | `services:` (image, env, command, volumes, ports). Init containers become separate services with `restart: on-failure`. Sidecar containers become separate services with `network_mode: container:<main>` (shared network namespace). DaemonSet treated identically to Deployment (single-machine tool). |
+| DaemonSet / Deployment / StatefulSet | `services:` (image, env, command, volumes, ports). Init containers become separate services with `restart: on-failure`; main service uses `depends_on` with `condition: service_completed_successfully`. Sidecar containers become separate services with `network_mode: container:<main>` (shared network namespace). Resource limits → `deploy.resources.limits`. Readiness/liveness probes → `healthcheck`. DaemonSet treated identically to Deployment (single-machine tool). |
 | Job | `services:` with `restart: on-failure` (migrations, superuser creation). Init containers converted the same way. |
 | ConfigMap / Secret | Resolved inline into `environment:` + generated as files for volume mounts |
 | Service (ClusterIP) | Network aliases (FQDN variants resolve via compose DNS) |
@@ -90,7 +90,7 @@ See [Writing rewriters](../extend/extensions/writing-rewriters.md) for the full 
 
 ### Not converted or silently ignored
 
-CronJobs, resource limits, HPA, PDB emit warnings. RBAC, NetworkPolicies, CRDs (unless claimed by an extension), probes, and other cluster-only kinds are silently skipped. Unknown kinds trigger a warning. See [Limitations](../limitations.md) for the full breakdown and rationale.
+CronJobs, HPA, PDB emit warnings. RBAC, NetworkPolicies, CRDs (unless claimed by an extension), and other cluster-only kinds are silently skipped. Unknown kinds trigger a warning. Resource limits are translated to `deploy.resources.limits`; probes are converted to `healthcheck`. See [Limitations](../limitations.md) for the full breakdown and rationale.
 
 ## Processing pipeline
 
@@ -105,9 +105,9 @@ Thirteen steps. Each one locally reasonable. Together, they flatten a distribute
 7. **Dispatch to converters** — each converter receives its kind's manifests + a `ConvertContext`. Extensions run in priority order (lower first), then built-in converters. Within `IngressProvider`, each Ingress manifest is dispatched to the first matching `IngressRewriter` (by `ingressClassName` or annotation prefix).
 8. **Post-process env** — port remapping and replacements applied to all service environments (idempotent — catches extension-produced services).
 9. **Build network aliases** — for each K8s Service, add FQDN aliases (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`) + short alias to the compose service's `networks.default.aliases`. FQDNs resolve natively via compose DNS — no hostname rewriting needed.
-10. **Apply overrides** — deep merge from config `overrides:` and `services:` sections.
-11. **Hostname truncation** — services with names >63 chars get explicit `hostname:`.
-12. **Run transforms** — post-processing hooks (if loaded). Transforms mutate `compose_services` and `ingress_entries` in place.
+10. **Hostname truncation** — services with names >63 chars get explicit `hostname:`.
+11. **Run transforms** — post-processing hooks (if loaded). Transforms mutate `compose_services` and `ingress_entries` in place.
+12. **Apply overrides** — deep merge from config `overrides:` and `services:` sections. Runs last so user overrides always win over transform output.
 13. **Write output** — `compose.yml`, reverse proxy config (via `IngressProvider`), config/secret files. The temple is rendered. The architect goes to sleep. The architect does not sleep well.
 
 ## Automatic rewrites

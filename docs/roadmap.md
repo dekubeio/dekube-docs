@@ -34,7 +34,7 @@ A Swarm-oriented distribution with different monks — distributed volumes, `dep
 
 ## Out of scope
 
-CronJobs, resource limits, HPA, PDB, probes-to-healthcheck. These survived the flattening by virtue of not being worth flattening. See [Limitations](limitations.md) for the full list and rationale.
+CronJobs, resource requests, HPA, PDB. These survived the flattening by virtue of not being worth flattening. See [Limitations](limitations.md) for the full list and rationale.
 
 ---
 
