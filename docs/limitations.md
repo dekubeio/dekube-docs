@@ -42,14 +42,6 @@ Sidecar containers (`containers[1:]`) are converted to separate compose services
 
 Other compose services reach both the main container and its sidecars via the main service name, each on its own port.
 
-Shared `emptyDir` volumes between the main container and its sidecars are handled automatically by the [emptydir](catalogue.md#emptydir) transform (bundled in helmfile2compose).
-
-### emptyDir volumes
-
-K8s `emptyDir` volumes are shared between containers in the same pod. In compose, containers become separate services — they can't share an anonymous volume (`- /path`). The [`emptydir` transform](catalogue.md#emptydir) (bundled in helmfile2compose, priority 1000) auto-detects `emptyDir` volumes mounted by more than one container in the same pod and replaces their anonymous volume entries with a shared named Compose volume declared at the top level. No configuration needed.
-
-If you need to override or exclude a specific emptyDir volume, use `overrides:` in `dekube.yaml` — user overrides run after transforms and always have the final say.
-
 ### PVC (PersistentVolumeClaim) conversion
 
 Kubernetes PVCs request dynamic storage from a provisioner (Longhorn, Ceph, etc.). helmfile2compose converts them to bind mounts — host directories mapped into the container. Each PVC claim name is registered in `dekube.yaml` on first run with a default host path under `./data/`. `volumeClaimTemplates` (StatefulSets) are handled the same way.
