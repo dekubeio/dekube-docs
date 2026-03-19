@@ -16,7 +16,17 @@ The Kubernetes [Gateway API](https://gateway-api.sigs.k8s.io/) is the eventual s
 
 ### Pipeline hooks
 
-Named pipeline hooks (`post_aliases`, `pre_write`, etc.) for extensions. Not needed yet — converters + transforms cover known cases. Revisit if a third pattern shows up. So far, two patterns have shown up. The third is watching.
+Named pipeline hooks (`pre_write`, `post_aliases`, etc.) for extensions. The third pattern has arrived: `dekube-transform-emptydir` needs to contribute top-level `volumes:` to the compose output — something neither converters nor transforms can do through their existing contracts.
+
+**Stopgap:** `ctx.compose_extras`, a general-purpose dict accumulator on `ConvertContext`. Transforms write to it, the output module merges it into the compose dict. Works, minimal, no contract changes. But it's a data bag, not a pipeline stage — no ordering guarantees, no lifecycle.
+
+**Proper solution:** `pre_write(self, compose_dict, ctx)` as a duck-typed optional method on transforms. The engine calls it after assembling the compose dict, before writing. Transforms that need to modify the output structure implement it; others don't. Backward-compatible, no contract breakage.
+
+**Priority model:** One priority per extension, three execution pools (`pre_hook`, `transform`, `post_hook`), each sorted by that same priority. An extension at priority 1000 runs at 1000 in whichever pools it participates in. No per-phase priority — if an exotic case ever needs it, the option can be added later, but the default is one priority.
+
+**Post hooks.** If `pre_write` exists, a post-convert hook (after services are generated but before alias injection) is a natural counterpart. Indexers already fill this role via low-priority converters, but a dedicated post hook would make the intent explicit. Some final-pass transforms like fix-permissions (priority 8000, runs after everything that touches volumes) are natural post hooks. Reclassifying them is a separate concern, not a dependency.
+
+**Migration.** When hooks land, `ctx.compose_extras` becomes dead code. Transforms migrate from `ctx.compose_extras[key] = val` to `pre_write(compose, ctx): compose[key] = val`. Trivial, no user-facing impact.
 
 ### Extension compatibility matrix
 
