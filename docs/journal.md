@@ -10,7 +10,7 @@
 
 ## The void learns to share {#the-void-learns-to-share}
 
-*2026-03-19* · `engine: v?.?.? · workload: v?.?.? · emptydir: v0.1.0 · fix-permissions: v?.?.?`
+*2026-03-19* · `engine: v1.4.0 · workload: v0.3.0 · emptydir: v0.1.0 · fix-permissions: v0.1.4 · helmfile2compose: v3.2.0 · kubernetes2simple: v1.0.6`
 
 Kubernetes `emptyDir` volumes were the last known gap where containers in the same pod lost sight of each other after conversion. An init container would populate a Java truststore; the main container would mount the same path and find nothing. The void was always there — it just wasn't shared.
 
