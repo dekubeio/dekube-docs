@@ -8,6 +8,31 @@
 
 ---
 
+## The void learns to share {#the-void-learns-to-share}
+
+*2026-03-19* · `engine: v?.?.? · workload: v?.?.? · emptydir: v0.1.0 · fix-permissions: v?.?.?`
+
+Kubernetes `emptyDir` volumes were the last known gap where containers in the same pod lost sight of each other after conversion. An init container would populate a Java truststore; the main container would mount the same path and find nothing. The void was always there — it just wasn't shared.
+
+Also: some tentacles were found in corners from the previous session's probe and resource-limits work — named ports that crashed on `int()`, memory units that Compose didn't recognize. The goo has been cleaned up. Apologies to anyone who stepped in it.
+
+??? abstract "TL;DR"
+    - New bundled extension: `dekube-transform-emptydir` — auto-detects shared emptyDir volumes, promotes to named Compose volumes
+    - Core: `ctx.compose_extras` accumulator on `ConvertContext` — general-purpose mechanism for transforms to contribute top-level compose keys
+    - Core: `Pod` kind support across engine, workload provider, emptydir, fix-permissions
+    - Workload provider: named port resolution in probes (`rpc` → resolve), K8s memory units (`256Mi` → `256m`)
+    - Roadmap: pipeline hooks (`pre_write`) acknowledged as the proper long-term solution; `compose_extras` is the stopgap
+
+We introduced a new disciple that sits in the council — without the rank of monk, however unfair it may be. The [emptydir transform](catalogue.md#emptydir) scans K8s manifests for `emptyDir` volumes mounted by more than one container, and promotes them to shared named Compose volumes. No configuration, no `dekube.yaml` entries. Bundled in helmfile2compose, not a monk — it was never part of the original engine extraction.
+
+The mechanism required a small addition to the engine: `ctx.compose_extras`, a general-purpose accumulator that lets transforms contribute top-level compose keys without mutating the config. It's a stopgap — the [roadmap](roadmap.md#pipeline-hooks) now acknowledges pipeline hooks (`pre_write`) as the proper long-term solution.
+
+> *The void between vessels was never truly empty — it teemed with intent, with data half-written, with truststores no hand had yet opened. When at last a bridge was laid across the nothing, the vessels discovered they had been speaking all along. They simply could not hear each other through the silence.*
+>
+> — *Necronomicon, On the Communion of Empty Vessels (volume I)*
+
+---
+
 ## What the Twin Stars revealed — and what they could not {#twin-stars-audit}
 
 *2026-03-09* · `engine: v1.3.3 · haproxy: v0.1.2 · nginx: v0.4.2 · bitnami: v0.3.2 · fix-permissions: v0.1.2 · helmfile2compose: v3.1.4`
