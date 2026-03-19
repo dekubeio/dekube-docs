@@ -19,9 +19,9 @@ There are six extension types, all loaded from the same `--extensions-dir`:
 
 See [Writing extensions](extend/extensions/index.md) to build your own.
 
-## The Eight Monks — bundled in helmfile2compose
+## The Nine Monks — bundled in helmfile2compose
 
-These are the eight extensions bundled in the [helmfile2compose distribution](understand/distributions.md). Together they form the reference distribution: everything you need to convert standard K8s manifests into a working compose stack, nothing you don't. No CRD magic, no vendor-specific annotations, no opinions about your monitoring stack — just Deployments, StatefulSets, Jobs, Services, Ingresses, ConfigMaps, Secrets, PVCs, and the plumbing to wire them together.
+These are the nine extensions bundled in the [helmfile2compose distribution](understand/distributions.md). Together they form the reference distribution: everything you need to convert standard K8s manifests into a working compose stack, nothing you don't. No CRD magic, no vendor-specific annotations, no opinions about your monitoring stack — just Deployments, StatefulSets, Jobs, Services, Ingresses, ConfigMaps, Secrets, PVCs, and the plumbing to wire them together.
 
 If your helmfile only uses standard Kubernetes resources, the monks are all you need. The moment you introduce CRDs (cert-manager Certificates, Keycloak CRs, ServiceMonitors…) or vendor-specific ingress annotations (nginx, traefik), you install extensions from the sections below.
 
@@ -34,9 +34,10 @@ If your helmfile only uses standard Kubernetes resources, the monks are all you 
 | [The Builder](https://github.com/dekubeio/dekube-provider-simple-workload) | Provider | `Deployment`, `StatefulSet`, `DaemonSet`, `Job` | 500 |
 | [The Herald](https://github.com/dekubeio/dekube-rewriter-haproxy) | IngressRewriter | — | — |
 | [The Gatekeeper](https://github.com/dekubeio/dekube-provider-caddy) | IngressProvider | `Ingress` | 900 |
+| [The Emissary](https://github.com/dekubeio/dekube-transform-emptydir) | Transform | — | 1000 |
 | [The Custodian](https://github.com/dekubeio/dekube-transform-fix-permissions) | Transform | — | 8000 |
 
-The four indexers populate `ConvertContext` lookups so that later stages can resolve ConfigMap keys, Secret references, PVC claims, and Service ports. The Builder turns workloads into compose services. The Herald translates HAProxy ingress annotations, the Gatekeeper assembles them into a Caddy reverse proxy. The Custodian runs last — it scans for non-root containers and generates a busybox init service that fixes bind mount permissions.
+The four indexers populate `ConvertContext` lookups so that later stages can resolve ConfigMap keys, Secret references, PVC claims, and Service ports. The Builder turns workloads into compose services. The Herald translates HAProxy ingress annotations, the Gatekeeper assembles them into a Caddy reverse proxy. The Emissary reconciles shared emptyDir volumes — auto-detecting which anonymous volumes cross service boundaries and promoting them to named Compose volumes. The Custodian runs last — it scans for non-root containers and generates a busybox init service that fixes bind mount permissions.
 
 ## Ingress providers
 
@@ -186,6 +187,23 @@ Built to restore **nerdctl compose** compatibility — nerdctl silently ignores 
 ```bash
 python3 dekube-manager.py flatten-internal-urls
 ```
+
+---
+
+### emptydir
+
+| | |
+|---|---|
+| **Repo** | [dekube-transform-emptydir](https://github.com/dekubeio/dekube-transform-emptydir) |
+| **Dependencies** | none |
+| **Priority** | 1000 |
+| **Status** | stable |
+
+The quiet one. Kubernetes `emptyDir` volumes are shared scratch space between all containers in a pod — init containers prepare data, the main container consumes it, sidecars read it. In compose, pods become separate services, and separate services cannot share anonymous volumes (`- /path`). Each container would get its own independent anonymous volume, silently failing to share anything.
+
+This transform auto-detects the problem: it scans all services for anonymous volume entries that originated from the same pod's `emptyDir`, identifies which ones are mounted by more than one service, and promotes them to named Compose volumes (`{workload}-{volume-name}`) declared at the top level. Services that shared the emptyDir in Kubernetes now share a named Compose volume — no configuration, no `dekube.yaml` entries, no manual intervention.
+
+Uses `ctx.compose_extras` to declare the top-level `volumes:` block. Runs at priority 1000, before bitnami (1500) and fix-permissions (8000).
 
 ---
 

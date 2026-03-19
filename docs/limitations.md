@@ -42,13 +42,13 @@ Sidecar containers (`containers[1:]`) are converted to separate compose services
 
 Other compose services reach both the main container and its sidecars via the main service name, each on its own port.
 
-Limitation: `emptyDir` volumes are not shared between the main container and its sidecars (same limitation as init containers — see [emptyDir volumes](#emptydir-volumes)).
+Shared `emptyDir` volumes between the main container and its sidecars are handled automatically by the [emptydir](catalogue.md#emptydir) transform (bundled in helmfile2compose).
 
 ### emptyDir volumes
 
-K8s `emptyDir` volumes are shared between containers in the same pod. When init containers and the main container both mount the same `emptyDir` (e.g. to chmod a directory), compose converts them to anonymous volumes (`- /path`) which are NOT shared between services.
+K8s `emptyDir` volumes are shared between containers in the same pod. In compose, containers become separate services — they can't share an anonymous volume (`- /path`). The [`emptydir` transform](catalogue.md#emptydir) (bundled in helmfile2compose, priority 1000) auto-detects `emptyDir` volumes mounted by more than one container in the same pod and replaces their anonymous volume entries with a shared named Compose volume declared at the top level. No configuration needed.
 
-If an init container needs to prepare data for the main container via a shared volume, the `emptyDir` must be mapped to a named volume in `dekube.yaml` manually.
+If you need to override or exclude a specific emptyDir volume, use `overrides:` in `dekube.yaml` — user overrides run after transforms and always have the final say.
 
 ### PVC (PersistentVolumeClaim) conversion
 
