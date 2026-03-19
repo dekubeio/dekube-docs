@@ -87,6 +87,37 @@ The conversion primitives (`convert_command`, `convert_volume_mounts`, `build_al
 
 Internal functions (`_apply_port_remap`, `_apply_alias_map`, `_build_vol_map`, etc.) are not part of the stable API and may change between versions. Pin your dekube-engine version if you depend on them. Transforms in particular should avoid importing from the core — see [Writing transforms](writing-transforms.md#self-contained--no-core-imports).
 
+## Keep helpers inside the class
+
+Distributions concatenate all extension `.py` files into a single script. Top-level function names share a flat namespace — if two extensions define `_log()`, the second silently overwrites the first. The build system detects this and refuses to build (unless you pass `--my-extensions-are-fine-i-swear`).
+
+The fix is simple: put all helper functions inside your class.
+
+```python
+# Good — no collisions possible
+class MyTransform:
+    name = "my-transform"
+    priority = 100
+
+    def _log(self, msg):
+        print(f"  [{self.name}] {msg}", file=sys.stderr)
+
+    @staticmethod
+    def _parse_thing(data):
+        ...
+
+    def transform(self, compose_services, ingress_entries, ctx):
+        self._log("doing things")
+        result = self._parse_thing(data)
+```
+
+- Methods that need `self` (logging with `self.name`) → regular methods
+- Pure helpers → `@staticmethod`
+- Call via `self._func()` from instance methods, `ClassName._func()` from static methods
+- Top-level constants (`_WORKLOAD_KINDS = (...)`) are fine — only functions collide
+
+This applies to all extension types: converters, providers, transforms, rewriters.
+
 ## Input validation: not your problem
 
 The engine assumes its input manifests are valid Kubernetes YAML — it does [zero validation](../../understand/concepts.md#no-validation-by-design) and your extension shouldn't either. If a manifest is missing a field, has the wrong type, or references something that doesn't exist, that's a broken helmfile, not your bug. You don't need to guard against malformed input.
