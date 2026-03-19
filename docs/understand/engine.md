@@ -8,7 +8,7 @@
 
 dekube-engine is the conversion engine — the pipeline, the extension loader, the CLI, and nothing else. No built-in converters. No built-in rewriters. All registries empty. Feed it manifests and it will parse them, warn that every kind is unknown, and produce nothing. A temple with no priests.
 
-It exists so that [distributions](distributions.md) can bundle different sets of extensions on top of the same engine. The [helmfile2compose](https://github.com/dekubeio/helmfile2compose) distribution is the default — dekube-engine + 8 bundled extensions, concatenated into a single `helmfile2compose.py`. But dekube-engine can also be used standalone with `--extensions-dir`, or as the foundation for custom distributions.
+It exists so that [distributions](distributions.md) can bundle different sets of extensions on top of the same engine. The [helmfile2compose](https://github.com/dekubeio/helmfile2compose) distribution is the default — dekube-engine + 9 bundled extensions (the Eight Monks + the emptydir transform), concatenated into a single `helmfile2compose.py`. But dekube-engine can also be used standalone with `--extensions-dir`, or as the foundation for custom distributions.
 
 **Users never interact with dekube-engine directly.** They use a distribution. dekube-engine is for extension developers, distribution builders, and people who want to understand how the engine works.
 

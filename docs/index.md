@@ -45,7 +45,7 @@ Write extensions, maintain code quality, run the test suite.
 
 | Repo | What it is |
 |------|------------|
-| [helmfile2compose](https://helmfile2compose.dekube.io/docs/) | The distribution — core + 8 bundled extensions → single `helmfile2compose.py`. |
+| [helmfile2compose](https://helmfile2compose.dekube.io/docs/) | The distribution — core + 9 bundled extensions (Eight Monks + emptydir) → single `helmfile2compose.py`. |
 | [kubernetes2simple](https://k2s.dekube.io/) | Turnkey distribution — helmfile2compose + all extensions + automagic bootstrap. |
 | [dekube-engine](https://github.com/dekubeio/dekube-engine) | Bare conversion engine — empty registries, no opinions. Produces `dekube.py`. |
 | [dekube-manager](https://github.com/dekubeio/dekube-manager) | Package manager — downloads distribution + extensions, resolves dependencies. |
