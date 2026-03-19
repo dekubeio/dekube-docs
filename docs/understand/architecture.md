@@ -32,15 +32,15 @@ K8s manifests
 compose.yml + reverse proxy config
 ```
 
-### The Nine Monks (distribution)
+### The Eight Monks + bundled transforms (distribution)
 
-The bare dekube-engine has **no** built-in converters — all registries are empty. The [helmfile2compose](https://github.com/dekubeio/helmfile2compose) distribution bundles 9 bundled extensions via `_auto_register()`:
+The bare dekube-engine has **no** built-in converters — all registries are empty. The [helmfile2compose](https://github.com/dekubeio/helmfile2compose) distribution bundles 9 extensions via `_auto_register()`:
 
 - **`ConfigMapIndexer`** / **`SecretIndexer`** / **`PvcIndexer`** / **`ServiceIndexer`** — index resources into `ctx` ([dekube-indexer-*](https://github.com/dekubeio))
 - **`SimpleWorkloadProvider`** — kinds: DaemonSet, Deployment, Job, StatefulSet ([dekube-provider-simple-workload](https://github.com/dekubeio/dekube-provider-simple-workload))
 - **`HAProxyRewriter`** — built-in ingress rewriter, haproxy + default fallback ([dekube-rewriter-haproxy](https://github.com/dekubeio/dekube-rewriter-haproxy))
 - **`CaddyProvider`** — IngressProvider, produces a Caddy service + Caddyfile ([dekube-provider-caddy](https://github.com/dekubeio/dekube-provider-caddy))
-- **`EmptyDir`** — transform, promotes shared emptyDir volumes to named Compose volumes ([dekube-transform-emptydir](https://github.com/dekubeio/dekube-transform-emptydir))
+- **`EmptyDirTransform`** — transform, promotes shared emptyDir volumes to named Compose volumes ([dekube-transform-emptydir](https://github.com/dekubeio/dekube-transform-emptydir))
 - **`FixPermissions`** — transform, generates fix-permissions service for non-root bind mounts ([dekube-transform-fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions))
 
 Each lives in its own repo, referenced in `distribution.json`. The distribution assembles them at build time via dekube-manager.

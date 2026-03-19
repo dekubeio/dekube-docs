@@ -19,11 +19,11 @@ There are six extension types, all loaded from the same `--extensions-dir`:
 
 See [Writing extensions](extend/extensions/index.md) to build your own.
 
-## The Nine Monks — bundled in helmfile2compose
+## The Eight Monks — bundled in helmfile2compose
 
-These are the nine extensions bundled in the [helmfile2compose distribution](understand/distributions.md). Together they form the reference distribution: everything you need to convert standard K8s manifests into a working compose stack, nothing you don't. No CRD magic, no vendor-specific annotations, no opinions about your monitoring stack — just Deployments, StatefulSets, Jobs, Services, Ingresses, ConfigMaps, Secrets, PVCs, and the plumbing to wire them together.
+These are the eight original extensions bundled in the [helmfile2compose distribution](understand/distributions.md). Together with the [emptydir transform](#emptydir), they form the reference distribution: everything you need to convert standard K8s manifests into a working compose stack, nothing you don't. No CRD magic, no vendor-specific annotations, no opinions about your monitoring stack — just Deployments, StatefulSets, Jobs, Services, Ingresses, ConfigMaps, Secrets, PVCs, and the plumbing to wire them together.
 
-If your helmfile only uses standard Kubernetes resources, the monks are all you need. The moment you introduce CRDs (cert-manager Certificates, Keycloak CRs, ServiceMonitors…) or vendor-specific ingress annotations (nginx, traefik), you install extensions from the sections below.
+If your helmfile only uses standard Kubernetes resources, the monks and bundled transforms are all you need. The moment you introduce CRDs (cert-manager Certificates, Keycloak CRs, ServiceMonitors…) or vendor-specific ingress annotations (nginx, traefik), you install extensions from the sections below.
 
 | Monk | Type | Kinds | Priority |
 |------|------|-------|----------|
@@ -34,10 +34,11 @@ If your helmfile only uses standard Kubernetes resources, the monks are all you 
 | [The Builder](https://github.com/dekubeio/dekube-provider-simple-workload) | Provider | `Deployment`, `StatefulSet`, `DaemonSet`, `Job` | 500 |
 | [The Herald](https://github.com/dekubeio/dekube-rewriter-haproxy) | IngressRewriter | — | — |
 | [The Gatekeeper](https://github.com/dekubeio/dekube-provider-caddy) | IngressProvider | `Ingress` | 900 |
-| [The Emissary](https://github.com/dekubeio/dekube-transform-emptydir) | Transform | — | 1000 |
 | [The Custodian](https://github.com/dekubeio/dekube-transform-fix-permissions) | Transform | — | 8000 |
 
-The four indexers populate `ConvertContext` lookups so that later stages can resolve ConfigMap keys, Secret references, PVC claims, and Service ports. The Builder turns workloads into compose services. The Herald translates HAProxy ingress annotations, the Gatekeeper assembles them into a Caddy reverse proxy. The Emissary reconciles shared emptyDir volumes — auto-detecting which anonymous volumes cross service boundaries and promoting them to named Compose volumes. The Custodian runs last — it scans for non-root containers and generates a busybox init service that fixes bind mount permissions.
+The four indexers populate `ConvertContext` lookups so that later stages can resolve ConfigMap keys, Secret references, PVC claims, and Service ports. The Builder turns workloads into compose services. The Herald translates HAProxy ingress annotations, the Gatekeeper assembles them into a Caddy reverse proxy. The Custodian runs last — it scans for non-root containers and generates a busybox init service that fixes bind mount permissions.
+
+The distribution also bundles the [emptydir transform](#emptydir) (priority 1000), which auto-detects shared `emptyDir` volumes and promotes them to named Compose volumes. Not a monk — it was never part of the original engine extraction — but bundled from day one.
 
 ## Ingress providers
 
