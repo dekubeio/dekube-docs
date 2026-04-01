@@ -115,6 +115,35 @@ python3 dekube-manager.py servicemonitor
 
 Grafana saw what we did to its lifelong companion and [fought back itself](https://helmfile2compose.dekube.io/docs/known-workarounds/kube-prometheus-stack/).
 
+### cnpg
+
+| | |
+|---|---|
+| **Repo** | [dekube-provider-cnpg](https://github.com/dekubeio/dekube-provider-cnpg) |
+| **Kinds** | `Cluster`, `Pooler` |
+| **Dependencies** | none (optional: `cert-manager` for TLS) |
+| **Priority** | 90 (indexer) / 500 (provider) |
+| **Produces** | compose services + postgresql.conf + pg_hba.conf + superuser secrets |
+| **Status** | fresh — untested in prod |
+
+The most dishonest extension in the catalogue, and that's saying something given the company it keeps.
+
+First, the identity theft. The CNPG operator runs PostgreSQL inside a custom image wrapping the database in a controller binary that speaks to the Kubernetes API for replication, failover, TLS certificate management, and backup scheduling. This extension strips all of that, extracts the version tag from the image name, and substitutes the stock Docker Hub `postgres` image. Everything the operator spent years building — gone. Replaced with `POSTGRES_USER` and a mounted `postgresql.conf`. The database doesn't know, the applications don't know, and if you don't tell anyone, nobody will.
+
+Then, the forgery. CNPG auto-generates a per-cluster CA with server certificates. Rather than reimplementing certificate generation — a job the [cert-manager extension](#cert-manager) already handles — this provider emits *synthetic cert-manager CRDs* into the manifest pipeline. Fake Issuers. Fake Certificates. Injected at priority 90, before cert-manager's priority 100 pass, so cert-manager processes them believing they came from a real Helm chart. The generated PEM material is indistinguishable from the real thing. It's a forger commissioning forgeries from another forger. Heresy compounding heresy.
+
+Finally, the Pooler lie. In Kubernetes, a `Pooler` CRD spawns a PgBouncer deployment — connection pooling, transaction-level multiplexing, the works. Here? The pooler name becomes a DNS alias. `directory-cluster-pooler-rw` resolves directly to the PostgreSQL container. No PgBouncer, no pooling, no multiplexing. Apps configured with `sslmode=verify-full` against the pooler endpoint connect straight to the database and never notice. The abstraction layer they relied on was never there.
+
+Also generates superuser secrets with connection URIs (`uri`, `fqdn-uri`, `jdbc-uri`, `pgpass`) emulating the operator's output format. Because if you're going to impersonate a Kubernetes operator, you might as well forge the paperwork too.
+
+```bash
+python3 dekube-manager.py cnpg
+# optional: install cert-manager for TLS (recommended)
+python3 dekube-manager.py cert-manager
+```
+
+---
+
 ## Converters
 
 Converters produce synthetic resources (Secrets, ConfigMaps, files on disk) without adding compose services. They forge the documents that a K8s controller would have produced at runtime — the resources exist, but no workload runs.
