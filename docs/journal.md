@@ -8,6 +8,44 @@
 
 ---
 
+## The false keeper of the deep wells {#the-false-keeper}
+
+*2026-04-01* · `cnpg: v0.1.0`
+
+CloudNativePG is the most complex operator the ecosystem has faced. In Kubernetes, it runs PostgreSQL inside a custom image that wraps the database in a controller binary — replication, automatic failover, TLS certificate management, scheduled backups, connection pooling via PgBouncer. The operator manages six secrets per cluster (CA, server TLS, replication TLS, pooler TLS, app credentials, superuser credentials with connection URIs), creates three services (-rw, -r, -ro), and deploys the database through an init container that copies the controller binary before starting postgres. None of this is standard postgres. None of it works without the Kubernetes API.
+
+The provider's approach: pretend none of that exists.
+
+**The identity theft.** Extract the version tag from `ghcr.io/cloudnative-pg/postgresql:18.3`, discard everything else, substitute `postgres:18.3` from Docker Hub. The CNPG controller, the init container, the status endpoints, the replication protocol — replaced with `POSTGRES_USER`, `POSTGRES_PASSWORD`, and a mounted `postgresql.conf`. The database process is identical. The management layer is gone.
+
+**The forgery chain.** CNPG auto-generates a per-cluster CA with server certificates. Rather than reimplementing cert generation, the provider emits synthetic cert-manager CRDs — fake Issuers, fake Certificates — into the manifest pipeline at priority 90. The [cert-manager extension](catalogue.md#cert-manager) processes them at priority 100 believing they came from a real Helm chart. The result: a fully functional TLS chain where no real cert-manager CRD ever existed. The forger commissioned forgeries from another forger.
+
+**The pooler lie.** A CNPG `Pooler` spawns a PgBouncer deployment — connection pooling, transaction-level multiplexing, TLS termination. Here, the pooler name becomes a DNS alias. `directory-cluster-pooler-rw.pa-postgres.svc.cluster.local` resolves directly to the PostgreSQL container. No PgBouncer. No pooling. Applications configured with `sslmode=verify-full` against the pooler endpoint connect straight to the database and the TLS handshake succeeds — because the server certificate was forged with the pooler's name in its SANs.
+
+**The superuser papers.** The operator generates a superuser secret containing connection URIs in four formats (postgresql://, jdbc:, FQDN variants, pgpass). The provider generates identical URIs from the auto-generated password, writes them to disk, and injects them into ctx.secrets. Any application or config that references the superuser secret by key name gets a working connection string to a database that was never managed by the operator it thinks it's talking to.
+
+A `TLS key file has group or world access` surprise was discovered mid-implementation — PostgreSQL refuses to start if the key file is world-readable, and Docker bind mounts inherit host permissions. The fix: mount the key to `/tmp/server.key:ro`, then `install -o postgres -g postgres -m 600` copies it with correct ownership inside the container before calling `docker-entrypoint.sh`. The kind of detail that turns a twenty-minute task into a two-hour investigation of Docker UID mapping.
+
+Architecture: two classes in one file, communicating through a module-level `_clusters` dict. `CnpgIndexer` (IndexerConverter, priority 90) indexes clusters and emits synthetic certs. `CnpgProvider` (Provider, priority 500) reads the indexed data, checks what cert-manager produced, and generates compose services. Without cert-manager loaded, TLS degrades gracefully — postgres runs unencrypted, `pg_hba.conf` is not generated, no error.
+
+Heresy score: 7/10. The highest of any non-banned extension. It lies about what image it runs, forges certificates through a proxy, impersonates connection endpoints, and fabricates operator-generated secrets. The database works. The applications connect. The TLS handshake completes. And somewhere, a CNPG operator pod that was never deployed doesn't know it's been made redundant.
+
+??? abstract "TL;DR"
+    - New extension: `dekube-provider-cnpg` — CloudNativePG Cluster and Pooler CRDs
+    - Cluster → PostgreSQL compose service (stock `postgres:*` image, not CNPG image)
+    - Pooler → DNS alias to cluster (no PgBouncer container)
+    - TLS via cert-manager delegation: synthetic Certificate/Issuer CRDs emitted at priority 90
+    - Superuser secret emulation with connection URIs (uri, fqdn-uri, jdbc-uri, pgpass)
+    - pg_hba.conf: `hostssl` + `scram-sha-256` (not `cert` — compose apps don't have client certs)
+    - TLS key permission fix: `install -m 600 -o postgres` at container startup
+    - Graceful degradation without cert-manager (no TLS, no error)
+
+> *There was a keeper of the deep wells — or so the faithful believed. They spoke its name in their rites, carved its sigil into their wards, trusted it to hold the seals against corruption and silence. But the keeper had been replaced. A lesser spirit wore its shape, answered to its name, held the gates with cruder hands. The waters still flowed. The seals still held. And no pilgrim, kneeling at the well's edge, ever thought to ask whether the voice answering from the depths was the one they had summoned.*
+>
+> — *Cultes des Goules, On the Substitution of Guardians (under oath)*
+
+---
+
 ## The void learns to share {#the-void-learns-to-share}
 
 *2026-03-19* · `engine: v1.4.0 · workload: v0.3.0 · emptydir: v0.1.0 · fix-permissions: v0.1.4 · helmfile2compose: v3.2.0 · kubernetes2simple: v1.0.6`
