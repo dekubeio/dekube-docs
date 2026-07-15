@@ -1,3 +1,7 @@
+---
+description: "The dekube roadmap: unimplemented ideas like Gateway API support, pipeline hooks, and a Swarm-oriented distribution, plus what's out of scope."
+---
+
 # Roadmap
 
 Ideas that haven't earned implementation yet — or that the architect hasn't recovered enough bandwidth to face.

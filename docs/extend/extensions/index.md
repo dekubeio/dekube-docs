@@ -1,3 +1,7 @@
+---
+description: "How to write a dekube extension: choosing between converter, provider, transform, rewriter, or ingress provider, with available imports."
+---
+
 # Writing extensions
 
 So you want to teach dekube a new heresy. Take a moment to reconsider. Then, having failed to reconsider, make sure you're familiar with [Concepts](../../understand/concepts.md) (design philosophy, emulation boundary) and [Architecture](../../understand/architecture.md) (converter pipeline, dispatch loop). A look at [Code quality](../code-quality.md) is also recommended — the bar is higher than the project's origins would suggest.

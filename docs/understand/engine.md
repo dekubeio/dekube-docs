@@ -1,3 +1,7 @@
+---
+description: "dekube-engine internals: the bare conversion core, its package structure, three layers, and the pacts API extensions rely on."
+---
+
 # dekube-engine — the bare engine
 
 > *The disciple gazed upon the monolith and saw that it was vast — a single tablet bearing every law, every rite, every contradiction. And he said: let us shatter the tablet, that each fragment may be understood alone. But when the pieces lay scattered, each fragment still whispered the name of the whole.*

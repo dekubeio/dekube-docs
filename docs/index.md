@@ -1,3 +1,7 @@
+---
+description: "dekube converts Kubernetes manifests, Helm charts, and helmfiles to Docker Compose. Engine docs, extension guides, and architecture."
+---
+
 # dekube
 
 You deploy with Helm charts or helmfiles. Your users, your dev setup, or your NAS just need `docker compose up`. dekube generates `compose.yml` + reverse proxy config from your Kubernetes manifests — same charts, same values, no second stack to maintain.
@@ -7,7 +11,7 @@ You deploy with Helm charts or helmfiles. Your users, your dev setup, or your NA
     Sloppiness has been [actively fought](extend/code-quality.md#aberrant-not-sloppy-we-hope) (or at least, I'm trying to).
 
 
-If you just want it to work and don't care why, [kubernetes2simple](https://k2s.dekube.io/) will handle everything. If you want to understand what you're running and control what gets loaded, [helmfile2compose](https://helmfile2compose.dekube.io/docs/) is the distribution for you. If you're here, you want to understand the engine itself, write extensions, or build your own distribution.
+If you just want it to work and don't care why, [kubernetes2simple](https://k2s.dekube.io/) will handle everything — see [convert a Helm chart to Docker Compose](https://k2s.dekube.io/guides/helm-chart-to-docker-compose/) for the walkthrough. If you want to understand what you're running and control what gets loaded, [helmfile2compose](https://helmfile2compose.dekube.io/docs/) is the distribution for you. If you're here, you want to understand the engine itself, write extensions, or build your own distribution.
 
 > *And lo, the architect who sought to render the celestial rites in common tongue found himself building a second heaven. "I have translated," he proclaimed, standing in a temple whose pillars bore the same glyphs as the first. The old gods smiled, for one does not carry fire without becoming a hearth.*
 >

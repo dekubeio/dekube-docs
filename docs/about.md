@@ -1,3 +1,7 @@
+---
+description: "The complete story of dekube: why an engineer rebuilt Kubernetes' architecture to convert it away, and what that says about AI-assisted scope creep."
+---
+
 # About
 
 Architect here. This project is an aberration. I am unreasonably proud of it.

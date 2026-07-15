@@ -1,3 +1,7 @@
+---
+description: "Writing a dekube ingress rewriter: translating controller-specific Ingress annotations into provider-agnostic routing entries."
+---
+
 # Writing rewriters
 
 Every ingress controller invented its own annotation language. HAProxy puts path rewrites in `haproxy.org/path-rewrite`. Nginx puts them in `nginx.ingress.kubernetes.io/rewrite-target`. Traefik decided annotations were beneath it and uses CRDs instead (but also supports annotations, because consistency is for the weak). A rewriter translates one controller's dialect into provider-agnostic ingress entries that any `IngressProvider` can consume.

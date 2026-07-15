@@ -1,3 +1,7 @@
+---
+description: "How dekube keeps AI-generated code maintainable: pylint, pyflakes, radon complexity targets, and current linter scores per repo."
+---
+
 # Code quality
 
 A project born from desecration, built with AI across multiple sessions, whose primary architectural document is a fake Lovecraftian grimoire — has no business passing a linter. It passes every single one. That's somehow worse.

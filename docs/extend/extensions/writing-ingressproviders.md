@@ -1,3 +1,7 @@
+---
+description: "Writing a dekube IngressProvider: replacing the reverse proxy backend entirely, with build_service() and write_config() contracts."
+---
+
 # Writing ingress providers
 
 In Kubernetes, the ingress controller is a load-balanced, health-checked, horizontally scaled reverse proxy backed by an entire control plane. We replaced that steel bridge with an assembly of twigs — a single-instance reverse proxy on a single host, configured by a generated flat file. Don't expect a freight train to cross it. But you're here, reading this page, which means you've already accepted the premise. So let's build the best twigs we can.

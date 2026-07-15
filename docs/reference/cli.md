@@ -1,3 +1,7 @@
+---
+description: "dekube CLI reference: every command-line flag, first-run vs subsequent-run behavior, and exit codes for helmfile2compose and dekube-engine."
+---
+
 # CLI reference
 
 > *The ritual required precise incantation — not in the words themselves, which were few, but in the silences between them. Each flag unfurled was a choice; each flag omitted, a trust placed in the default.*

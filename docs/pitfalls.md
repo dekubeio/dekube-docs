@@ -1,3 +1,7 @@
+---
+description: "dekube pitfalls: null-safe YAML from Helm conditionals, sys.modules module identity, build system gotchas, and Docker Compose runtime limits."
+---
+
 # Pitfalls
 
 Technical gotchas for extension developers and distribution builders. If you're a user looking for help with a broken stack, see the [helmfile2compose troubleshooting guide](https://helmfile2compose.dekube.io/docs/troubleshooting/).

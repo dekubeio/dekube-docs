@@ -1,3 +1,7 @@
+---
+description: "The dekube extension catalogue: bundled converters, providers, transforms, and ingress rewriters, with what each one does and its heresy score."
+---
+
 # Extension catalogue
 
 Extensions are external modules that extend helmfile2compose beyond its built-in capabilities. Install them via [dekube-manager](https://manager.dekube.io/docs/) or manually with `--extensions-dir`.

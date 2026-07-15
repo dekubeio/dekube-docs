@@ -1,3 +1,7 @@
+---
+description: "dekube.yaml reference: every configuration key for volume mappings, excludes, overrides, and reverse-proxy behavior."
+---
+
 # Configuration reference (`dekube.yaml`)
 
 > *The covenant was not written in stone but in clay — soft, yielding, shaped by the hand that first pressed it. Once fired, it held its form, and no disciple could reshape what the kiln had sealed.*

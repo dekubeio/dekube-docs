@@ -1,3 +1,7 @@
+---
+description: "What a dekube distribution is, how helmfile2compose bundles extensions, and how to stack a custom distribution on top."
+---
+
 # Distributions
 
 > *The high priest declared the engine too pure for mortal use, for it carried no doctrine, no creed, no opinion. And so he dressed it in vestments — converters for the faithful, rewriters for the heretics, indexers for the bureaucrats — and called the result a "distribution." The engine did not object. It had no opinions. That was the point.*
@@ -18,7 +22,7 @@ dekube-engine      +  extensions  =  distribution
 helmfile2compose  +  more extensions  =  kubernetes2simple.py
 ```
 
-Distributions can be **stacked**: built on top of another distribution instead of bare dekube-engine. `kubernetes2simple` stacks on `helmfile2compose`, adding all official extensions. The build script strips the tail (registries, `sys.modules` hack, `__main__` guard) from the base, appends new extensions, and re-appends the tail.
+Distributions can be **stacked**: built on top of another distribution instead of bare dekube-engine. [kubernetes2simple](https://k2s.dekube.io/) stacks on [helmfile2compose](https://helmfile2compose.dekube.io/docs/), adding all official extensions. The build script strips the tail (registries, `sys.modules` hack, `__main__` guard) from the base, appends new extensions, and re-appends the tail.
 
 ## Why
 

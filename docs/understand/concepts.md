@@ -1,3 +1,7 @@
+---
+description: "Core dekube concepts: the emulation boundary, how Kubernetes and Docker Compose differ, and what the conversion can and cannot preserve."
+---
+
 # Concepts
 
 First of all, there is nothing to save in this project. The portals are opened, the flattening has begun, and the only question left is how far down the desecration goes before something pushes back.

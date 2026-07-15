@@ -1,3 +1,7 @@
+---
+description: "dekube's regression test suite: comparing output between pinned and latest versions across extension combos, plus the O(n^3) torture generator."
+---
+
 # Testing
 
 It has tests. It has an executioner.

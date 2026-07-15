@@ -1,3 +1,7 @@
+---
+description: "Writing a dekube transform: post-processing the final compose output after converters, aliases, and hostname truncation run."
+---
+
 # Writing transforms
 
 A transform sees the compose output after everyone else is done — converters have produced services, aliases have been injected, hostnames have been truncated — and decides what still needs to change. It can rewrite environment variables, inject services, strip aliases, fix permissions, or do anything else that doesn't fit in a converter's "one kind in, resources out" model. Overrides run *after* transforms, so even the transform's work can be overridden in `dekube.yaml`. Nothing is final until the user says so.

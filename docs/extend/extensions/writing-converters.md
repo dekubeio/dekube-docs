@@ -1,3 +1,7 @@
+---
+description: "Writing a dekube converter: the kinds and convert() contract, ConvertContext, indexers, and priority ordering between extensions."
+---
+
 # Writing converters
 
 A converter teaches dekube how to handle Kubernetes resource kinds it would otherwise skip with a warning and a shrug. You claim a `kind`, you get its manifests, you decide what they become in compose. One `.py` file, one class, one more thing the engine shouldn't know how to do but now does.

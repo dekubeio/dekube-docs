@@ -1,3 +1,7 @@
+---
+description: "The dekube cursed journal: a chronological record of every engine, distribution, extension, and manager release, in the order it was built."
+---
+
 # The Cursed Journal
 
 *A record of the dekube ecosystem's rituals — engine, distributions, extensions, manager — in the order they were committed. Earlier entries use the names that existed at the time (h2c, helmfile2compose org, h2c-core); the rename to dekube is documented where it happened. Read at your own risk.*

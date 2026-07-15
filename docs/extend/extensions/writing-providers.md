@@ -1,3 +1,7 @@
+---
+description: "Writing a dekube provider: emulating a Kubernetes controller to produce compose services, inject synthetic resources, and register aliases."
+---
+
 # Writing providers
 
 A provider emulates a Kubernetes controller — without the inconvenience of actually running one. It reads CRDs, pretends a reconciliation loop happened, and produces the compose services that the real controller would have created. Same manifests in, same services out, minus the control plane, the RBAC, and the existential purpose. Providers subclass `Provider` (from `dekube`) and share the same `kinds` + `convert()` interface as converters, but deal with additional patterns: injecting synthetic resources, registering services, and coordinating with other extensions through priority ordering.

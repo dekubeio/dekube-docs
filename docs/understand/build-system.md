@@ -1,3 +1,7 @@
+---
+description: "How dekube's build system concatenates modules into a single script: build.py, build-distribution.py, and the sys.modules fix."
+---
+
 # Build system
 
 > *The scribe's first task was not to write the scripture — it was to build the press. For the scripture was twenty-one tablets, and the faithful demanded a single scroll. The press crushes the tablets in order, strips the seams, and produces a scroll indistinguishable from one carved by hand. The scribe keeps both. The faithful see only the scroll. The inquisitors see everything.*

@@ -1,3 +1,7 @@
+---
+description: "What Kubernetes features dekube cannot preserve in Docker Compose: scaling, network isolation, CronJobs, CRDs, and other cluster-only behavior."
+---
+
 # Limitations
 
 *We replaced the perfectly sane orchestra conductor with a hideously mutated chimpanzee sprouting tentacle appendices, and you're surprised the audience needs earplugs.*

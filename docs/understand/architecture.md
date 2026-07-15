@@ -1,3 +1,7 @@
+---
+description: "The dekube conversion pipeline: converters, providers, indexers, rewriters, and the dispatch loop that turns manifests into compose.yml."
+---
+
 # Architecture
 
 ## Pipeline
