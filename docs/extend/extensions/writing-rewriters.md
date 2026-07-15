@@ -28,7 +28,7 @@ class NginxRewriter(IngressRewriter):
         cls = get_ingress_class(manifest, ingress_types)
         if cls == "nginx":
             return True
-        annotations = manifest.get("metadata", {}).get("annotations", {})
+        annotations = (manifest.get("metadata") or {}).get("annotations") or {}
         return any(k.startswith("nginx.ingress.kubernetes.io/") for k in annotations)
 
     def rewrite(self, manifest, ctx):

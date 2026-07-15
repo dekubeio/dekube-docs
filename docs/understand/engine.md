@@ -36,7 +36,7 @@ dekube-engine/
 │       ├── parsing.py       # helmfile template, YAML loading, namespace inference
 │       ├── config.py        # dekube.yaml load/save
 │       └── output.py        # compose.yml, warnings
-├── build.py                 # concat → single-file h2c.py (bare engine)
+├── build.py                 # concat → single-file dekube.py (bare engine)
 ├── build-distribution.py    # concat core + extensions → distribution
 └── .github/workflows/
     └── release.yml          # CI: build + release assets on tag push

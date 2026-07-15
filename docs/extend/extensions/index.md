@@ -4,7 +4,7 @@ So you want to teach dekube a new heresy. Take a moment to reconsider. Then, hav
 
 > *The acolyte approached the altar and asked: "May I add my own prayer to the liturgy?" The high priest did not refuse. The high priest never refuses. That is the problem.*
 >
-> — *Book of Eibon, On Open Extension Points (one assumes)*
+> — *Book of Eibon, On Open Extension Points (broadly speaking)*
 
 !!! tip "Something broken?"
     If the engine contract doesn't behave as documented, or if you hit a bug while developing an extension, open an issue on [dekube-engine](https://github.com/dekubeio/dekube-engine/issues). If the problem is in a bundled extension (one of the Eight Monks), file it on the extension's own repo — each one is linked in the [catalogue](../../catalogue.md). Not sure where the bug lives? Use [helmfile2compose](https://github.com/dekubeio/helmfile2compose/issues) — I'll triage.

@@ -28,7 +28,7 @@ The distribution model avoids forking the core — everyone shares the same engi
 
 ## helmfile2compose — the reference distribution
 
-[helmfile2compose](https://github.com/dekubeio/helmfile2compose) is the default distribution. It bundles 8 extensions:
+[helmfile2compose](https://github.com/dekubeio/helmfile2compose) is the default distribution. It bundles 9 extensions:
 
 | Repo | Type | File | Purpose |
 |------|------|------|---------|
@@ -39,6 +39,7 @@ The distribution model avoids forking the core — everyone shares the same engi
 | [dekube-provider-simple-workload](https://github.com/dekubeio/dekube-provider-simple-workload) | Provider | `workloads.py` | DaemonSet, Deployment, Job, StatefulSet → compose services |
 | [dekube-rewriter-haproxy](https://github.com/dekubeio/dekube-rewriter-haproxy) | IngressRewriter | `haproxy.py` | HAProxy annotations + default fallback |
 | [dekube-provider-caddy](https://github.com/dekubeio/dekube-provider-caddy) | IngressProvider | `caddy.py` | Caddy service + Caddyfile generation |
+| [dekube-transform-emptydir](https://github.com/dekubeio/dekube-transform-emptydir) | Transform | `emptydir.py` | Share `emptyDir` volumes between init/sidecar and main containers |
 | [dekube-transform-fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) | Transform | `fix_permissions.py` | Fix bind mount permissions for non-root containers |
 
 External extensions (loaded via `--extensions-dir` at runtime) work on top of whatever a distribution bundles.
@@ -57,10 +58,10 @@ my-distribution/
 
 ```json
 {
-  "base": "core",
+  "base": "engine",
   "extensions": [
     "configmap-indexer", "secret-indexer", "pvc-indexer", "service-indexer",
-    "workload", "haproxy", "caddy", "fix-permissions"
+    "workload", "haproxy", "caddy", "emptydir", "fix-permissions"
   ]
 }
 ```
@@ -95,7 +96,7 @@ python build-distribution.py kubernetes2simple \
   --base ../helmfile2compose/helmfile2compose.py
 ```
 
-The `--base-distribution` flag defaults to `core` (bare dekube-engine). When set to another distribution name, `build-distribution.py` looks it up in dekube-manager's `distributions.json`, downloads the `.py` release artifact, and uses it as the base. `--base-version` pins a specific version (default: `latest`).
+The `--base-distribution` flag defaults to `engine` (bare dekube-engine). When set to another distribution name, `build-distribution.py` looks it up in dekube-manager's `distributions.json`, downloads the `.py` release artifact, and uses it as the base. `--base-version` pins a specific version (default: `latest`).
 
 `--base` takes a local `.py` file path directly — useful for local dev when you have the parent distribution already built.
 

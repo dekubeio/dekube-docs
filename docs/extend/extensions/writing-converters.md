@@ -113,8 +113,8 @@ class MyConverter:
         if kind == "DependencyKind":
             # Index first, produce nothing yet
             for m in manifests:
-                name = m.get("metadata", {}).get("name", "")
-                self._indexed[name] = m.get("spec", {})
+                name = (m.get("metadata") or {}).get("name", "")
+                self._indexed[name] = m.get("spec") or {}
             return ConverterResult()
         # kind == "MainKind" — use indexed data
         return self._process_main(manifests, ctx)

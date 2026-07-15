@@ -92,7 +92,7 @@ This applies to extensions too — see [Writing extensions — Input validation]
 
 ## The ouroboros
 
-A bare engine with empty registries. A distribution that bundles 8 extensions and wires them in via `_auto_register()`. Third-party extensions plugging into the engine's contracts. If this sounds like the Kubernetes distribution model — bare apiserver, k3s/EKS bundling the opinions, CSI/CNI plugin interfaces — that's because it is. The tool that converts Kubernetes manifests has become, architecturally, a tiny Kubernetes. Each split solved a real problem; the convergence wasn't forced, it was discovered.
+A bare engine with empty registries. A distribution that bundles 9 extensions and wires them in via `_auto_register()`. Third-party extensions plugging into the engine's contracts. If this sounds like the Kubernetes distribution model — bare apiserver, k3s/EKS bundling the opinions, CSI/CNI plugin interfaces — that's because it is. The tool that converts Kubernetes manifests has become, architecturally, a tiny Kubernetes. Each split solved a real problem; the convergence wasn't forced, it was discovered.
 
 For the full existential crisis, see [about](../about.md).
 
