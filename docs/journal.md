@@ -8,6 +8,33 @@
 
 ---
 
+## The scattered forgot the ward {#scattered-forgot-the-ward}
+
+*2026-07-15* · `engine: v1.4.1 · 16 extensions patched · helmfile2compose: v3.2.1 · kubernetes2simple: v1.0.7`
+
+The null was sealed once — a systematic `or {}` / `or []` sweep across the monolith, back when the engine was a single temple. But since then the monks [scattered](#v310--the-eight-monks) to found their own sanctuaries, and several rebuilt the manifest-reading rites by hand rather than calling the engine's consecrated helpers. Wherever an extension iterated `spec.template.spec.volumes` itself, or read `metadata.annotations` directly, the old vulnerability had quietly returned. The temple had been warded for months; the outbuildings never were.
+
+A fan-out audit was summoned: one scribe per repo, twenty in parallel, each given a single file and a single question — does the Void still wear the shape of an offering here? Sixteen of the twenty did. Four did not — they had never strayed from the engine's helpers, or touched only the finished compose output, and so were never exposed.
+
+**The confirmation.** The pvc-indexer crashed outright on `volumes: [null, ...]` — a Helm conditional rendering an empty slot in a list, then `v.get("persistentVolumeClaim")` reaching into the nothing. The engine's own `_build_vol_map` had guarded this for months; the extension that had copied its logic before the guard existed never received the fix.
+
+**The precedence trap.** One scribe, applying the ward mechanically to a multi-line incantation in the trust-manager, wrapped `or {}` around the wrong span: `x.get("configMap") or {}.get("key", default)`. Python binds `or` looser than the call — so the default was fetched from an empty dict and thrown away, and the entire `configMap` object was returned where only its `key` was wanted. pyflakes blessed it; the syntax was immaculate. Only a second reading, by a different hand, caught it. A linter proves a sentence is grammatical. It never proves the sentence means what you intended.
+
+Sixteen repos hardened and re-released; the two distributions rebuilt on top to carry the fixes downstream; the regression suite re-baselined against the new output.
+
+??? abstract "TL;DR"
+    - Fan-out audit: one agent per extension repo (20), targeting the null-safe YAML bug class — errata to [v2.3.1](#v231--the-null-devours-silently)'s monolith sweep, now that the code is scattered
+    - 16 extensions hardened: `.get("k") or {}` / `or []` on nullable manifest reads, `if not item: continue` on list iterations Helm may render with null members
+    - 4 clean (indexer-service, rewriter-nginx, transform-bitnami, transform-nspawn) — they delegate to engine helpers or only touch the built compose dict, never raw manifests
+    - A precedence bug caught in review, **not** by pyflakes: mechanically inserting `or {}` into a multi-line `.get()` chain must be parenthesized, or `or` rebinds and returns the wrong object
+    - Engine v1.4.1 (ConfigMap volume `items` key-filtering + rename, hostname-truncation hardening); distributions bumped; testsuite re-baselined
+
+> *When the faithful scattered to raise their own altars, each carried the ward in memory alone — the sign that bars the Void from wearing the shape of an offering. But memory frays, and hands that once traced the sign together now traced it apart, each certain he held it whole. The Void, patient as ever, returned through every gate rebuilt from recollection. And one disciple, reciting the ward in haste, spoke its syllables in the wrong order — and summoned the thing entire where he meant to admit only its shadow.*
+>
+> — *De Vermis Mysteriis, On Wards Rebuilt from Memory (off the record)*
+
+---
+
 ## The false keeper of the deep wells {#the-false-keeper}
 
 *2026-04-01* · `cnpg: v0.1.0`
