@@ -46,6 +46,8 @@ This is where the forgery happens. Converters can fabricate K8s resources that n
 ### Secrets
 
 ```python
+from dekube import write_secret_files
+
 # Inject a synthetic Secret (cert-manager pattern)
 ctx.secrets["my-tls-secret"] = {
     "metadata": {"name": "my-tls-secret"},
@@ -55,36 +57,51 @@ ctx.secrets["my-tls-secret"] = {
     },
 }
 
-# Write files to disk so volume mounts can find them
-import os
-secret_dir = os.path.join(ctx.output_dir, "secrets", "my-tls-secret")
-os.makedirs(secret_dir, exist_ok=True)
-with open(os.path.join(secret_dir, "tls.crt"), "w", encoding="utf-8") as f:
-    f.write(pem_cert)
-ctx.generated_secrets.add("my-tls-secret")
+# Emit its data to disk so volume mounts can find it. The helper creates
+# output_dir/secrets/my-tls-secret/, writes each key as a file, and records
+# the name in ctx.generated_secrets. Returns "./secrets/my-tls-secret".
+write_secret_files("my-tls-secret", ctx)
 ```
 
-Use `stringData` (not `data`) to avoid double-encoding — the main pipeline handles base64 decoding for `data` entries, but synthetic secrets should use plain text.
+Use `stringData` (not `data`) to avoid double-encoding — the main pipeline handles base64 decoding for `data` entries, but synthetic secrets should use plain text. `write_secret_files` handles both (plus `binaryData`) and warns rather than crashing on a path-traversal key. Don't hand-roll `os.makedirs` + `open` + `ctx.generated_secrets.add` — that's what the helper is for.
 
 ### ConfigMaps
 
 ```python
+from dekube import write_configmap_files
+
 # Inject a synthetic ConfigMap (trust-manager pattern)
 ctx.configmaps["my-ca-bundle"] = {
     "metadata": {"name": "my-ca-bundle"},
     "data": {"ca-certificates.crt": pem_bundle},
 }
 
-# Write files to disk so volume mounts can find them
-import os
-cm_dir = os.path.join(ctx.output_dir, "configmaps", "my-ca-bundle")
-os.makedirs(cm_dir, exist_ok=True)
-with open(os.path.join(cm_dir, "ca-certificates.crt"), "w", encoding="utf-8") as f:
-    f.write(pem_bundle)
-ctx.generated_cms.add("my-ca-bundle")
+# Emit its data to output_dir/configmaps/my-ca-bundle/ and record it in
+# ctx.generated_cms. Returns "./configmaps/my-ca-bundle".
+write_configmap_files("my-ca-bundle", ctx)
 ```
 
-Same principle as Secrets — inject into `ctx.configmaps` so downstream converters can read the data, and write to disk so the volume-mount machinery picks it up.
+Same principle as Secrets — inject into `ctx.configmaps` so downstream converters can read the data, then call `write_configmap_files` so the volume-mount machinery finds it on disk.
+
+### Generated credentials
+
+Operators often auto-generate a password and store it in a Secret. Emulate that with `generate_password` (random alphanumeric, default 24 chars — pass the operator's length if it differs), and read a value back from any Secret in `ctx.secrets` with `secret_value`:
+
+```python
+from dekube import generate_password, secret_value, write_secret_files
+
+password = generate_password(32)
+ctx.secrets["db-credentials"] = {
+    "metadata": {"name": "db-credentials"},
+    "stringData": {"password": password},
+}
+write_secret_files("db-credentials", ctx)
+
+# Later, or in a downstream converter reading a Secret someone else injected:
+password = secret_value(ctx.secrets["db-credentials"], "password")
+```
+
+The cnpg and keycloak providers use exactly this pattern — generate the credential the operator would have created, write it to disk, and hand the same value to every service that references the Secret.
 
 ## Registering network aliases
 

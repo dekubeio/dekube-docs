@@ -110,21 +110,14 @@ This means your transform doesn't *have to* set `user:` — fix-permissions degr
 
 ### Example: strip network aliases
 
-The [`flatten-internal-urls`](../../catalogue.md#flatten-internal-urls) transform is the reference implementation. Its core logic (simplified — the real implementation uses module-level functions, not methods):
+The [`flatten-internal-urls`](../../catalogue.md#flatten-internal-urls) transform is the reference implementation. Its core logic (simplified — the FQDN-collapsing and alias-rewriting come from the engine's public helpers):
 
 ```python
-import re
-
-_K8S_DNS_RE = re.compile(
-    r'([a-z0-9](?:[a-z0-9-]*[a-z0-9])?)'
-    r'\.[a-z0-9-]+\.svc(?:\.cluster\.local)?(?::\d+)?'
-)
+from dekube import rewrite_k8s_dns, apply_alias_map
 
 def _rewrite_text(text, alias_map):
-    """Rewrite K8s FQDNs to short names, then apply alias map."""
-    text = _K8S_DNS_RE.sub(r'\1', text)
-    # ... alias_map substitution
-    return text
+    """Collapse K8s FQDNs to short names, then apply the alias map."""
+    return apply_alias_map(rewrite_k8s_dns(text), alias_map)
 
 class FlattenInternalUrls:
     priority = 2000
@@ -157,7 +150,7 @@ class FlattenInternalUrls:
                 entry["upstream"], ctx.alias_map)
 ```
 
-Note the three rewrite targets: environment variables, configmap files on disk (`_rewrite_configmap_files`), and Caddy upstreams. The module-level functions (`_rewrite_text`, `_rewrite_k8s_dns`, `_apply_alias_map`) are self-contained — see [Self-contained — no core imports](#self-contained--no-core-imports).
+Note the three rewrite targets: environment variables, configmap files on disk, and Caddy upstreams. The DNS-collapsing (`rewrite_k8s_dns`) and alias-rewriting (`apply_alias_map`) come from the engine — flatten no longer carries its own copy. See [Import the public helpers, not the private internals](#self-contained--no-core-imports).
 
 ### Example: inject a service
 
@@ -172,12 +165,12 @@ class AddWhoami:
         }
 ```
 
-## Self-contained — no core imports {#self-contained--no-core-imports}
+## Import the public helpers, not the private internals {#self-contained--no-core-imports}
 
-Transforms should not import private functions from `dekube`. The core's `_`-prefixed functions (`_apply_port_remap`, `_K8S_DNS_RE`, etc.) are internal and may change between versions.
+Transforms may import anything in the [public API](index.md#available-imports) — it's stable across minor versions. They must **not** reach into the core's `_`-prefixed internals (`_apply_port_remap`, `_build_vol_map`, etc.), which can change between versions without notice.
 
-If your transform needs regex patterns or utility functions that exist in the core, copy them into your module. This is intentional — transforms are independent modules that should work across core versions without breakage. `flatten-internal-urls` defines its own `_K8S_DNS_RE` and `_apply_alias_map` for this reason.
+The utilities transforms most often want are already public: `log`, `is_excluded`, `iter_workloads`, `iter_named_containers`, `apply_alias_map`, `rewrite_k8s_dns`, `write_configmap_files`, `write_secret_files`. Import them — don't reimplement them. `flatten-internal-urls` used to carry its own `_K8S_DNS_RE` and `_apply_alias_map`; it now imports `rewrite_k8s_dns` and `apply_alias_map` from the engine, so a fix to the shared logic reaches every transform at once instead of drifting copy by copy — the lesson [the scattered learned the hard way](../../journal.md#scattered-forgot-the-ward).
 
-The public API (`ConvertResult`, `apply_replacements`, `resolve_env`) is available for import but rarely useful in transforms — those are converter-oriented tools.
+If you genuinely need something the public API doesn't expose, copy it into your module rather than importing a `_`-prefixed core function — a private import breaks silently on the next engine release. But check [Available imports](index.md#available-imports) first; the list is longer than it used to be.
 
 See [Writing extensions](index.md) for testing, repo structure, publishing, and available imports.

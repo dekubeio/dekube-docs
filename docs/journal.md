@@ -12,6 +12,33 @@ description: "The dekube cursed journal: a chronological record of every engine,
 
 ---
 
+## The prayers were cut but once {#prayers-cut-but-once}
+
+*2026-07-16* · `engine: v1.5.0 · 9 extensions migrated · helmfile2compose: v3.2.3 · kubernetes2simple: v1.0.9`
+
+[The forking rite](#forking-rite-cloven) had clove two tangled functions by extracting `_iter_workloads` and `_iter_named_containers` — but it carved them *twice*, once into the emptydir transform and once into the fix-permissions Custodian, byte-identical copies kept in two sanctuaries. And that pair was not alone. Across nine extensions the same small rites had been rewritten by hand again and again: the log-line, the password-forge, the exclusion-glob, the alias-rewrite, the DNS-flattening, the Secret-decode, the ConfigMap- and Secret-to-file emitters. The day before, [the scattered had forgotten the ward](#scattered-forgot-the-ward) and named the disease — rites rebuilt from memory, each copy free to drift — but only patched its symptoms. This is the cure.
+
+**The gathering.** Eight families of helper were lifted out of the extensions and carved into the engine's [pacts](understand/engine.md#pacts--the-sacred-contracts) — the sacred contracts every extension may import: `log`, `generate_password`, `is_excluded`, `iter_workloads`, `iter_named_containers`, `apply_alias_map`, `rewrite_k8s_dns`, and the two heaviest rites of all — `write_configmap_files` and `write_secret_files`, which spill a ConfigMap's or Secret's data to disk. A ninth, `secret_value`, had been canon since [v1.3.0](#helpers-ordering-entries-nginx); the copies that had drifted from it were simply told to read the original. Even the engine kept a private copy — a dead `_apply_alias_map` in `core/env`, called by no one — and it too was cast out.
+
+**The single script.** Nine extensions were migrated to import from `dekube` and delete their private rites: bitnami, emptydir, fix-permissions, servicemonitor, simple-workload, flatten-internal-urls, nspawn, cnpg, keycloak. `log` was made a free function rather than a method — the very collision the [extension guide warns against](extend/extensions/index.md#keep-helpers-inside-the-class) (two extensions each defining `_log`, the second silently overwriting the first) dissolves when the log-line comes from the engine and no acolyte defines it at all. New symbols carry no deprecated alias; only where a copy had replaced a name extensions already imported was the old spelling kept.
+
+**The proof.** Output was verified byte-identical against a frozen pre-migration baseline across all nine testsuite fixtures — the full nine-extension set rendered at once, no diff. Nothing the temple emits changed for valid input, so the regression suite needs no re-baseline; the distributions were rebuilt only to carry the consolidated extensions downstream. Two latent amendments wait in the dark, untriggered by any current fixture: emptydir now guards a null container the old copy would have crashed on, and keycloak's file-emitters gained the engine's path-traversal warnings and binaryData support. A migrated extension run against the *old* engine now fails at import — a soft covenant, enforced only by releasing the engine first.
+
+??? abstract "TL;DR"
+    - Eight helper families promoted to the public `dekube.pacts` API: `log`, `generate_password`, `is_excluded`, `iter_workloads`, `iter_named_containers`, `apply_alias_map`, `rewrite_k8s_dns`, `write_configmap_files`/`write_secret_files` — plus adoption of the already-public `secret_value`
+    - Nine extensions migrated to `from dekube import …`, private copies deleted (bitnami, emptydir, fix-permissions, servicemonitor, simple-workload, flatten-internal-urls, nspawn, cnpg, keycloak)
+    - `log` is a free function, not a method — removes the `_log` top-level-collision hazard entirely
+    - Dead `_apply_alias_map` copy removed from the engine's own `core/env`
+    - Output byte-identical across all 9 fixtures (full-set integration run, NO DIFF) → no testsuite re-baseline; distributions bumped only to bundle the consolidated extensions
+    - New symbols get no deprecated alias; soft dependency on engine v1.5.0 (old engine → `ImportError`), enforced by release ordering
+    - Two latent behavior changes, untriggered by current fixtures: emptydir null-container guard; keycloak path-traversal warnings + binaryData support
+
+> *The wards had been carved anew at every altar, each disciple tracing from memory what the temple once held whole — and memory, we learned, is a forger. So the elders gathered every copy, cast them into the fire, and cut the prayers but once, into the foundation-stone beneath all altars. Now no hand recites its own version; all read from the one script, and when the script is amended, it is amended for every altar at once. The disciples mourned their copies. The temple did not.*
+>
+> — *De Vermis Mysteriis, On the Common Scripture (pending canonisation)*
+
+---
+
 ## The forking rite was cloven {#forking-rite-cloven}
 
 *2026-07-16* · `emptydir: v0.1.2 · fix-permissions: v0.1.6 · helmfile2compose: v3.2.2 · kubernetes2simple: v1.0.8`

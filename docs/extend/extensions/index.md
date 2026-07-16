@@ -51,6 +51,17 @@ from dekube import apply_replacements      # apply user-defined string replaceme
 from dekube import resolve_env             # resolve env/envFrom into flat list
 from dekube import secret_value             # decode a Secret key (base64 or plain)
 
+# Extension helper functions (stable API)
+from dekube import log                       # print "  [name] msg" to stderr
+from dekube import generate_password         # random alphanumeric password
+from dekube import is_excluded               # fnmatch a name against exclude patterns
+from dekube import iter_workloads            # yield (name, pod_spec) for every workload
+from dekube import iter_named_containers     # yield (compose_name, container): main/init/sidecar
+from dekube import apply_alias_map           # rewrite K8s Service names → compose names in hostnames
+from dekube import rewrite_k8s_dns           # <svc>.<ns>.svc[.cluster.local] → <svc>
+from dekube import write_configmap_files     # emit a ConfigMap's data to configmaps/<name>/
+from dekube import write_secret_files        # emit a Secret's data to secrets/<name>/
+
 # K8s-to-compose conversion primitives (stable API)
 from dekube import convert_command          # K8s command/args → compose entrypoint/command
 from dekube import convert_volume_mounts    # volumeMounts → compose volume strings
@@ -59,7 +70,7 @@ from dekube import build_service_port_map   # (service, port) → container port
 from dekube import resolve_named_port       # named port → numeric containerPort
 ```
 
-These are all stable across minor versions. The base classes, result types, and helpers above the comment line are **pacts** — the [sacred contracts](../../understand/engine.md#pacts--the-sacred-contracts). Both import paths work for them:
+These are all stable across minor versions. Everything above the `# K8s-to-compose conversion primitives` comment — base classes, result types, and helper functions — are **pacts** (they live in `dekube.pacts`), the [sacred contracts](../../understand/engine.md#pacts--the-sacred-contracts). Both import paths work for them:
 
 ```python
 from dekube import ConvertContext           # via re-export
@@ -80,6 +91,15 @@ The conversion primitives (`convert_command`, `convert_volume_mounts`, `build_al
 - **`apply_replacements(text, replacements)`** — applies user-defined `replacements` (from `ctx.replacements`) to a string.
 - **`resolve_env(container, configmaps, secrets, workload_name, warnings, replacements=None, service_port_map=None)`** — resolves a container's `env` and `envFrom` into a flat `list[dict]` of `{name, value}` pairs.
 - **`secret_value(secret, key)`** — decodes a single key from a K8s Secret dict. Handles both `stringData` (plain text) and `data` (base64-decoded). Returns `str | None`. Useful for converters that need to read Secret values injected by other converters (e.g. reading a database password from a cert-manager-generated secret).
+- **`log(name, msg)`** — prints `  [name] msg` to stderr. Use `log("my-extension", "...")` instead of defining your own `_log` — a free function can't collide with another extension's (see [Keep helpers inside the class](#keep-helpers-inside-the-class)).
+- **`generate_password(length=24)`** — returns a random alphanumeric password. Providers emulating an operator that auto-generates credentials (cnpg, keycloak) use this. Pass an explicit `length` if the operator's default differs.
+- **`is_excluded(name, patterns)`** — `True` if `name` matches any `fnmatch` pattern in `patterns` (null-safe: `None` patterns → `False`). The exclusion-glob every workload-producing extension needs.
+- **`iter_workloads(manifests)`** — yields `(workload_name, pod_spec)` for every workload manifest (Deployment, StatefulSet, DaemonSet, Job, Pod, …). Null-safe against Helm's `null`-rendered lists. `manifests` is `ctx.manifests`.
+- **`iter_named_containers(name, pod_spec)`** — yields `(compose_service_name, container)` for a pod's main, init, and sidecar containers, named the way the workload converter names them (`name`, `name-init-<c>`, `name-sidecar-<c>`). Pair with `iter_workloads` to walk every container in the output.
+- **`apply_alias_map(text, alias_map)`** — rewrites K8s Service names to compose service names in hostname positions (preceded by `/` or `@`, followed by `/ : whitespace`, quotes, or end). Only hostnames are touched, not substrings like bucket names. Pass `ctx.alias_map`.
+- **`rewrite_k8s_dns(text)`** — collapses `<svc>.<ns>.svc[.cluster.local][:port]` down to `<svc>`. Used by the flatten-internal-urls transform.
+- **`write_configmap_files(name, ctx, items=None)`** — emits ConfigMap `name`'s data (and `binaryData`) as files under `output_dir/configmaps/<name>/`, records it in `ctx.generated_cms`, and returns the relative dir (`./configmaps/<name>`) — or `None` (appending to `ctx.warnings`) if the ConfigMap isn't in `ctx.configmaps`. Replaces hand-rolling `os.makedirs` + `open` (see [Injecting synthetic resources](writing-providers.md#injecting-synthetic-resources)).
+- **`write_secret_files(name, ctx, items=None)`** — the Secret counterpart: emits `ctx.secrets[name]`'s data under `output_dir/secrets/<name>/`, records it in `ctx.generated_secrets`, returns `./secrets/<name>` or `None`.
 - **`convert_command(container, env_dict)`** — converts K8s `command`/`args` to compose `entrypoint`/`command` with `$(VAR)` resolution and `$VAR` escaping.
 - **`convert_volume_mounts(volume_mounts, pod_volumes, pvc_names, config, workload_name, warnings, ...)`** — converts `volumeMounts` to compose volume strings, handling PVC, ConfigMap, Secret, and emptyDir mounts.
 - **`build_alias_map(manifests, services_by_selector)`** — builds a map of K8s Service names to compose service names (ClusterIP + ExternalName resolution).
@@ -87,15 +107,18 @@ The conversion primitives (`convert_command`, `convert_volume_mounts`, `build_al
 - **`resolve_named_port(name, container_ports)`** — resolves a named port (e.g. `'http'`) to its numeric `containerPort`.
 
 !!! note "Deprecated `_`-prefixed aliases"
-    The old `_secret_value`, `_convert_command`, `_convert_volume_mounts`, `_build_alias_map`, `_build_service_port_map`, `_resolve_named_port` names still work (exported in `__all__`) for backward compatibility. Prefer the unprefixed names in new code.
+    The old `_secret_value`, `_convert_command`, `_convert_volume_mounts`, `_build_alias_map`, `_build_service_port_map`, `_resolve_named_port` names still work (exported in `__all__`) for backward compatibility. Prefer the unprefixed names in new code. The helpers promoted later (`log`, `generate_password`, `is_excluded`, `iter_workloads`, `iter_named_containers`, `apply_alias_map`, `rewrite_k8s_dns`, `write_configmap_files`, `write_secret_files`) have **no** `_`-prefixed alias — they were never public under another name, so import them exactly as spelled.
 
-Internal functions (`_apply_port_remap`, `_apply_alias_map`, `_build_vol_map`, etc.) are not part of the stable API and may change between versions. Pin your dekube-engine version if you depend on them. Transforms in particular should avoid importing from the core — see [Writing transforms](writing-transforms.md#self-contained--no-core-imports).
+Internal functions (`_apply_port_remap`, `_resolve_env_entry`, `_build_vol_map`, etc.) are not part of the stable API and may change between versions. Pin your dekube-engine version if you depend on them. Transforms in particular should avoid importing from the core — see [Writing transforms](writing-transforms.md#self-contained--no-core-imports).
 
 ## Keep helpers inside the class
 
 Distributions concatenate all extension `.py` files into a single script. Top-level function names share a flat namespace — if two extensions define `_log()`, the second silently overwrites the first. The build system detects this and refuses to build (unless you pass `--my-extensions-are-fine-i-swear`).
 
-The fix is simple: put all helper functions inside your class.
+!!! tip "First, reach for the engine's helpers"
+    Before writing a helper at all, check [Available imports](#available-imports) — the common ones are already there. `log("my-extension", msg)` replaces a hand-rolled `_log`; `generate_password`, `is_excluded`, `iter_workloads`, `iter_named_containers` cover the usual cases. Engine functions live in the `dekube` namespace, so they can't collide with an extension's top-level names. What you don't define can't clash.
+
+The fix, for helpers the engine doesn't provide: put them inside your class.
 
 ```python
 # Good — no collisions possible

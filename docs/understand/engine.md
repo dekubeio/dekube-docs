@@ -27,7 +27,7 @@ dekube-engine/
 │   ├── pacts/               # public contracts for extensions
 │   │   ├── types.py         # ConvertContext, ConverterResult, ProviderResult, Converter, Provider
 │   │   ├── ingress.py       # IngressRewriter, get_ingress_class(), resolve_backend()
-│   │   └── helpers.py       # apply_replacements(), secret_value()
+│   │   └── helpers.py       # apply_replacements(), secret_value(), log(), generate_password(), is_excluded(), iter_workloads(), iter_named_containers(), apply_alias_map(), rewrite_k8s_dns(), write_configmap_files(), write_secret_files()
 │   ├── core/                # internal conversion engine
 │   │   ├── constants.py     # regexes, kind lists, well-known ports
 │   │   ├── env.py           # resolve_env(), port remapping, command conversion
@@ -58,6 +58,10 @@ from dekube import ConvertResult  # deprecated alias for ProviderResult
 from dekube import Converter, IndexerConverter, Provider
 from dekube import IngressRewriter, get_ingress_class, resolve_backend
 from dekube import apply_replacements, resolve_env, secret_value
+from dekube import log, generate_password, is_excluded
+from dekube import iter_workloads, iter_named_containers
+from dekube import apply_alias_map, rewrite_k8s_dns
+from dekube import write_configmap_files, write_secret_files
 ```
 
 Or explicitly:
@@ -82,6 +86,8 @@ ingress.py        ← pacts, IngressProvider base class
 extensions.py     ← pacts/ingress, ingress
 convert.py        ← pacts, all core modules, _auto_register()
 ```
+
+One edge runs the other way at *runtime*: the `write_configmap_files` / `write_secret_files` helpers in `pacts/helpers.py` delegate to `core/volumes.py` — the reverse of the `volumes.py ← pacts/helpers` dependency above. To keep the module-import graph acyclic, those two do a function-body-local import of `core.volumes` instead of a top-level one. The graph stays acyclic; only the call happens across the boundary.
 
 Module-level mutable state lives in `core/convert.py` (`_CONVERTERS`, `_TRANSFORMS`, `CONVERTED_KINDS`) and `core/ingress.py` (`_REWRITERS`). In the distribution model, `_auto_register()` populates these registries from all classes found in the concatenated script's globals.
 
