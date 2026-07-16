@@ -92,3 +92,13 @@ See [Configuration reference](config.md) for the full `dekube.yaml` schema.
 | `2` | Empty output — no services generated. Not a crash, but nothing useful produced. Usually means all workloads were excluded or the input contained no convertible manifests. |
 
 Useful for scripting (`generate-compose.sh`, CI pipelines):
+
+```bash
+#!/usr/bin/env bash
+python3 helmfile2compose.py -e compose --output-dir ./output
+case $? in
+  0) echo "Generated compose.yml" ;;
+  2) echo "No services generated — check exclusions and input" >&2; exit 2 ;;
+  *) echo "Conversion failed" >&2; exit 1 ;;
+esac
+```

@@ -22,7 +22,7 @@ The distinction between converters (`dekube-converter-*`) and providers (`dekube
 A converter class must have:
 
 1. **`kinds`** — a list of K8s kinds to handle (e.g. `["Keycloak", "KeycloakRealmImport"]`). **Kinds are exclusive between extensions** — if two extensions claim the same kind, dekube exits with an error. An extension *can* override a built-in converter by claiming the same kind — the built-in is silently removed from the dispatch for that kind. Yes, this means you can replace how dekube handles Secrets, or Deployments. Why you would corrupt the already corrupted is between you and Yog Sa'rath. (For Ingress annotation handling, use an [ingress rewriter](writing-rewriters.md) instead — converters handle the kind dispatch, rewriters handle the annotation translation.)
-2. **`convert(kind, manifests, ctx)`** — called once per kind, returns a `ConvertResult`
+2. **`convert(kind, manifests, ctx)`** — called once per kind, returns a `ConverterResult`
 
 ```python
 from dekube import Converter, ConverterResult

@@ -10,7 +10,7 @@ A provider emulates a Kubernetes controller — without the inconvenience of act
 >
 > — *De Vermis Mysteriis, On the Succession of Clergy (contested)*
 
-Read [Writing converters](writing-converters.md) first for the base interface (`kinds`, `convert()`, `ConvertResult`, `ConvertContext`, priority, testing, publishing).
+Read [Writing converters](writing-converters.md) first for the base interface (`kinds`, `convert()`, `ConverterResult`, `ConvertContext`, priority, testing, publishing).
 
 ## Provider vs Converter
 

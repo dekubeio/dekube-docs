@@ -89,7 +89,7 @@ See [Writing rewriters](../extend/extensions/writing-rewriters.md) for the full 
 | Service (ClusterIP) | Network aliases (FQDN variants resolve via compose DNS) |
 | Service (ExternalName) | Resolved through alias chain (e.g. `docs-media` -> minio) |
 | Service (NodePort / LoadBalancer) | `ports:` mapping |
-| Ingress | Reverse proxy service + config file, dispatched to ingress rewriters by `ingressClassName`. The `IngressProvider` (Caddy by default) consumes rewriter output and produces the proxy service. Path-rewrite annotations, backend SSL, and `extra_directives` (rate-limit, auth, headers) are passed through as provider-agnostic entry dicts. |
+| Ingress | Reverse proxy service + config file, dispatched to ingress rewriters by `ingressClassName`. The `IngressProvider` (Caddy by default) consumes rewriter output and produces the proxy service. Path-rewrite annotations, backend SSL, and structured fields (`response_headers`, `max_body_size`) are passed through as provider-agnostic entry dicts; the legacy `extra_directives` field is still accepted as a deprecated fallback for third-party rewriter compatibility. |
 | PVC / volumeClaimTemplates | Host-path bind mounts (auto-registered in `dekube.yaml` on first run only) |
 | securityContext (runAsUser) | Auto-generated `fix-permissions` service (`chown -R <uid>`) for non-root bind mounts (via the [fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) transform) |
 

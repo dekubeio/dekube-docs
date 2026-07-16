@@ -27,7 +27,7 @@ dekube-engine/
 │   ├── pacts/               # public contracts for extensions
 │   │   ├── types.py         # ConvertContext, ConverterResult, ProviderResult, Converter, Provider
 │   │   ├── ingress.py       # IngressRewriter, get_ingress_class(), resolve_backend()
-│   │   └── helpers.py       # apply_replacements(), _secret_value()
+│   │   └── helpers.py       # apply_replacements(), secret_value()
 │   ├── core/                # internal conversion engine
 │   │   ├── constants.py     # regexes, kind lists, well-known ports
 │   │   ├── env.py           # resolve_env(), port remapping, command conversion
@@ -57,7 +57,7 @@ from dekube import ConvertContext, ConverterResult, ProviderResult
 from dekube import ConvertResult  # deprecated alias for ProviderResult
 from dekube import Converter, IndexerConverter, Provider
 from dekube import IngressRewriter, get_ingress_class, resolve_backend
-from dekube import apply_replacements, resolve_env, _secret_value
+from dekube import apply_replacements, resolve_env, secret_value
 ```
 
 Or explicitly:

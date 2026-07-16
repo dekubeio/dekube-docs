@@ -16,7 +16,7 @@ All repos use the same toolchain:
 
 - **[pylint](https://pylint.readthedocs.io/)** — static analysis. Style warnings (too-many-locals, line-too-long, too-many-arguments) are accepted. Real issues (unused imports, actual bugs, f-strings without placeholders) are not.
 - **[pyflakes](https://github.com/PyCQA/pyflakes)** — fast, zero-config, no false positives. Must be clean.
-- **[radon](https://radon.readthedocs.io/)** — cyclomatic complexity. Target: no function rated D or worse. C-rated functions are tolerated when they're natural dispatchers or sequential logic that wouldn't benefit from splitting. Current worst: `_read_yaml_config` (20) and `_collect_uids` (18), both C.
+- **[radon](https://radon.readthedocs.io/)** — cyclomatic complexity. Target: no function rated D or worse. C-rated functions are tolerated when they're natural dispatchers or sequential logic that wouldn't benefit from splitting. Current worst: `_find_shared_emptydirs` (32, E) and `_collect_uids` (23, D) — two distribution extensions that currently breach the target (see below).
 
 ## Aberrant, not sloppy (we hope)
 
@@ -36,9 +36,9 @@ The tentacles have always been in the idea, not in the code. These rituals exist
 
 ## Current scores
 
-*Last updated: 2026-03-07 — six helpers promoted, an ordering bug fixed, and the linters still approve.*
+*Last updated: 2026-07-16 — re-measured with pylint 4.0.6, pyflakes 3.4.0, radon 6.0.1 (Python 3.14.6). The emptydir monk joined the order and brought an E-rated function with it.*
 
-This page covers dekube-engine, dekube-manager, and the built-in distribution extensions (the Eight Monks). Third-party and official extensions track their own scores in their respective READMEs.
+This page covers dekube-engine, dekube-manager, and the built-in distribution extensions (nine monks now, since `emptydir` joined). Third-party and official extensions track their own scores in their respective READMEs.
 
 ### Pylint
 
@@ -47,61 +47,73 @@ This page covers dekube-engine, dekube-manager, and the built-in distribution ex
 | dekube-indexer-configmap | 10.00/10 | Built-in distribution extension |
 | dekube-indexer-secret | 10.00/10 | Built-in distribution extension |
 | dekube-indexer-pvc | 10.00/10 | Built-in distribution extension |
-| dekube-rewriter-haproxy | 10.00/10 | Built-in distribution extension |
 | dekube-provider-caddy | 9.88/10 | Built-in distribution extension |
-| dekube-transform-fix-permissions | 9.86/10 | Built-in distribution extension |
-| dekube-manager | 9.74/10 | Style only (too-many-locals) |
-| dekube-provider-simple-workload | 9.66/10 | Built-in distribution extension |
-| dekube-engine | 9.58/10 | Style only (too-many-args, too-many-locals) |
+| dekube-rewriter-haproxy | 9.79/10 | Built-in distribution extension |
+| dekube-manager | 9.74/10 | Style only (too-many-locals, too-many-args, line-too-long) |
+| dekube-provider-simple-workload | 9.68/10 | Built-in distribution extension |
+| dekube-engine | 9.56/10 | Style only (too-many-args, too-many-locals, duplicate-code) |
+| dekube-transform-fix-permissions | 9.36/10 | Built-in distribution extension |
+| dekube-transform-emptydir | 9.33/10 | Built-in distribution extension (newest monk) |
 | dekube-indexer-service | 9.23/10 | Built-in distribution extension |
 
 Remaining warnings are accepted style issues (`R0914` too-many-locals, `R0913` too-many-arguments). `E0401` (import-error) and `R0903` (too-few-public-methods) are suppressed inline — the import resolves at runtime, and the one-class-one-method contract is by design.
 
 ### Pyflakes
 
-Zero warnings across all repos (the pre-existing `f-string is missing placeholders` in `cli.py:90` is a false positive — the f-string is intentional). The inquisitors left in silence.
+Zero warnings across all repos — pyflakes exits clean on every measured file. The inquisitors left in silence.
 
 ### Radon (cyclomatic complexity)
 
 | Repo | Worst function | CC | Rating |
 |------|---------------|---:|--------|
-| dekube-transform-fix-permissions | `_collect_uids` | 18 | C |
+| dekube-transform-emptydir | `EmptyDirTransform._find_shared_emptydirs` | 32 | E |
+| dekube-transform-fix-permissions | `FixPermissions._collect_uids` | 23 | D |
+| dekube-engine | `build_service_port_map` | 20 | C |
+| dekube-provider-simple-workload | `SimpleWorkloadProvider._build_service` | 19 | C |
+| dekube-engine | `convert` | 18 | C |
+| dekube-transform-emptydir | `EmptyDirTransform` (class) | 17 | C |
+| dekube-provider-simple-workload | `SimpleWorkloadProvider._convert_one` | 17 | C |
 | dekube-manager | `main` | 17 | C |
-| dekube-engine | `build_service_port_map` | 16 | C |
-| dekube-engine | `main` (cli) | 16 | C |
-| dekube-engine | `convert` | 16 | C |
-| dekube-provider-simple-workload | `SimpleWorkloadProvider._build_service` | 13 | C |
-| dekube-engine | `_auto_register` | 13 | C |
-| dekube-indexer-pvc | `PVCIndexer.convert` | 12 | C |
-| dekube-rewriter-haproxy | `HAProxyRewriter.rewrite` | 12 | C |
-| dekube-transform-fix-permissions | `FixPermissions` (class) | 12 | C |
-| dekube-engine | `_resolve_env_entry` | 11 | C |
-| dekube-provider-simple-workload | `_get_exposed_ports` | 11 | C |
-| dekube-provider-simple-workload | `SimpleWorkloadProvider._convert_one` | 11 | C |
-| dekube-engine | `_resolve_secret_keys` | 11 | C |
-| dekube-engine | `convert_volume_mounts` | 11 | C |
-| dekube-provider-caddy | `_write_caddy_host_block` | 11 | C |
-| dekube-transform-fix-permissions | `FixPermissions.transform` | 11 | C |
+| dekube-engine | `main` (cli) | 17 | C |
+| dekube-engine | `_resolve_env_entry` | 17 | C |
+| dekube-transform-fix-permissions | `FixPermissions.transform` | 16 | C |
+| dekube-rewriter-haproxy | `HAProxyRewriter.rewrite` | 16 | C |
+| dekube-engine | `_auto_register` | 16 | C |
+| dekube-indexer-pvc | `PVCIndexer.convert` | 15 | C |
+| dekube-provider-simple-workload | `SimpleWorkloadProvider._probe_to_healthcheck` | 15 | C |
+| dekube-transform-emptydir | `EmptyDirTransform.transform` | 14 | C |
+| dekube-engine | `build_alias_map` | 14 | C |
+| dekube-engine | `_build_vol_map` | 14 | C |
+| dekube-engine | `write_compose` | 13 | C |
+| dekube-engine | `convert_volume_mounts` | 13 | C |
+| dekube-provider-simple-workload | `_get_exposed_ports` | 12 | C |
+| dekube-engine | `_resolve_envfrom` | 12 | C |
+| dekube-indexer-pvc | `PVCIndexer` (class) | 11 | C |
+| dekube-provider-caddy | `CaddyProvider._write_caddy_host_block` | 11 | C |
 | dekube-manager | `_read_yaml_config` | 11 | C |
 | dekube-manager | `_install` | 11 | C |
+| dekube-engine | `load_config` | 11 | C |
+| dekube-engine | `_build_dir_ns_map` | 11 | C |
+| dekube-engine | `resolve_backend` | 11 | C |
 
-No D/E/F rated functions. dekube-manager's `_read_yaml_config` dropped from D(23) to C(11) after replacing the hand-rolled YAML parser with pyyaml. The remaining C-rated functions are natural dispatchers or sequential steps where splitting would move complexity without improving readability.
+Two functions now breach the D-or-worse target, both in distribution extensions: `_find_shared_emptydirs` (E, 32) in the newly-bundled dekube-transform-emptydir, and `_collect_uids` (D, 23) in dekube-transform-fix-permissions — the latter regressed from its former C(18). dekube-manager's `_read_yaml_config` remains C(11) after the hand-rolled YAML parser was replaced with pyyaml. The remaining C-rated functions are natural dispatchers or sequential steps where splitting would move complexity without improving readability.
 
 ### Average complexity & maintainability
 
 | Repo | MI | MI rating | Avg CC | CC rating |
 |------|---:|-----------|-------:|-----------|
-| dekube-indexer-service | 78.97 | A | — | A |
-| dekube-indexer-configmap | 70.29 | A | 4.5 | A |
-| dekube-indexer-secret | 70.29 | A | 4.5 | A |
-| dekube-indexer-pvc | 67.76 | A | 9.7 | B |
-| dekube-transform-fix-permissions | 60.33 | A | 8.0 | B |
-| dekube-provider-caddy | 53.90 | A | 7.6 | B |
-| dekube-rewriter-haproxy | 41.75 | A | 7.2 | B |
-| dekube-provider-simple-workload | 40.96 | A | 7.6 | B |
-| dekube-manager | 32.89 | A | 4.8 | A |
+| dekube-indexer-configmap | 86.70 | A | 5.5 | B |
+| dekube-indexer-secret | 83.09 | A | 7.5 | B |
+| dekube-indexer-service | 78.97 | A | 6.5 | B |
+| dekube-indexer-pvc | 68.96 | A | 10.3 | C |
+| dekube-transform-emptydir | 58.01 | A | 16.0 | C |
+| dekube-transform-fix-permissions | 53.58 | A | 9.3 | B |
+| dekube-provider-caddy | 51.09 | A | 7.3 | B |
+| dekube-rewriter-haproxy | 45.64 | A | 9.2 | B |
+| dekube-manager | 33.25 | A | 4.4 | A |
+| dekube-provider-simple-workload | 27.17 | A | 8.7 | B |
 
-All repos are MI A-rated. dekube-engine is not listed here (19 modules, overall MI varies per module; see `radon mi src/dekube/ -s` for per-module scores — lowest is `extensions.py` at 37.56).
+All repos are MI A-rated. dekube-engine is not listed here (19 modules, overall MI varies per module; see `radon mi src/dekube/ -s` for per-module scores — lowest is `core/convert.py` at 40.68, with `core/extensions.py` close behind at 40.77).
 
 ## The uncomfortable truth
 
@@ -109,7 +121,7 @@ This project is, by every objective metric, well-structured code. The functions 
 
 This is deeply unsettling.
 
-The expectation — the *hope*, even — was that a tool this conceptually wrong would at least have the decency to be poorly written. That the code quality would serve as a warning label: "abandon all hope, ye who read this." Instead, the temple stands. The prayers work. The linters nod approvingly. And somewhere, a developer who understands what this project actually *does* stares at a pylint score of 9.55 and feels nothing but existential dread.
+The expectation — the *hope*, even — was that a tool this conceptually wrong would at least have the decency to be poorly written. That the code quality would serve as a warning label: "abandon all hope, ye who read this." Instead, the temple stands. The prayers work. The linters nod approvingly. And somewhere, a developer who understands what this project actually *does* stares at a pylint score of 9.56 and feels nothing but existential dread.
 
 The code is clean. The architecture is sound. The concept remains an abomination. These things are not in conflict — they are in conspiracy.
 
