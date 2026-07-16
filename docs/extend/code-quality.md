@@ -16,7 +16,7 @@ All repos use the same toolchain:
 
 - **[pylint](https://pylint.readthedocs.io/)** — static analysis. Style warnings (too-many-locals, line-too-long, too-many-arguments) are accepted. Real issues (unused imports, actual bugs, f-strings without placeholders) are not.
 - **[pyflakes](https://github.com/PyCQA/pyflakes)** — fast, zero-config, no false positives. Must be clean.
-- **[radon](https://radon.readthedocs.io/)** — cyclomatic complexity. Target: no function rated D or worse. C-rated functions are tolerated when they're natural dispatchers or sequential logic that wouldn't benefit from splitting. Current worst: `_find_shared_emptydirs` (32, E) and `_collect_uids` (23, D) — two distribution extensions that currently breach the target (see below).
+- **[radon](https://radon.readthedocs.io/)** — cyclomatic complexity. Target: no function rated D or worse. C-rated functions are tolerated when they're natural dispatchers or sequential logic that wouldn't benefit from splitting. The target holds: the current worst is `build_service_port_map` (20, C) in dekube-engine — every function is C-or-better.
 
 ## Aberrant, not sloppy (we hope)
 
@@ -36,7 +36,7 @@ The tentacles have always been in the idea, not in the code. These rituals exist
 
 ## Current scores
 
-*Last updated: 2026-07-16 — re-measured with pylint 4.0.6, pyflakes 3.4.0, radon 6.0.1 (Python 3.14.6). The emptydir monk joined the order and brought an E-rated function with it.*
+*Last updated: 2026-07-16 — re-measured with pylint 4.0.6, pyflakes 3.4.0, radon 6.0.1 (Python 3.14.6). The emptydir monk joined the order bearing an E-rated scanner; it and fix-permissions' D-rated one were refactored back to C-or-better by extracting shared workload/container iteration helpers.*
 
 This page covers dekube-engine, dekube-manager, and the built-in distribution extensions (nine monks now, since `emptydir` joined). Third-party and official extensions track their own scores in their respective READMEs.
 
@@ -48,12 +48,12 @@ This page covers dekube-engine, dekube-manager, and the built-in distribution ex
 | dekube-indexer-secret | 10.00/10 | Built-in distribution extension |
 | dekube-indexer-pvc | 10.00/10 | Built-in distribution extension |
 | dekube-provider-caddy | 9.88/10 | Built-in distribution extension |
+| dekube-transform-emptydir | 9.85/10 | Built-in distribution extension (newest monk) |
 | dekube-rewriter-haproxy | 9.79/10 | Built-in distribution extension |
 | dekube-manager | 9.74/10 | Style only (too-many-locals, too-many-args, line-too-long) |
 | dekube-provider-simple-workload | 9.68/10 | Built-in distribution extension |
 | dekube-engine | 9.56/10 | Style only (too-many-args, too-many-locals, duplicate-code) |
-| dekube-transform-fix-permissions | 9.36/10 | Built-in distribution extension |
-| dekube-transform-emptydir | 9.33/10 | Built-in distribution extension (newest monk) |
+| dekube-transform-fix-permissions | 9.43/10 | Built-in distribution extension |
 | dekube-indexer-service | 9.23/10 | Built-in distribution extension |
 
 Remaining warnings are accepted style issues (`R0914` too-many-locals, `R0913` too-many-arguments). `E0401` (import-error) and `R0903` (too-few-public-methods) are suppressed inline — the import resolves at runtime, and the one-class-one-method contract is by design.
@@ -66,12 +66,9 @@ Zero warnings across all repos — pyflakes exits clean on every measured file. 
 
 | Repo | Worst function | CC | Rating |
 |------|---------------|---:|--------|
-| dekube-transform-emptydir | `EmptyDirTransform._find_shared_emptydirs` | 32 | E |
-| dekube-transform-fix-permissions | `FixPermissions._collect_uids` | 23 | D |
 | dekube-engine | `build_service_port_map` | 20 | C |
 | dekube-provider-simple-workload | `SimpleWorkloadProvider._build_service` | 19 | C |
 | dekube-engine | `convert` | 18 | C |
-| dekube-transform-emptydir | `EmptyDirTransform` (class) | 17 | C |
 | dekube-provider-simple-workload | `SimpleWorkloadProvider._convert_one` | 17 | C |
 | dekube-manager | `main` | 17 | C |
 | dekube-engine | `main` (cli) | 17 | C |
@@ -86,6 +83,7 @@ Zero warnings across all repos — pyflakes exits clean on every measured file. 
 | dekube-engine | `_build_vol_map` | 14 | C |
 | dekube-engine | `write_compose` | 13 | C |
 | dekube-engine | `convert_volume_mounts` | 13 | C |
+| dekube-transform-emptydir | `EmptyDirTransform._find_shared_emptydirs` | 13 | C |
 | dekube-provider-simple-workload | `_get_exposed_ports` | 12 | C |
 | dekube-engine | `_resolve_envfrom` | 12 | C |
 | dekube-indexer-pvc | `PVCIndexer` (class) | 11 | C |
@@ -96,7 +94,7 @@ Zero warnings across all repos — pyflakes exits clean on every measured file. 
 | dekube-engine | `_build_dir_ns_map` | 11 | C |
 | dekube-engine | `resolve_backend` | 11 | C |
 
-Two functions now breach the D-or-worse target, both in distribution extensions: `_find_shared_emptydirs` (E, 32) in the newly-bundled dekube-transform-emptydir, and `_collect_uids` (D, 23) in dekube-transform-fix-permissions — the latter regressed from its former C(18). dekube-manager's `_read_yaml_config` remains C(11) after the hand-rolled YAML parser was replaced with pyyaml. The remaining C-rated functions are natural dispatchers or sequential steps where splitting would move complexity without improving readability.
+No function breaches the D-or-worse target. The two that briefly did — `_find_shared_emptydirs` (was E, 32) in the newly-bundled dekube-transform-emptydir and `_collect_uids` (was D, 23) in dekube-transform-fix-permissions — were refactored by extracting shared `_iter_workloads` / `_iter_named_containers` helpers (pure staticmethods, no instance state to clobber across calls), dropping them to C(13) and A(5) with byte-identical output. dekube-manager's `_read_yaml_config` remains C(11) after the hand-rolled YAML parser was replaced with pyyaml. The remaining C-rated functions are natural dispatchers or sequential steps where splitting would move complexity without improving readability.
 
 ### Average complexity & maintainability
 
@@ -106,8 +104,8 @@ Two functions now breach the D-or-worse target, both in distribution extensions:
 | dekube-indexer-secret | 83.09 | A | 7.5 | B |
 | dekube-indexer-service | 78.97 | A | 6.5 | B |
 | dekube-indexer-pvc | 68.96 | A | 10.3 | C |
-| dekube-transform-emptydir | 58.01 | A | 16.0 | C |
-| dekube-transform-fix-permissions | 53.58 | A | 9.3 | B |
+| dekube-transform-emptydir | 60.80 | A | 9.2 | B |
+| dekube-transform-fix-permissions | 55.42 | A | 7.0 | B |
 | dekube-provider-caddy | 51.09 | A | 7.3 | B |
 | dekube-rewriter-haproxy | 45.64 | A | 9.2 | B |
 | dekube-manager | 33.25 | A | 4.4 | A |
