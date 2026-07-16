@@ -34,7 +34,7 @@ from dekube import ConverterResult
 
 class CertManagerConverter:
     kinds = ["Certificate", "ClusterIssuer", "Issuer"]
-    priority = 10
+    priority = 100
 ```
 
 The distinction is enforced — `Provider` is a base class in `dekube.pacts.types` (subclass of `Converter`, default priority 500). Subclassing it signals intent to the framework. Naming convention: `dekube-provider-*` for providers, `dekube-converter-*` for converters.
@@ -122,11 +122,11 @@ Use `priority` to ensure converters run in the right order when they depend on e
 ```python
 class CertManagerConverter:
     kinds = ["Certificate", "ClusterIssuer", "Issuer"]
-    priority = 10  # generates secrets
+    priority = 100  # generates secrets
 
 class TrustManagerConverter:
     kinds = ["Bundle"]
-    priority = 20  # reads cert-manager's secrets
+    priority = 200  # reads cert-manager's secrets
 ```
 
 The cert-manager converter injects synthetic Secrets into `ctx.secrets`. The trust-manager converter reads those secrets to assemble CA bundles. Without priority ordering, trust-manager might run first and find nothing.

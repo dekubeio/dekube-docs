@@ -97,7 +97,7 @@ Set `priority` as a class attribute to control execution order. Lower = earlier.
 ```python
 class CertManagerConverter:
     kinds = ["Certificate", "ClusterIssuer", "Issuer"]
-    priority = 10  # runs first
+    priority = 100  # runs first
 ```
 
 This matters when converters depend on each other's output — which is temporal coupling in a system that was supposed to be "just extensions running independently." cert-manager must inject its secrets before trust-manager reads them. Get the priority wrong and trust-manager finds an empty `ctx.secrets`, produces an empty CA bundle, and every downstream TLS connection fails for reasons that have nothing to do with TLS.

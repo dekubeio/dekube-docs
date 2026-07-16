@@ -36,9 +36,9 @@ The tentacles have always been in the idea, not in the code. These rituals exist
 
 ## Current scores
 
-*Last updated: 2026-07-16 — re-measured with pylint 4.0.6, pyflakes 3.4.0, radon 6.0.1 (Python 3.14.6). The emptydir monk joined the order bearing an E-rated scanner; it and fix-permissions' D-rated one were refactored back to C-or-better by extracting shared workload/container iteration helpers.*
+*Last updated: 2026-07-16 — re-measured with pylint 4.0.6, pyflakes 3.4.0, radon 6.0.1 (Python 3.14.6). The newly-bundled emptydir transform arrived bearing an E-rated scanner; it and fix-permissions' D-rated one were refactored back to C-or-better by extracting shared workload/container iteration helpers.*
 
-This page covers dekube-engine, dekube-manager, and the built-in distribution extensions (nine monks now, since `emptydir` joined). Third-party and official extensions track their own scores in their respective READMEs.
+This page covers dekube-engine, dekube-manager, and the built-in distribution extensions (the eight monks plus the `emptydir` transform). Third-party and official extensions track their own scores in their respective READMEs.
 
 ### Pylint
 
@@ -48,7 +48,7 @@ This page covers dekube-engine, dekube-manager, and the built-in distribution ex
 | dekube-indexer-secret | 10.00/10 | Built-in distribution extension |
 | dekube-indexer-pvc | 10.00/10 | Built-in distribution extension |
 | dekube-provider-caddy | 9.88/10 | Built-in distribution extension |
-| dekube-transform-emptydir | 9.85/10 | Built-in distribution extension (newest monk) |
+| dekube-transform-emptydir | 9.85/10 | Built-in distribution extension (newest bundled extension) |
 | dekube-rewriter-haproxy | 9.79/10 | Built-in distribution extension |
 | dekube-manager | 9.74/10 | Style only (too-many-locals, too-many-args, line-too-long) |
 | dekube-provider-simple-workload | 9.68/10 | Built-in distribution extension |

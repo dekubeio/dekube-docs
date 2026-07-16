@@ -41,7 +41,7 @@ compose.yml + reverse proxy config
 The bare dekube-engine has **no** built-in converters — all registries are empty. The [helmfile2compose](https://github.com/dekubeio/helmfile2compose) distribution bundles 9 extensions via `_auto_register()`:
 
 - **`ConfigMapIndexer`** / **`SecretIndexer`** / **`PvcIndexer`** / **`ServiceIndexer`** — index resources into `ctx` ([dekube-indexer-*](https://github.com/dekubeio))
-- **`SimpleWorkloadProvider`** — kinds: DaemonSet, Deployment, Job, StatefulSet ([dekube-provider-simple-workload](https://github.com/dekubeio/dekube-provider-simple-workload))
+- **`SimpleWorkloadProvider`** — kinds: DaemonSet, Deployment, Job, Pod, StatefulSet ([dekube-provider-simple-workload](https://github.com/dekubeio/dekube-provider-simple-workload))
 - **`HAProxyRewriter`** — built-in ingress rewriter, haproxy + default fallback ([dekube-rewriter-haproxy](https://github.com/dekubeio/dekube-rewriter-haproxy))
 - **`CaddyProvider`** — IngressProvider, produces a Caddy service + Caddyfile ([dekube-provider-caddy](https://github.com/dekubeio/dekube-provider-caddy))
 - **`EmptyDirTransform`** — transform, promotes shared emptyDir volumes to named Compose volumes ([dekube-transform-emptydir](https://github.com/dekubeio/dekube-transform-emptydir))
@@ -83,7 +83,7 @@ See [Writing rewriters](../extend/extensions/writing-rewriters.md) for the full 
 
 | K8s kind | Compose equivalent |
 |----------|-------------------|
-| DaemonSet / Deployment / StatefulSet | `services:` (image, env, command, volumes, ports). Init containers become separate services with `restart: on-failure`; main service uses `depends_on` with `condition: service_completed_successfully`. Sidecar containers become separate services with `network_mode: container:<main>` (shared network namespace). Shared `emptyDir` volumes promoted to named Compose volumes by the [emptydir](../catalogue.md#emptydir) transform. Resource limits → `deploy.resources.limits`. Readiness/liveness probes → `healthcheck`. DaemonSet treated identically to Deployment (single-machine tool). |
+| DaemonSet / Deployment / StatefulSet / Pod | `services:` (image, env, command, volumes, ports). Init containers become separate services with `restart: on-failure`; main service uses `depends_on` with `condition: service_completed_successfully`. Sidecar containers become separate services with `network_mode: container:<main>` (shared network namespace). Shared `emptyDir` volumes promoted to named Compose volumes by the [emptydir](../catalogue.md#emptydir) transform. Resource limits → `deploy.resources.limits`. Readiness/liveness probes → `healthcheck`. DaemonSet treated identically to Deployment (single-machine tool). |
 | Job | `services:` with `restart: on-failure` (migrations, superuser creation). Init containers converted the same way. |
 | ConfigMap / Secret | Resolved inline into `environment:` + generated as files for volume mounts |
 | Service (ClusterIP) | Network aliases (FQDN variants resolve via compose DNS) |

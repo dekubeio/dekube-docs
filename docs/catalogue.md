@@ -35,7 +35,7 @@ If your helmfile only uses standard Kubernetes resources, the monks and bundled 
 | [The Guardian](https://github.com/dekubeio/dekube-indexer-secret) | IndexerConverter | `Secret` | 50 |
 | [The Binder](https://github.com/dekubeio/dekube-indexer-pvc) | IndexerConverter | `PersistentVolumeClaim` | 50 |
 | [The Weaver](https://github.com/dekubeio/dekube-indexer-service) | IndexerConverter | `Service` | 50 |
-| [The Builder](https://github.com/dekubeio/dekube-provider-simple-workload) | Provider | `Deployment`, `StatefulSet`, `DaemonSet`, `Job` | 500 |
+| [The Builder](https://github.com/dekubeio/dekube-provider-simple-workload) | Provider | `Deployment`, `StatefulSet`, `DaemonSet`, `Job`, `Pod` | 500 |
 | [The Herald](https://github.com/dekubeio/dekube-rewriter-haproxy) | IngressRewriter | — | — |
 | [The Gatekeeper](https://github.com/dekubeio/dekube-provider-caddy) | IngressProvider | `Ingress` | 900 |
 | [The Custodian](https://github.com/dekubeio/dekube-transform-fix-permissions) | Transform | — | 8000 |

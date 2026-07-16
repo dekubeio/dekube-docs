@@ -40,7 +40,7 @@ The distribution model avoids forking the core — everyone shares the same engi
 | [dekube-indexer-secret](https://github.com/dekubeio/dekube-indexer-secret) | IndexerConverter | `secret_indexer.py` | Populates `ctx.secrets` |
 | [dekube-indexer-pvc](https://github.com/dekubeio/dekube-indexer-pvc) | IndexerConverter | `pvc_indexer.py` | Populates `ctx.pvc_names` |
 | [dekube-indexer-service](https://github.com/dekubeio/dekube-indexer-service) | IndexerConverter | `service_indexer.py` | Populates `ctx.services_by_selector` |
-| [dekube-provider-simple-workload](https://github.com/dekubeio/dekube-provider-simple-workload) | Provider | `workloads.py` | DaemonSet, Deployment, Job, StatefulSet → compose services |
+| [dekube-provider-simple-workload](https://github.com/dekubeio/dekube-provider-simple-workload) | Provider | `workloads.py` | DaemonSet, Deployment, Job, Pod, StatefulSet → compose services |
 | [dekube-rewriter-haproxy](https://github.com/dekubeio/dekube-rewriter-haproxy) | IngressRewriter | `haproxy.py` | HAProxy annotations + default fallback |
 | [dekube-provider-caddy](https://github.com/dekubeio/dekube-provider-caddy) | IngressProvider | `caddy.py` | Caddy service + Caddyfile generation |
 | [dekube-transform-emptydir](https://github.com/dekubeio/dekube-transform-emptydir) | Transform | `emptydir.py` | Share `emptyDir` volumes between init/sidecar and main containers |
