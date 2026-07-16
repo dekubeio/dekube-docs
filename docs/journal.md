@@ -12,6 +12,31 @@ description: "The dekube cursed journal: a chronological record of every engine,
 
 ---
 
+## The forking rite was cloven {#forking-rite-cloven}
+
+*2026-07-16* · `emptydir: v0.1.2 · fix-permissions: v0.1.6 · helmfile2compose: v3.2.2 · kubernetes2simple: v1.0.8`
+
+The [code-quality ledger](extend/code-quality.md) named two rites too tangled to walk — the only two the linter still rated beyond redemption. In the emptydir transform, `_find_shared_emptydirs` had forked into two-and-thirty passages (radon E, CC 32); in the fix-permissions Custodian, `_collect_uids` into three-and-twenty (D). Both had grown the same way: three near-identical blocks — main, init, sidecar — copied inside the kind-and-manifest loop, each walking the pod's containers by hand.
+
+**The division.** Each was cloven into two pure helpers — `_iter_workloads` (the kind loop and the Pod-versus-template branch) and `_iter_named_containers` (the three blocks, collapsed into one) — leaving the rite itself a flat double loop. `_find_shared_emptydirs` fell to C (13); `_collect_uids` to A (5). No rite in the ecosystem now branches past C.
+
+**The shared vessel.** The helpers were made stateless by design — `@staticmethod`, data in through arguments and out through return values, nothing stashed on the instance. The [multi-kind dispatch warning](extend/extensions/writing-converters.md#multi-kind-dispatch) is explicit: a transform instance is reused across the pipeline, so any `self._x` scratch state written by one call is read by the next. Pure helpers carry their own vessel and spill nothing into the calls that follow.
+
+**The proof.** Output was verified byte-identical against the pre-refactor rites over crafted manifests — Pod, Deployment, StatefulSet, shared emptyDirs across main/init/sidecar, root-UID skip, pod-level securityContext inheritance, null manifests and null containers — down to dict insertion order. Nothing the temple emits changed, so the regression suite needed no re-baseline; the distributions were rebuilt only to carry the leaner extensions downstream.
+
+??? abstract "TL;DR"
+    - `_find_shared_emptydirs` (emptydir) E→C: 32→13; `_collect_uids` (fix-permissions) D→A: 23→5 — the last two functions rated worse than C
+    - Both refactored by extracting shared `_iter_workloads` / `_iter_named_containers` helpers — the three copied main/init/sidecar blocks collapsed into one
+    - Helpers are pure `@staticmethod`s: no `self._x` scratch state to clobber across reused-instance calls (the documented multi-kind dispatch trap)
+    - Output byte-identical, verified incl. dict order → no testsuite re-baseline; distributions bumped only to bundle the leaner extensions
+    - No function in the ecosystem now rated worse than C
+
+> *The great rite had forked into two-and-thirty passages, and no acolyte could walk it whole without losing his mind in the branching dark. The elders clove it into lesser rites, each complete unto itself, each bearing its own vessel — for a vessel shared between rites will spill one acolyte's offering into the next, and the god receives a communion no one meant to give.*
+>
+> — *Necronomicon, On the Division of Rites (give or take)*
+
+---
+
 ## The scattered forgot the ward {#scattered-forgot-the-ward}
 
 *2026-07-15* · `engine: v1.4.1 · 16 extensions patched · helmfile2compose: v3.2.1 · kubernetes2simple: v1.0.7`
