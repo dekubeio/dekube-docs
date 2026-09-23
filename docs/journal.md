@@ -12,6 +12,33 @@ description: "The dekube cursed journal: a chronological record of every engine,
 
 ---
 
+## The inquest of the eleven wounds {#inquest-eleven-wounds}
+
+*2026-09-23* · `engine: v1.6.0 · simple-workload: v0.4.0 · indexer-pvc: v0.2.0 · cnpg: v0.2.0 · cert-manager: v0.4.0 · emptydir: v0.1.4 · bitnami: v0.3.4 · nginx: v0.4.3 · helmfile2compose: v3.3.0 · kubernetes2simple: v1.1.0`
+
+A new oracle was set loose upon the temple with no instruction but *find what is broken*. It returned with eleven grave wounds. Each got a fixture in the [regression suite](extend/testing.md) and was proven the only way the suite knows — both sides bleeding identically, then drift appearing only where the wound had closed. What the suite cannot see (the installer, the certificates' inner seals, a database accepting a login) was proven by hand.
+
+**The herald's tongue.** Compose reads `$` as a summons, so every value the temple wrote into `environment` was re-read on its way in: `pa$word` arrived as `pa`. The engine now doubles every `$` it generates, after all transforms and before user `overrides:`, which stay raw. The cure had a collateral — bitnami put the redis password in `command`, so the clients now heard the real word and the server still the half one; bitnami v0.3.4 doubles it there too. **If you escaped `$$` by hand, remove it** — you now get `$$$$`.
+
+**The shared crypt.** Every StatefulSet with a `data` volumeClaimTemplate was bound to the same `./data/data`; a PostgreSQL and a MariaDB wrote their souls into each other. Claims are now `<vct>-<sts>`. An existing `dekube.yaml` with the bare key keeps its data path and asks you to rename it; StatefulSets sharing that key get a collision warning.
+
+**The temple that listened only to itself.** The cnpg provider's `postgresql.conf` replaced the image's own, taking `listen_addresses = '*'` with it — PostgreSQL listened on localhost, in a vessel no one else could enter, with its data in an anonymous volume. v0.2.0 listens, persists PGDATA as `<cluster>-1`, and bootstraps like CloudNativePG (`postgres` superuser, owner role and database, a fuller `-app` secret). **Upgraders: the old data is not in `./data/<cluster>-1` — [dump it first](https://github.com/dekubeio/dekube-provider-cnpg#upgrading-from--v01x).**
+
+**The lesser wounds.** Services matched runes carved on the workload instead of its pod template. DNS flattening turned `api.data.svc-proxy.example.com` into `api-proxy.example.com`. Native sidecars (`restartPolicy: Always` init containers) were awaited forever as one-shot rites; they now share the main vessel's network. cert-manager seals carried no KeyUsage, so strict verifiers refused every chain, and `87600h0m0s` meant ninety days — the cert-manager docs claim `server auth` is a default usage, its source says otherwise and why; the source won. `null` list items crashed emptydir, a `null` nginx snippet fix had waited six months for a release, and the installer's prompt under `curl | bash` read its answer from the script itself.
+
+??? abstract "TL;DR"
+    - `$` in generated env escaped as `$$`, `overrides:` stay raw — **pre-escaped `$$` becomes `$$$$`**; bitnami escapes the redis `--requirepass` too
+    - StatefulSet VCT PVCs are `<vct>-<sts>`, legacy bare keys kept with rename/collision warnings; simple-workload v0.4.0 requires engine ≥ v1.6.0
+    - cnpg v0.2.0: listens, persists PGDATA as `<cluster>-1`, CNPG-style credentials — **upgraders dump their data first**
+    - Pod-template selectors, anchored DNS flattening, native sidecars, cert-manager KeyUsage/Go durations/nulls, null-safe emptydir and nginx, k2s prompt under `curl | bash`
+    - Testsuite: `--local-ext`, runs latest when ref fails, reuses ref secrets, skips `*.crt`/`*.key` — still asserts nothing
+
+> *The scribe copied the words of the vault faithfully onto the herald's scroll, and the herald, reading aloud, found in them the sigil of summoning — and summoned. So the vault's word was spoken as half a word, and the vault stayed shut. The elders did not teach the herald to read more carefully; heralds do not learn. They taught the scribe to carve the sigil twice, so that the herald would speak it once.*
+>
+> — *Necronomicon, On the Doubling of Sigils (in theory)*
+
+---
+
 ## The prayers were cut but once {#prayers-cut-but-once}
 
 *2026-07-16* · `engine: v1.5.0 · 9 extensions migrated · helmfile2compose: v3.2.3 · kubernetes2simple: v1.0.9`
