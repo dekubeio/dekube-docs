@@ -58,7 +58,7 @@ from dekube import is_excluded               # fnmatch a name against exclude pa
 from dekube import iter_workloads            # yield (name, pod_spec) for every workload
 from dekube import iter_named_containers     # yield (compose_name, container): main/init/sidecar
 from dekube import apply_alias_map           # rewrite K8s Service names → compose names in hostnames
-from dekube import rewrite_k8s_dns           # <svc>.<ns>.svc[.cluster.local] → <svc>
+from dekube import rewrite_k8s_dns           # <svc>.<ns>.svc[.cluster.local] → <svc> (only when .svc ends the hostname)
 from dekube import write_configmap_files     # emit a ConfigMap's data to configmaps/<name>/
 from dekube import write_secret_files        # emit a Secret's data to secrets/<name>/
 
@@ -95,9 +95,9 @@ The conversion primitives (`convert_command`, `convert_volume_mounts`, `build_al
 - **`generate_password(length=24)`** — returns a random alphanumeric password. Providers emulating an operator that auto-generates credentials (cnpg, keycloak) use this. Pass an explicit `length` if the operator's default differs.
 - **`is_excluded(name, patterns)`** — `True` if `name` matches any `fnmatch` pattern in `patterns` (null-safe: `None` patterns → `False`). The exclusion-glob every workload-producing extension needs.
 - **`iter_workloads(manifests)`** — yields `(workload_name, pod_spec)` for every workload manifest (Deployment, StatefulSet, DaemonSet, Job, Pod, …). Null-safe against Helm's `null`-rendered lists. `manifests` is `ctx.manifests`.
-- **`iter_named_containers(name, pod_spec)`** — yields `(compose_service_name, container)` for a pod's main, init, and sidecar containers, named the way the workload converter names them (`name`, `name-init-<c>`, `name-sidecar-<c>`). Pair with `iter_workloads` to walk every container in the output.
+- **`iter_named_containers(name, pod_spec)`** — yields `(compose_service_name, container)` for a pod's main, init, and sidecar containers, named the way the workload converter names them (`name`, `name-init-<c>`, `name-sidecar-<c>`). Native sidecars (initContainers with `restartPolicy: Always`) keep the `name-init-<c>` naming too — only their compose treatment (network namespace, `depends_on` direction) differs. Pair with `iter_workloads` to walk every container in the output.
 - **`apply_alias_map(text, alias_map)`** — rewrites K8s Service names to compose service names in hostname positions (preceded by `/` or `@`, followed by `/ : whitespace`, quotes, or end). Only hostnames are touched, not substrings like bucket names. Pass `ctx.alias_map`.
-- **`rewrite_k8s_dns(text)`** — collapses `<svc>.<ns>.svc[.cluster.local][:port]` down to `<svc>`. Used by the flatten-internal-urls transform.
+- **`rewrite_k8s_dns(text)`** — collapses `<svc>.<ns>.svc[.cluster.local][:port]` down to `<svc>`, but only when `.svc` (or `.svc.cluster.local`) actually ends the hostname — `api.data.svc-proxy.example.com` or `db.app.svc.example.com` are left alone. `:port`, `/path`, quotes, end-of-string, and a trailing `.` are still recognized as valid endings. Used by the flatten-internal-urls transform.
 - **`write_configmap_files(name, ctx, items=None)`** — emits ConfigMap `name`'s data (and `binaryData`) as files under `output_dir/configmaps/<name>/`, records it in `ctx.generated_cms`, and returns the relative dir (`./configmaps/<name>`) — or `None` (appending to `ctx.warnings`) if the ConfigMap isn't in `ctx.configmaps`. Replaces hand-rolling `os.makedirs` + `open` (see [Injecting synthetic resources](writing-providers.md#injecting-synthetic-resources)).
 - **`write_secret_files(name, ctx, items=None)`** — the Secret counterpart: emits `ctx.secrets[name]`'s data under `output_dir/secrets/<name>/`, records it in `ctx.generated_secrets`, returns `./secrets/<name>` or `None`.
 - **`convert_command(container, env_dict)`** — converts K8s `command`/`args` to compose `entrypoint`/`command` with `$(VAR)` resolution and `$VAR` escaping.

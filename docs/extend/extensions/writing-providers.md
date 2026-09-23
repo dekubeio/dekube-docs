@@ -130,7 +130,7 @@ ctx.services_by_selector[k8s_svc_name] = {
 }
 ```
 
-The `namespace` field is required for FQDN alias generation. Without it, only short-name aliases are created.
+The `namespace` field is required for FQDN alias generation. Without it, only short-name aliases are created. The `selector` you register is matched against the workload's **pod-template labels** (`spec.template.metadata.labels`), not its own `metadata.labels` — mirror whatever the real operator's Service would select.
 
 ## Cross-converter dependencies
 

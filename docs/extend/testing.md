@@ -75,7 +75,15 @@ Performance tests run locally, not in CI — public runners aren't meant for thi
 
 # Keep /tmp output for inspection
 ./run-tests.sh --perf 15 --keep
+
+# Test unreleased core work (latest side only; ref stays pinned)
+./run-tests.sh --local-core /path/to/helmfile2compose.py
+
+# Test an unreleased extension file, repeatable per extension
+./run-tests.sh --local-ext nginx=/path/to/nginx_rewriter.py
 ```
+
+`--local-core` and `--local-ext` only replace the named piece on the **latest** side — the reference side always comes from the pinned release. `--local-ext` doesn't follow transitive dependencies: if the extension you're overriding pulls in another one (trust-manager pulling cert-manager), that dependency is still fetched at its latest released tag unless you also pass `--local-ext` for it.
 
 ## Reference versions
 
@@ -111,5 +119,9 @@ The GitHub Actions workflow runs regression weekly (Monday 6am UTC) and on push 
 - `core-only` diff → pure dekube-engine behavioral change
 - `ext-<name>` diff → change in that extension or its interaction with core
 - `ext-all` diff → interaction between extensions
+- `ref run FAILED, latest OK` → a crash fixed in latest; no diff available for that combo
+- `ref run FAILED, latest FAILED` → both sides still crash; check the latest output before assuming it's the same failure
 
-When you see a diff, the question isn't "is this a bug?" — it's "did I mean to change this?" If yes, bump the reference version in `dekube-known-versions.json` and the diff disappears. If no, you just caught a regression.
+The latest run's output directory is pre-seeded with the reference run's `secrets/` before it starts, so idempotent generators (cnpg's superuser password, for instance) produce the same values on both sides instead of manufacturing a spurious diff. `*.crt`/`*.key` files are excluded from the diff entirely — cert-manager regenerates key material on every run, so their content is noise, not drift.
+
+When you see a diff, the question isn't "is this a bug?" — it's "did I mean to change this?" If yes, bump the reference version in `dekube-known-versions.json` and the diff disappears. If no, you just caught a regression. The suite stays assertion-free by design — it measures drift, it doesn't judge it.

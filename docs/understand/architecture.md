@@ -83,14 +83,14 @@ See [Writing rewriters](../extend/extensions/writing-rewriters.md) for the full 
 
 | K8s kind | Compose equivalent |
 |----------|-------------------|
-| DaemonSet / Deployment / StatefulSet / Pod | `services:` (image, env, command, volumes, ports). Init containers become separate services with `restart: on-failure`; main service uses `depends_on` with `condition: service_completed_successfully`. Sidecar containers become separate services with `network_mode: container:<main>` (shared network namespace). Shared `emptyDir` volumes promoted to named Compose volumes by the [emptydir](../catalogue.md#emptydir) transform. Resource limits → `deploy.resources.limits`. Readiness/liveness probes → `healthcheck`. DaemonSet treated identically to Deployment (single-machine tool). |
+| DaemonSet / Deployment / StatefulSet / Pod | `services:` (image, env, command, volumes, ports). Init containers become separate services with `restart: on-failure`; main service uses `depends_on` with `condition: service_completed_successfully`. Sidecar containers become separate services with `network_mode: container:<main>` (shared network namespace). Native sidecars (initContainers with `restartPolicy: Always`, K8s ≥ 1.28) get the same `network_mode: container:<main>` treatment instead of being waited on — the main service's `depends_on` points at them. Shared `emptyDir` volumes promoted to named Compose volumes by the [emptydir](../catalogue.md#emptydir) transform. Resource limits → `deploy.resources.limits`. Readiness/liveness probes → `healthcheck`. DaemonSet treated identically to Deployment (single-machine tool). |
 | Job | `services:` with `restart: on-failure` (migrations, superuser creation). Init containers converted the same way. |
 | ConfigMap / Secret | Resolved inline into `environment:` + generated as files for volume mounts |
 | Service (ClusterIP) | Network aliases (FQDN variants resolve via compose DNS) |
 | Service (ExternalName) | Resolved through alias chain (e.g. `docs-media` -> minio) |
 | Service (NodePort / LoadBalancer) | `ports:` mapping |
 | Ingress | Reverse proxy service + config file, dispatched to ingress rewriters by `ingressClassName`. The `IngressProvider` (Caddy by default) consumes rewriter output and produces the proxy service. Path-rewrite annotations, backend SSL, and structured fields (`response_headers`, `max_body_size`) are passed through as provider-agnostic entry dicts; the legacy `extra_directives` field is still accepted as a deprecated fallback for third-party rewriter compatibility. |
-| PVC / volumeClaimTemplates | Host-path bind mounts (auto-registered in `dekube.yaml` on first run only) |
+| PVC / volumeClaimTemplates | Host-path bind mounts (auto-registered in `dekube.yaml` on first run only). `volumeClaimTemplate` claims are keyed `<vct>-<sts>`; a legacy bare `<vct>` key in an existing config still resolves, with a rename warning. |
 | securityContext (runAsUser) | Auto-generated `fix-permissions` service (`chown -R <uid>`) for non-root bind mounts (via the [fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) transform) |
 
 ### Not converted or silently ignored
@@ -103,7 +103,7 @@ Thirteen steps. Each one locally reasonable. Together, they flatten a distribute
 
 1. **Parse manifests** — recursive `.yaml` scan, multi-doc YAML split, classify by kind. Malformed YAML files are skipped with a warning.
 2. **Index lookup data** — ConfigMaps, Secrets, Services indexed for resolution during conversion.
-3. **Build alias map** — K8s Service name -> workload name mapping. ExternalName services resolved through chain.
+3. **Build alias map** — K8s Service name -> workload name mapping, matching each Service's `spec.selector` against the workload's **pod-template labels** (`spec.template.metadata.labels`; a bare Pod's own `metadata.labels`) rather than the workload's own `metadata.labels`. ExternalName services resolved through chain.
 4. **Build port map** — K8s Service port -> container port resolution (named ports resolved via container spec). When the Service is missing from manifests, named ports fall back to a well-known port table (`http` → 80, `https` → 443, `grpc` → 50051).
 5. **Track PVCs** — from both regular volumes and `volumeClaimTemplates`. On first run, auto-register in config for host_path mapping. On subsequent runs, track only (config is read-only after creation).
 6. **First-run init** — auto-exclude K8s-only workloads, generate default config, write `dekube.yaml`. On subsequent runs: detect stale volume entries (config volumes not referenced by any PVC).
@@ -124,6 +124,7 @@ These happen transparently during conversion:
 - **Port remapping** — K8s Service port -> container port in URLs. `http://svc` (implicit port 80) and `http://svc:80` both rewritten to `http://svc:8080` if the container listens on 8080. FQDN variants (`svc.ns.svc.cluster.local:80`) are also matched.
 - **Kubelet `$(VAR)`** — `$(VAR_NAME)` in container command/args resolved from the container's env vars.
 - **Shell `$VAR` escaping** — `$VAR` in command/entrypoint escaped to `$$VAR` for compose.
+- **Environment `$` escaping** — every `environment` value the engine or an extension generates gets its `$` doubled (`$$`) so compose passes it through literally instead of interpolating it (`pa$word` no longer becomes `pa`). Runs once, after all transforms and before user `overrides:` — which stay raw on purpose.
 - **String replacements** — user-defined `replacements:` from config applied to env vars, ConfigMap files, and reverse proxy upstreams.
 
 ## Beyond single-host : Docker Swarm {#beyond-single-host}

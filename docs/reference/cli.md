@@ -80,6 +80,8 @@ On **subsequent runs** (`dekube.yaml` already exists):
 - The config file is **read-only** — the engine never writes to it again
 - New PVC claims not in `dekube.yaml` emit a warning (add them manually)
 - Stale volume entries (config volumes not referenced by any PVC) emit a warning
+- A `volumeClaimTemplate` PVC falling back to a legacy bare `<vct>` key emits a warning to rename it to `<vct>-<sts>`
+- Several StatefulSets falling back to the same legacy `<vct>` key (sharing a data directory) emit a collision warning
 
 See [Configuration reference](config.md) for the full `dekube.yaml` schema.
 

@@ -26,11 +26,15 @@ volume_root: ./data
 
 # PVC volume mappings. Auto-populated on first run.
 # Each key is a PVC claim name from the K8s manifests.
+# StatefulSet volumeClaimTemplates are keyed <vct>-<sts> (K8s names
+# them <vct>-<sts>-<ordinal>; compose runs one replica).
 volumes:
   my-pvc:
     host_path: ./data/my-pvc        # bind mount (most common)
   shared-data:                       # named volume (no host_path)
     driver: local
+  data-my-statefulset:               # volumeClaimTemplate "data" on StatefulSet "my-statefulset"
+    host_path: ./data/data-my-statefulset
 
 # Workload names to exclude from conversion.
 # Auto-populated on first run with K8s-only workloads
@@ -117,7 +121,7 @@ extensions:
 |-----|------|---------|-------------|
 | `name` | `str` | *(auto-detected)* | Compose project name. Set from helmfile on first run. |
 | `volume_root` | `str` | `./data` | Root directory for PVC bind mount paths. |
-| `volumes` | `dict` | `{}` | PVC claim name → `{host_path: "..."}` mapping. Auto-populated on first run. Named volumes (no `host_path`) are added to compose `volumes:` top-level. |
+| `volumes` | `dict` | `{}` | PVC claim name → `{host_path: "..."}` mapping. Auto-populated on first run. `volumeClaimTemplate` claims are keyed `<vct>-<sts>`. Named volumes (no `host_path`) are added to compose `volumes:` top-level. |
 | `exclude` | `list[str]` | `[]` | Workload names to skip. Supports `fnmatch` wildcards. |
 | `replacements` | `list[dict]` | `[]` | String replacements: `[{old: "...", new: "..."}]`. Applied to env vars, ConfigMap files, and reverse proxy upstreams. |
 | `disable_ingress` | `bool` | `false` | Skip reverse proxy generation entirely. |
@@ -127,6 +131,9 @@ extensions:
 | `overrides` | `dict` | *(none)* | Per-service compose overrides (deep-merged). |
 | `services` | `dict` | *(none)* | Custom compose services (added verbatim). |
 | `extensions` | `dict` | `{}` | Per-extension config, keyed by extension `name`. |
+
+!!! note "Legacy bare `volumes:` key for `volumeClaimTemplates`"
+    An existing `dekube.yaml` written before the `<vct>-<sts>` naming still works: the engine falls back to the bare `<vct>` key (the data path doesn't move) and warns `PVC '<vct>-<sts>': using legacy mapping '<vct>' — rename it to '<vct>-<sts>' in dekube.yaml`. If several StatefulSets fall back to the same legacy key, they'd share a data directory — the engine warns `PVC collision: a, b share legacy mapping '<vct>' (same data directory) — give each its own entry and host_path in dekube.yaml` instead. Both warnings only fire on non-first runs.
 
 ## Per-extension config (`extensions.*`)
 
@@ -169,6 +176,13 @@ Two placeholder patterns are resolved in config values:
       - old: "PLACEHOLDER_PASSWORD"
         new: "$secret:my-secret:password"
     ```
+
+## `$` escaping in `overrides:`
+
+Every `environment` value the engine or an extension generates has its `$` doubled (`$$`) so compose passes it through literally instead of interpolating it — this runs once, after all transforms, and **before** `overrides:` are applied. `overrides:` values themselves stay raw on purpose: you keep compose's own `${VAR}` interpolation available there. The one exception is a `$secret:<name>:<key>` reference inside an override — it's still resolved and escaped, so the secret value itself arrives literal.
+
+!!! note "Upgrading"
+    If you were pre-escaping `$$` by hand in chart values or `replacements:` to work around the old behavior, you'll now get `$$$$` — remove the manual escaping. A `${VAR}` you meant for compose interpolation but that arrives through chart values or `replacements:` is now taken literally — move it into `overrides:` instead, where it's left raw.
 
 ## Legacy key migration
 

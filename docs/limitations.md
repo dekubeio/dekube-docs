@@ -36,6 +36,8 @@ Workarounds:
 
 Kubernetes init containers block the main container until they complete. In compose, init containers become separate services with `restart: on-failure`, and the main service declares `depends_on` with `condition: service_completed_successfully` — so Docker Compose starts the main container only after its init containers exit successfully.
 
+**Exception: native sidecars.** An initContainer with `restartPolicy: Always` (Kubernetes ≥ 1.28) isn't a one-shot init anymore — it runs alongside the main container for the pod's whole life. It becomes its own `<name>-init-<cname>` service sharing the main container's network namespace (`network_mode: container:<main>`), with `depends_on: [<name>]` instead of the other way around. Known limit: a one-shot init container can't reach a native sidecar, since the sidecar attaches to the main container's netns, which only starts after the one-shot inits finish.
+
 nerdctl compose ignores `depends_on` entirely, so on nerdctl the main container starts concurrently and crash-loops until its dependencies are ready. The `restart: on-failure` policy ensures everything converges eventually — expect noisy logs on first boot with nerdctl. On Docker Compose, startup ordering is correct out of the box.
 
 Sidecar containers also use `depends_on` because `network_mode: container:<name>` needs the parent container to exist. Same story: Docker Compose respects it, nerdctl ignores it and relies on brute-force retry.
@@ -49,6 +51,8 @@ Other compose services reach both the main container and its sidecars via the ma
 ### PVC (PersistentVolumeClaim) conversion
 
 Kubernetes PVCs request dynamic storage from a provisioner (Longhorn, Ceph, etc.). helmfile2compose converts them to bind mounts — host directories mapped into the container. Each PVC claim name is registered in `dekube.yaml` on first run with a default host path under `./data/`. `volumeClaimTemplates` (StatefulSets) are handled the same way.
+
+StatefulSet `volumeClaimTemplate` PVCs are registered under the key `<vct>-<sts>` — the same naming Kubernetes itself uses, minus the ordinal (compose runs one replica). An existing `dekube.yaml` with the older bare `<vct>` key still works: the engine falls back to it and warns that it should be renamed. If several StatefulSets fall back to the same legacy key, a collision warning flags that they share one data directory.
 
 ### Secrets
 
