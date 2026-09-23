@@ -12,6 +12,27 @@ description: "The dekube cursed journal: a chronological record of every engine,
 
 ---
 
+## The seals were kept {#seals-were-kept}
+
+*2026-09-23* · `engine: v1.7.0 · cert-manager: v0.5.0 · cnpg: v0.2.1 · helmfile2compose: v3.4.0 · kubernetes2simple: v1.2.0`
+
+[The inquest](#inquest-eleven-wounds) left a ledger of lesser wounds; three were closed the same day.
+
+**The ordinal.** A StatefulSet's pods answer to `pg-0.pg-hl.app.svc.cluster.local`, through the headless Service that governs them — and replication configs, cluster peers and JDBC URLs use exactly that name. Compose only knew the Service's. Such StatefulSets now carry their pod's names as network aliases too (ordinal 0 — compose runs one replica), and the DNS flattening that mangled them into `pg-0.pg-hl`, or chewed the tail off longer hostnames, now collapses them onto the Service and leaves the rest alone.
+
+**The seals.** cert-manager minted a new CA and new leaves on every run, so anything that had learned yesterday's CA was a stranger today. Certificates are now reused while they still match their spec and aren't due for renewal; renewal happens when you re-run, and deleting `secrets/<name>/` forces it. cnpg, meanwhile, stops writing its TLS key into the PostgreSQL 18 data volume — it lives in `/etc/postgresql/tls/` now, and v0.2.0's leftovers can go.
+
+??? abstract "TL;DR"
+    - StatefulSet pod FQDNs (`<sts>-0.<svc>[.<ns>[.svc[.cluster.local]]]`) resolve via network aliases; DNS flattening rewrites them to the Service and no longer touches longer hostnames or SRV names
+    - cert-manager v0.5.0 reuses certificates that still match the spec (renewal on re-run, delete `secrets/<name>/` to force); requires `cryptography >= 40`
+    - cnpg v0.2.1 keeps TLS files in `/etc/postgresql/tls/`, out of the PGDATA volume
+
+> *Each dawn the seal-maker melted every seal in the temple and cast them anew, and each dawn the gatekeepers who had learned yesterday's seals turned the faithful away. The elders did not ask him to cast more carefully. They asked him to look at the seal before melting it.*
+>
+> — *Necronomicon, On the Keeping of Seals (pending appeal)*
+
+---
+
 ## The inquest of the eleven wounds {#inquest-eleven-wounds}
 
 *2026-09-23* · `engine: v1.6.0 · simple-workload: v0.4.0 · indexer-pvc: v0.2.0 · cnpg: v0.2.0 · cert-manager: v0.4.0 · emptydir: v0.1.4 · bitnami: v0.3.4 · nginx: v0.4.3 · helmfile2compose: v3.3.0 · kubernetes2simple: v1.1.0`

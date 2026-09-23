@@ -122,6 +122,6 @@ The GitHub Actions workflow runs regression weekly (Monday 6am UTC) and on push 
 - `ref run FAILED, latest OK` → a crash fixed in latest; no diff available for that combo
 - `ref run FAILED, latest FAILED` → both sides still crash; check the latest output before assuming it's the same failure
 
-The latest run's output directory is pre-seeded with the reference run's `secrets/` before it starts, so idempotent generators (cnpg's superuser password, for instance) produce the same values on both sides instead of manufacturing a spurious diff. `*.crt`/`*.key` files are excluded from the diff entirely — cert-manager regenerates key material on every run, so their content is noise, not drift.
+The latest run's output directory is pre-seeded with the reference run's `secrets/` before it starts, so idempotent generators (cnpg's superuser password, for instance) produce the same values on both sides instead of manufacturing a spurious diff. `*.crt`/`*.key` files are excluded from the diff entirely — key material is random, and cert-manager before v0.5.0 regenerated it on every run, so its content is noise, not drift.
 
 When you see a diff, the question isn't "is this a bug?" — it's "did I mean to change this?" If yes, bump the reference version in `dekube-known-versions.json` and the diff disappears. If no, you just caught a regression. The suite stays assertion-free by design — it measures drift, it doesn't judge it.

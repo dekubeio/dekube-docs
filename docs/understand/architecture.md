@@ -109,7 +109,7 @@ Thirteen steps. Each one locally reasonable. Together, they flatten a distribute
 6. **First-run init** — auto-exclude K8s-only workloads, generate default config, write `dekube.yaml`. On subsequent runs: detect stale volume entries (config volumes not referenced by any PVC).
 7. **Dispatch to converters** — each converter receives its kind's manifests + a `ConvertContext`. Extensions run in priority order (lower first), then built-in converters. Within `IngressProvider`, each Ingress manifest is dispatched to the first matching `IngressRewriter` (by `ingressClassName` or annotation prefix).
 8. **Post-process env** — port remapping and replacements applied to all service environments (idempotent — catches extension-produced services).
-9. **Build network aliases** — for each K8s Service, add FQDN aliases (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`) + short alias to the compose service's `networks.default.aliases`. FQDNs resolve natively via compose DNS — no hostname rewriting needed.
+9. **Build network aliases** — for each K8s Service, add FQDN aliases (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`) + short alias to the compose service's `networks.default.aliases`. A StatefulSet whose `spec.serviceName` names a Service that selects it also gets its pod FQDNs (`<sts>-0.<svc>`, `.<ns>`, `.<ns>.svc`, `.<ns>.svc.cluster.local` — ordinal 0 only, compose runs one replica). FQDNs resolve natively via compose DNS — no hostname rewriting needed.
 10. **Hostname truncation** — services with names >63 chars get explicit `hostname:`.
 11. **Run transforms** — post-processing hooks (if loaded). Transforms mutate `compose_services` and `ingress_entries` in place.
 12. **Apply overrides** — deep merge from config `overrides:` and `services:` sections. Runs last so user overrides always win over transform output.
@@ -119,7 +119,7 @@ Thirteen steps. Each one locally reasonable. Together, they flatten a distribute
 
 These happen transparently during conversion:
 
-- **Network aliases** — each compose service gets `networks.default.aliases` with all K8s FQDN variants (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`). FQDNs in env vars, ConfigMaps, and reverse proxy upstreams resolve natively via compose DNS — no hostname rewriting needed. This preserves cert SANs for HTTPS.
+- **Network aliases** — each compose service gets `networks.default.aliases` with all K8s FQDN variants (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`), plus StatefulSet pod FQDNs through their governing Service (`pg-0.pg-hl.ns.svc.cluster.local`, ordinal 0 only). FQDNs in env vars, ConfigMaps, and reverse proxy upstreams resolve natively via compose DNS — no hostname rewriting needed. This preserves cert SANs for HTTPS.
 - **Service aliases** — K8s Services whose name differs from the workload are resolved. ExternalName services followed through the chain. The short K8s Service name is added as a network alias on the compose service.
 - **Port remapping** — K8s Service port -> container port in URLs. `http://svc` (implicit port 80) and `http://svc:80` both rewritten to `http://svc:8080` if the container listens on 8080. FQDN variants (`svc.ns.svc.cluster.local:80`) are also matched.
 - **Kubelet `$(VAR)`** — `$(VAR_NAME)` in container command/args resolved from the container's env vars.
