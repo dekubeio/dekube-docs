@@ -127,7 +127,7 @@ Grafana saw what we did to its lifelong companion and [fought back itself](https
 | **Kinds** | `Cluster`, `Pooler` |
 | **Dependencies** | none (optional: `cert-manager` for TLS) |
 | **Priority** | 90 (indexer) / 500 (provider) |
-| **Produces** | compose services + postgresql.conf + pg_hba.conf + superuser secrets |
+| **Produces** | compose services + postgresql.conf + pg_hba.conf + app secrets (+ superuser secrets with `enableSuperuserAccess: true`) |
 | **Status** | fresh — untested in prod |
 
 The most dishonest extension in the catalogue, and that's saying something given the company it keeps.
@@ -142,7 +142,7 @@ Then, the forgery. CNPG auto-generates a per-cluster CA with server certificates
 
 Finally, the Pooler lie. In Kubernetes, a `Pooler` CRD spawns a PgBouncer deployment — connection pooling, transaction-level multiplexing, the works. Here? The pooler name becomes a DNS alias. `directory-cluster-pooler-rw` resolves directly to the PostgreSQL container. No PgBouncer, no pooling, no multiplexing. Apps configured with `sslmode=verify-full` against the pooler endpoint connect straight to the database and never notice. The abstraction layer they relied on was never there.
 
-Also generates superuser secrets with connection URIs (`uri`, `fqdn-uri`, `jdbc-uri`, `pgpass`) emulating the operator's output format. Because if you're going to impersonate a Kubernetes operator, you might as well forge the paperwork too.
+With `enableSuperuserAccess: true`, it also generates the `<cluster>-superuser` secret with connection URIs (`uri`, `fqdn-uri`, `jdbc-uri`, `pgpass`) emulating the operator's output format. Because if you're going to impersonate a Kubernetes operator, you might as well forge the paperwork too. Without it — CNPG's default — the `postgres` password stays on disk for the container and is never published as a Secret, so an app referencing `<cluster>-superuser` needs the flag set, as it would against the real operator.
 
 ```bash
 python3 dekube-manager.py cnpg
