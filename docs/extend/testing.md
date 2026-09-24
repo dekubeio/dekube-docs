@@ -14,7 +14,7 @@ A project that emulates a container orchestrator by flattening its output into a
 
 ## What it tests
 
-[dekube-testsuite](https://github.com/dekubeio/dekube-testsuite) compares dekube output between a **pinned reference version** and the **latest release**. The test harness uses dekube-manager (rolling from `main`) as the runner — it's the tool, not the subject. What's compared is core + extension output between versions.
+[dekube-testsuite](https://github.com/dekubeio/dekube-testsuite) compares dekube output between a **pinned reference version** and the **latest release**. The test harness uses dekube-manager (rolling from `main`) as the runner — it's the tool, not the subject. What's compared is core + extension output between versions. Every download retries on network errors (`curl --retry 3 --retry-all-errors`, curl ≥ 7.71.0), and an exhausted retry never leaves a partial file in the download cache.
 
 ### Regression
 
@@ -40,6 +40,8 @@ The `manifests/` directory contains edge cases organized by kind:
 | `configmaps-secrets.yaml` | envFrom, volume mounts, binary data, shared references across deployments |
 | `crds.yaml` | KeycloakRealmImport, Certificate, ClusterIssuer, Issuer, ServiceMonitor, Bundle |
 | `edge-cases.yaml` | Empty docs, 63/64-char names, missing namespace, no selector, empty containers, unknown kinds |
+| `bug-<slug>.yaml` | One regression fixture per fixed bug, resource names prefixed with the slug so fixtures never collide |
+| `ext-<name>.yaml` | The main path of an extension (nginx, traefik, keycloak, servicemonitor) — otherwise only exercised by the bug fixtures |
 
 ### The torturer (`--perf N`) {#the-torturer}
 
@@ -81,7 +83,13 @@ Performance tests run locally, not in CI — public runners aren't meant for thi
 
 # Test an unreleased extension file, repeatable per extension
 ./run-tests.sh --local-ext nginx=/path/to/nginx_rewriter.py
+
+# Latest side: bundled extensions (indexers, workload, haproxy, caddy, emptydir,
+# fix-permissions) from main instead of the release
+./run-tests.sh --latest-main
 ```
+
+What a plain run measures: the reference side is the pinned `core` release; the latest side is the engine's latest **release** plus the dependency extensions (keycloak, nginx, cert-manager…) from each repo's `main`. Right after a rebaseline, the release halves are the same build, so only extension changes on `main` show up until the next tag. `--latest-main` also takes the bundled extensions from `main` (the engine body itself still comes from the latest release — there is no built engine for `main`); `--local-core` wins over it.
 
 `--local-core` and `--local-ext` only replace the named piece on the **latest** side — the reference side always comes from the pinned release. `--local-ext` doesn't follow transitive dependencies: if the extension you're overriding pulls in another one (trust-manager pulling cert-manager), that dependency is still fetched at its latest released tag unless you also pass `--local-ext` for it.
 
@@ -112,7 +120,7 @@ Extensions listed here are tested individually; unlisted are skipped. Extensions
 
 ## CI
 
-The GitHub Actions workflow runs regression weekly (Monday 6am UTC) and on push to test-related files. Diffs are uploaded as artifacts for human review. There are no assertions — the diff *is* the output.
+The GitHub Actions workflow runs regression weekly (Monday 6am UTC) and on push to test-related files. Diffs are uploaded as artifacts for human review. There are no assertions — the diff *is* the output. GitHub disables the weekly trigger after 60 days without repository activity; `gh workflow enable regression.yml -R dekubeio/dekube-testsuite` turns it back on.
 
 ## Reading diffs
 
