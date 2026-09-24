@@ -16,7 +16,7 @@ All repos use the same toolchain:
 
 - **[pylint](https://pylint.readthedocs.io/)** — static analysis. Style warnings (too-many-locals, line-too-long, too-many-arguments) are accepted. Real issues (unused imports, actual bugs, f-strings without placeholders) are not.
 - **[pyflakes](https://github.com/PyCQA/pyflakes)** — fast, zero-config, no false positives. Must be clean.
-- **[radon](https://radon.readthedocs.io/)** — cyclomatic complexity. Target: no function rated D or worse. C-rated functions are tolerated when they're natural dispatchers or sequential logic that wouldn't benefit from splitting. The target holds: the current worst is `build_service_port_map` (20, C) in dekube-engine — every function is C-or-better.
+- **[radon](https://radon.readthedocs.io/)** — cyclomatic complexity. Target: no function rated D or worse. C-rated functions are tolerated when they're natural dispatchers or sequential logic that wouldn't benefit from splitting. The target holds: the current worst sit at C(20) — `build_service_port_map` and `_warn_legacy_vct_mappings` in dekube-engine, `PVCIndexer.convert` in dekube-indexer-pvc — and every function is C-or-better.
 
 ## Aberrant, not sloppy (we hope)
 
@@ -36,7 +36,7 @@ The tentacles have always been in the idea, not in the code. These rituals exist
 
 ## Current scores
 
-*Last updated: 2026-07-16 — re-measured with pylint 4.0.6, pyflakes 3.4.0, radon 6.0.1 (Python 3.14.6). The workload/container iteration helpers that the emptydir and fix-permissions refactors first extracted locally were then promoted into the engine (`dekube.pacts.helpers`) and imported by both — along with seven other helper families that had been duplicated across the extensions. Deleting the private copies made the extensions smaller: their maintainability index rose, but their pylint score and average complexity ticked the other way (fewer, simpler statements to dilute the accepted style warnings and the genuinely-complex methods). Complexity ratings stayed C-or-better and the output is byte-identical.*
+*Last updated: 2026-09-24 — re-measured with pylint 4.0.6 (astroid 4.0.4), pyflakes 3.4.0, radon 6.0.1, all run as `/usr/bin/python3 -m …` (Python 3.14.4), the interpreter that has PyYAML and cryptography installed, so no import-error noise leaks into the scores. The bug-fix tranche before this measurement had grown five functions on this page past C: the engine's `convert` (D, 24), dekube-manager's `_install` (D, 24), simple-workload's `_probe_to_healthcheck` (D, 29) and `_convert_one` (D, 23), and fix-permissions' `transform` (D, 24). All five were split along the seams their own comments already marked and came out at A(4), B(9), B(10), B(7) and A(4), with byte-identical output across every testsuite combo. The same pass brought the official extensions' outliers back down too (cert-manager's `_reusable` F/43, the nginx rewriter's `rewrite` E/36, traefik's `_backend_scheme` E/34 and `_strip_prefixes` D/26, servicemonitor's `_process_servicemonitors` D/25, keycloak's `_build_options_env` D/21). Their READMEs carry the numbers.*
 
 This page covers dekube-engine, dekube-manager, and the built-in distribution extensions (the eight monks plus the `emptydir` transform). Third-party and official extensions track their own scores in their respective READMEs.
 
@@ -47,16 +47,16 @@ This page covers dekube-engine, dekube-manager, and the built-in distribution ex
 | dekube-indexer-configmap | 10.00/10 | Built-in distribution extension |
 | dekube-indexer-secret | 10.00/10 | Built-in distribution extension |
 | dekube-indexer-pvc | 10.00/10 | Built-in distribution extension |
-| dekube-provider-caddy | 9.88/10 | Built-in distribution extension |
-| dekube-rewriter-haproxy | 9.79/10 | Built-in distribution extension |
-| dekube-manager | 9.74/10 | Style only (too-many-locals, too-many-args, line-too-long) |
-| dekube-provider-simple-workload | 9.67/10 | Built-in distribution extension |
-| dekube-transform-emptydir | 9.57/10 | Built-in distribution extension (newest bundled extension) |
-| dekube-engine | 9.44/10 | Style only (too-many-args, too-many-locals, duplicate-code) |
-| dekube-transform-fix-permissions | 9.24/10 | Built-in distribution extension |
+| dekube-provider-caddy | 9.90/10 | Built-in distribution extension |
+| dekube-rewriter-haproxy | 9.81/10 | Built-in distribution extension |
+| dekube-manager | 9.76/10 | Style only (too-many-locals, too-many-args, line-too-long, the dashed module name) |
+| dekube-engine | 9.60/10 | Style only (too-many-args, too-many-locals, line-too-long, duplicate-code) plus the base-class stubs below |
+| dekube-transform-emptydir | 9.58/10 | Built-in distribution extension |
+| dekube-transform-fix-permissions | 9.56/10 | Built-in distribution extension |
+| dekube-provider-simple-workload | 9.41/10 | Built-in distribution extension |
 | dekube-indexer-service | 9.23/10 | Built-in distribution extension |
 
-Remaining warnings are accepted style issues (`R0914` too-many-locals, `R0913` too-many-arguments, `R0801` duplicate-code). `E0401` (import-error) and `R0903` (too-few-public-methods) are suppressed inline — the import resolves at runtime, and the one-class-one-method contract is by design. In the engine, `write_configmap_files` / `write_secret_files` do a function-body-local import of `core.volumes` to keep the module graph acyclic; the resulting `C0415` (import-outside-toplevel) and `R0401` (cyclic-import) are suppressed inline on the import lines — the deferred import means there is no runtime cycle. The engine's residual gap from a perfect score is `R0801` (duplicate-code): the new `iter_workloads`/`iter_named_containers` helpers resemble the workload converter they were factored out of, and that similarity is left visible rather than hidden.
+Remaining warnings are accepted style issues (`R0914` too-many-locals, `R0913`/`R0917` too-many-arguments, `C0301` line-too-long, `R0801` duplicate-code). In the bundled extensions, `E0401` (import-error) and `R0903` (too-few-public-methods) are suppressed inline — the import resolves at runtime, and the one-class-one-method contract is by design. In the engine, `write_configmap_files` / `write_secret_files` do a function-body-local import of `core.volumes` to keep the module graph acyclic; the resulting `C0415` (import-outside-toplevel) and `R0401` (cyclic-import) are suppressed inline on the import lines — the deferred import means there is no runtime cycle. `_auto_register` does the same kind of deferred import and still reports its `C0415`. The rest of the engine's gap is the contract itself: `W0613` (unused-argument) on the no-op default methods of the `pacts` base classes, whose signatures are the interface extensions override, `R0903` on those one-method base classes, and `R0801` between the two `__all__` lists (`dekube` re-exports `dekube.pacts` name for name) and between `_auto_register` and the extension loader's class dispatch.
 
 ### Pyflakes
 
@@ -67,34 +67,41 @@ Zero warnings across all repos — pyflakes exits clean on every measured file. 
 | Repo | Worst function | CC | Rating |
 |------|---------------|---:|--------|
 | dekube-engine | `build_service_port_map` | 20 | C |
-| dekube-provider-simple-workload | `SimpleWorkloadProvider._build_service` | 19 | C |
-| dekube-engine | `convert` | 18 | C |
-| dekube-provider-simple-workload | `SimpleWorkloadProvider._convert_one` | 17 | C |
-| dekube-manager | `main` | 17 | C |
+| dekube-engine | `_warn_legacy_vct_mappings` | 20 | C |
+| dekube-indexer-pvc | `PVCIndexer.convert` | 20 | C |
+| dekube-provider-simple-workload | `SimpleWorkloadProvider._get_exposed_ports` | 19 | C |
+| dekube-rewriter-haproxy | `HAProxyRewriter.rewrite` | 19 | C |
+| dekube-engine | `_build_vol_map` | 18 | C |
+| dekube-engine | `_convert_pvc_mount` | 18 | C |
+| dekube-engine | `_resolve_env_entry` | 18 | C |
+| dekube-provider-simple-workload | `SimpleWorkloadProvider._build_service` | 18 | C |
 | dekube-engine | `main` (cli) | 17 | C |
-| dekube-engine | `_resolve_env_entry` | 17 | C |
-| dekube-transform-fix-permissions | `FixPermissions.transform` | 16 | C |
-| dekube-rewriter-haproxy | `HAProxyRewriter.rewrite` | 16 | C |
+| dekube-manager | `main` | 17 | C |
 | dekube-engine | `_auto_register` | 16 | C |
-| dekube-indexer-pvc | `PVCIndexer.convert` | 15 | C |
-| dekube-provider-simple-workload | `SimpleWorkloadProvider._probe_to_healthcheck` | 15 | C |
-| dekube-transform-emptydir | `EmptyDirTransform.transform` | 14 | C |
+| dekube-engine | `convert_volume_mounts` | 16 | C |
+| dekube-engine | `_resolve_envfrom` | 16 | C |
+| dekube-provider-simple-workload | `SimpleWorkloadProvider._http_healthcheck` | 16 | C |
+| dekube-transform-emptydir | `EmptyDirTransform` (class) | 16 | C |
+| dekube-engine | `_add_statefulset_pod_aliases` | 15 | C |
+| dekube-engine | `resolve_env` | 15 | C |
+| dekube-transform-emptydir | `EmptyDirTransform._find_shared_emptydirs` | 15 | C |
 | dekube-engine | `build_alias_map` | 14 | C |
-| dekube-engine | `_build_vol_map` | 14 | C |
+| dekube-indexer-pvc | `PVCIndexer` (class) | 14 | C |
+| dekube-transform-emptydir | `EmptyDirTransform.transform` | 14 | C |
 | dekube-engine | `write_compose` | 13 | C |
-| dekube-engine | `convert_volume_mounts` | 13 | C |
-| dekube-transform-emptydir | `EmptyDirTransform._find_shared_emptydirs` | 13 | C |
-| dekube-provider-simple-workload | `_get_exposed_ports` | 12 | C |
-| dekube-engine | `_resolve_envfrom` | 12 | C |
-| dekube-indexer-pvc | `PVCIndexer` (class) | 11 | C |
-| dekube-provider-caddy | `CaddyProvider._write_caddy_host_block` | 11 | C |
-| dekube-manager | `_read_yaml_config` | 11 | C |
-| dekube-manager | `_install` | 11 | C |
-| dekube-engine | `load_config` | 11 | C |
+| dekube-engine | `load_config` | 12 | C |
+| dekube-engine | `_run_converters` | 12 | C |
+| dekube-provider-caddy | `CaddyProvider._resolve_ca_secrets` | 12 | C |
 | dekube-engine | `_build_dir_ns_map` | 11 | C |
 | dekube-engine | `resolve_backend` | 11 | C |
+| dekube-engine | `_index_workloads` | 11 | C |
+| dekube-engine | `_postprocess_env` | 11 | C |
+| dekube-manager | `_read_yaml_config` | 11 | C |
+| dekube-manager | `_reconcile_bundled` | 11 | C |
+| dekube-provider-caddy | `CaddyProvider._write_caddy_host_block` | 11 | C |
+| dekube-rewriter-haproxy | `HAProxyRewriter` (class) | 11 | C |
 
-No function breaches the D-or-worse target. The two that briefly did — `_find_shared_emptydirs` (was E, 32) in dekube-transform-emptydir and `_collect_uids` (was D, 23) in dekube-transform-fix-permissions — were refactored by extracting shared workload/container iteration helpers, dropping them to C(13) and A(5) with byte-identical output. Those helpers have since been promoted into the engine as public `iter_workloads` / `iter_named_containers` (in `dekube.pacts.helpers`); both extensions now import them instead of each keeping a copy. dekube-manager's `_read_yaml_config` remains C(11) after the hand-rolled YAML parser was replaced with pyyaml. The remaining C-rated functions are natural dispatchers or sequential steps where splitting would move complexity without improving readability.
+No function breaches the D-or-worse target. The five that did before this measurement were split into per-phase helpers: `convert` now reads as a straight sequence of calls (`_run_converters`, `_manage_pvc_volumes`, `_run_transforms`…), `_probe_to_healthcheck` dispatches to one builder per probe type (`_http_healthcheck` keeps the wget → curl → `/dev/tcp` chain in one piece, at C(16)), and fix-permissions' `transform` became five named stages. dekube-transform-fix-permissions has no C-rated function left. Earlier, `_find_shared_emptydirs` (was E, 32) and `_collect_uids` (was D, 23) had gone the same way, through the `iter_workloads` / `iter_named_containers` helpers now public in `dekube.pacts.helpers`. The remaining C-rated functions are natural dispatchers or sequential steps where splitting would move complexity without improving readability.
 
 ### Average complexity & maintainability
 
@@ -102,16 +109,16 @@ No function breaches the D-or-worse target. The two that briefly did — `_find_
 |------|---:|-----------|-------:|-----------|
 | dekube-indexer-configmap | 86.70 | A | 5.5 | B |
 | dekube-indexer-secret | 83.09 | A | 7.5 | B |
-| dekube-indexer-service | 78.97 | A | 6.5 | B |
-| dekube-transform-emptydir | 69.56 | A | 14.0 | C |
-| dekube-indexer-pvc | 68.96 | A | 10.3 | C |
-| dekube-transform-fix-permissions | 62.95 | A | 7.3 | B |
-| dekube-provider-caddy | 51.09 | A | 7.3 | B |
-| dekube-rewriter-haproxy | 45.64 | A | 9.2 | B |
-| dekube-manager | 33.25 | A | 4.4 | A |
-| dekube-provider-simple-workload | 27.73 | A | 9.4 | B |
+| dekube-indexer-service | 77.00 | A | 8.5 | B |
+| dekube-indexer-pvc | 68.91 | A | 13.0 | C |
+| dekube-transform-emptydir | 68.25 | A | 15.0 | C |
+| dekube-provider-caddy | 51.98 | A | 7.6 | B |
+| dekube-rewriter-haproxy | 51.97 | A | 10.0 | B |
+| dekube-transform-fix-permissions | 49.21 | A | 4.6 | A |
+| dekube-provider-simple-workload | 27.22 | A | 7.8 | B |
+| dekube-manager | 25.85 | A | 4.8 | A |
 
-All repos are MI A-rated. dekube-engine is not listed here (19 modules, overall MI varies per module; see `radon mi src/dekube/ -s` for per-module scores — lowest is `core/convert.py` at 40.68, with `core/extensions.py` close behind at 40.77).
+All repos are MI A-rated. dekube-engine is not listed here (19 modules, overall MI varies per module; see `radon mi src/dekube/ -s` for per-module scores — every module is A, the lowest being `core/volumes.py` at 33.62, then `core/convert.py` at 40.45 and `core/env.py` at 40.76). Its average CC across all blocks is 6.5 (B).
 
 ## The uncomfortable truth
 
