@@ -101,7 +101,7 @@ write_secret_files("db-credentials", ctx)
 password = secret_value(ctx.secrets["db-credentials"], "password")
 ```
 
-The cnpg and keycloak providers use exactly this pattern — generate the credential the operator would have created, write it to disk, and hand the same value to every service that references the Secret.
+The keycloak provider uses exactly this pattern. cnpg follows the same idea but writes its secret files itself instead of calling `write_secret_files` — it needs to read an existing password back off disk first to stay idempotent across runs, before deciding whether to generate a new one.
 
 ## Registering network aliases
 

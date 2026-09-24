@@ -40,7 +40,7 @@ compose.yml + reverse proxy config
 
 The bare dekube-engine has **no** built-in converters — all registries are empty. The [helmfile2compose](https://github.com/dekubeio/helmfile2compose) distribution bundles 9 extensions via `_auto_register()`:
 
-- **`ConfigMapIndexer`** / **`SecretIndexer`** / **`PvcIndexer`** / **`ServiceIndexer`** — index resources into `ctx` ([dekube-indexer-*](https://github.com/dekubeio))
+- **`ConfigMapIndexer`** / **`SecretIndexer`** / **`PVCIndexer`** / **`ServiceIndexer`** — index resources into `ctx` ([dekube-indexer-*](https://github.com/dekubeio))
 - **`SimpleWorkloadProvider`** — kinds: DaemonSet, Deployment, Job, Pod, StatefulSet ([dekube-provider-simple-workload](https://github.com/dekubeio/dekube-provider-simple-workload))
 - **`HAProxyRewriter`** — built-in ingress rewriter, haproxy + default fallback ([dekube-rewriter-haproxy](https://github.com/dekubeio/dekube-rewriter-haproxy))
 - **`CaddyProvider`** — IngressProvider, produces a Caddy service + Caddyfile ([dekube-provider-caddy](https://github.com/dekubeio/dekube-provider-caddy))
@@ -107,7 +107,7 @@ Thirteen steps. Each one locally reasonable. Together, they flatten a distribute
 4. **Build port map** — K8s Service port -> container port resolution (named ports resolved via container spec). When the Service is missing from manifests, named ports fall back to a well-known port table (`http` → 80, `https` → 443, `grpc` → 50051).
 5. **Track PVCs** — from both regular volumes and `volumeClaimTemplates`. On first run, auto-register in config for host_path mapping. On subsequent runs, track only (config is read-only after creation).
 6. **First-run init** — auto-exclude K8s-only workloads, generate default config, write `dekube.yaml`. On subsequent runs: detect stale volume entries (config volumes not referenced by any PVC).
-7. **Dispatch to converters** — each converter receives its kind's manifests + a `ConvertContext`. Extensions run in priority order (lower first), then built-in converters. Within `IngressProvider`, each Ingress manifest is dispatched to the first matching `IngressRewriter` (by `ingressClassName` or annotation prefix).
+7. **Dispatch to converters** — each converter receives its kind's manifests + a `ConvertContext`. Built-in and extension converters are merged into one list and dispatched together in priority order (lower first); on a priority tie, a converter loaded via `--extensions-dir` runs before a same-priority built-in. Within `IngressProvider`, each Ingress manifest is dispatched to the first matching `IngressRewriter` (by `ingressClassName` or annotation prefix).
 8. **Post-process env** — port remapping and replacements applied to all service environments (idempotent — catches extension-produced services).
 9. **Build network aliases** — for each K8s Service, add FQDN aliases (`svc.ns.svc.cluster.local`, `svc.ns.svc`, `svc.ns`) + short alias to the compose service's `networks.default.aliases`. A StatefulSet whose `spec.serviceName` names a Service that selects it also gets its pod FQDNs (`<sts>-0.<svc>`, `.<ns>`, `.<ns>.svc`, `.<ns>.svc.cluster.local` — ordinal 0 only, compose runs one replica). FQDNs resolve natively via compose DNS — no hostname rewriting needed.
 10. **Hostname truncation** — services with names >63 chars get explicit `hostname:`.
