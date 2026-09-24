@@ -22,7 +22,7 @@ dekube-engine      +  extensions  =  distribution
 helmfile2compose  +  more extensions  =  kubernetes2simple.py
 ```
 
-Distributions can be **stacked**: built on top of another distribution instead of bare dekube-engine. [kubernetes2simple](https://k2s.dekube.io/) stacks on [helmfile2compose](https://helmfile2compose.dekube.io/docs/), adding all official extensions. The build script strips the tail (registries, `sys.modules` hack, `__main__` guard) from the base, appends new extensions, and re-appends the tail.
+Distributions can be **stacked**: built on top of another distribution instead of bare dekube-engine. [kubernetes2simple](https://k2s.dekube.io/) stacks on [helmfile2compose](https://helmfile2compose.dekube.io/docs/), adding most of the remaining official extensions (`keycloak`, `cert-manager`, `trust-manager`, `servicemonitor`, `nginx`, `traefik`, `bitnami` — `cnpg`, `flatten-internal-urls`, `nginx-provider`, and `fake-apiserver` are left out). The build script strips the tail (registries, `sys.modules` hack, `__main__` guard) from the base, appends new extensions, and re-appends the tail.
 
 ## Why
 
@@ -137,6 +137,11 @@ jobs:
 ### Stacked distribution (against another distribution)
 
 ```yaml
+- name: Fetch build-distribution.py
+  run: |
+    curl -fsSL https://raw.githubusercontent.com/dekubeio/dekube-engine/main/build-distribution.py \
+      -o build-distribution.py
+
 - name: Build kubernetes2simple.py
   run: |
     python build-distribution.py kubernetes2simple \

@@ -127,7 +127,7 @@ Two build scripts produce two different outputs:
 ```bash
 # Bare engine
 python build.py
-# → dekube.py (~1265 lines, not committed)
+# → dekube.py (~1,900 lines, not committed)
 
 # Distribution (from a distribution repo)
 python build-distribution.py helmfile2compose --extensions-dir extensions --core-dir ../dekube-engine

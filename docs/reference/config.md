@@ -100,8 +100,8 @@ services:
 # `name` attribute. Extensions read this via ctx.extension_config.
 extensions:
   caddy:
-    # Disable the Caddy service entirely (different from disable_ingress:
-    # this only affects Caddy, not the ingress entry collection)
+    # Skip the Caddy compose service specifically (checked separately from
+    # disable_ingress; neither flag stops ingress entries from being collected)
     disabled: false
     # ACME email for Let's Encrypt
     email: admin@example.com
@@ -124,7 +124,7 @@ extensions:
 | `volumes` | `dict` | `{}` | PVC claim name → `{host_path: "..."}` mapping. Auto-populated on first run. `volumeClaimTemplate` claims are keyed `<vct>-<sts>`. Named volumes (no `host_path`) are added to compose `volumes:` top-level. |
 | `exclude` | `list[str]` | `[]` | Workload names to skip. Supports `fnmatch` wildcards. |
 | `replacements` | `list[dict]` | `[]` | String replacements: `[{old: "...", new: "..."}]`. Applied to env vars, ConfigMap files, and reverse proxy upstreams. |
-| `disable_ingress` | `bool` | `false` | Skip reverse proxy generation entirely. |
+| `disable_ingress` | `bool` | `false` | Skip the reverse proxy compose service. Ingress manifests are still dispatched to rewriters and the config file (e.g. Caddyfile) is still written, renamed to `Caddyfile-<project>` so it isn't picked up by accident. |
 | `infer_namespaces` | `bool` | `true` | Infer missing `metadata.namespace` from sibling manifests and helmfile metadata. Set to `false` if your charts already set namespaces on all resources. See [namespace inference](../understand/engine.md#namespace-inference). |
 | `ingress_types` | `dict[str, str]` | *(none)* | Custom `ingressClassName` → canonical rewriter name mapping. |
 | `network` | `str` | *(none)* | External compose network name. |
