@@ -437,7 +437,7 @@ No functional changes. Output identical to v2.3.1 — the [executioner](extend/t
 
 ---
 
-## v2.3.1 — The null devours silently
+## v2.3.1 — The null devours silently {#v231--the-null-devours-silently}
 
 *2026-02-18* · `1858 lines`
 
