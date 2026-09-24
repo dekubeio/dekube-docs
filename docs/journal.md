@@ -12,6 +12,38 @@ description: "The dekube cursed journal: a chronological record of every engine,
 
 ---
 
+## The stitches were examined {#stitches-examined}
+
+*2026-09-24* · `engine: v1.8.0 · simple-workload: v0.5.0 · indexer-pvc: v0.2.1 · indexer-service: v0.1.3 · haproxy: v0.2.0 · caddy: v0.3.0 · fix-permissions: v0.2.0 · cert-manager: v0.6.0 · trust-manager: v0.4.0 · servicemonitor: v0.4.0 · nginx: v0.5.0 · traefik: v0.4.0 · bitnami: v0.3.5 · flatten-internal-urls: v0.4.0 · nginx-provider: v0.2.0 · helmfile2compose: v3.5.0 · kubernetes2simple: v1.3.0`
+
+The rest of [the inquest's](#inquest-eleven-wounds) ledger closed in one sitting and shipped in one train: the lesser wounds, the security findings, and the docs that lied. Every fix went through its own reviewer before shipping, and three reviewers caught the fix itself doing damage. Flatten turned `redis://redis-master:6379` into `redis-master://…`. Mounted secrets lost their owner-write bit, so the second run crashed. The new fakeapi server broke every stack that pulls it from `main`. None of that shipped.
+
+**What you will notice.**
+- `env` now wins over `envFrom`, as kubelet does.
+- Every `$` in `command`/`args` is escaped after `$(VAR)` resolution.
+- ConfigMap and Secret mounts that use `items` move to `<name>_<hash>`.
+- An extension that fails to load now fails the run, and a build fails when the engine and an extension define the same top-level name differently.
+- `subPath` is honoured. Data already sitting at the volume root keeps the old mount, with a warning.
+- ServiceMonitors honour `namespaceSelector`.
+- In kubernetes2simple, haproxy stops claiming classless Ingresses that carry nginx or traefik annotations.
+- fakeapi now requires a token and binds to loopback: update the extension, then reconvert.
+
+**What was quietly wrong.** Remapped ports and `replacements` were applied twice. `stringData`, binary Secrets, `defaultMode` and `$$(VAR)` were ignored. `$secret:` swallowed the `@host` of URLs, and `$secret:` in `replacements:` and `$volume_root` in `host_path` were never resolved. Transforms received another extension's config, and `enabled: false` did nothing for rewriters. Ports came out as `None:None`, UDP was lost, and tcpSocket healthchecks always failed. Bitnami replaced its own exporters with redis. Caddy's `server-ca` pointed at a file nobody wrote. cert-manager dropped IP and URI SANs. Traefik mistook router TLS for backend TLS. Sidecars raced fix-permissions. Most of these had never crashed anything; they had only been wrong.
+
+**The fence.** fakeapi served every secret to the LAN, with no token and the Docker socket mounted. It now binds to loopback, checks a token, pins its server by sha256, and keeps its TLS key to itself. nspawn no longer lets an environment value inject unit sections. The installer verifies helm and helmfile checksums, CI actions are pinned by SHA, and the manager accepts commit pins and `min_engine`.
+
+??? abstract "TL;DR"
+    - Upgrade-visible: `env` > `envFrom`; all `$` escaped in command/args; `items` mounts at `<name>_<hash>`; extension load failure and differing top-level collisions are fatal; `subPath` honoured with a legacy fallback; ServiceMonitor `namespaceSelector`; haproxy is the fallback rewriter (priority 1100); **fakeapi: update and reconvert**
+    - Single-pass remaps/replacements, `stringData`, binary data, file modes, `$$(VAR)`, `$secret:` in URLs and `replacements:`, `$volume_root`, per-extension config and `enabled: false` everywhere
+    - Workload ports/UDP/limits/tcpSocket, bitnami exact image match, caddy `server-ca`, cert-manager SANs and issuer kinds, traefik backend scheme and StripPrefix, nginx capture groups and access-control warnings, fix-permissions `fsGroup`, flatten `host:port`
+    - Security: fakeapi token and loopback, pinned server, TLS key isolation; nspawn injection; installer checksums; CI pinned by SHA
+
+> *The healers closed forty wounds in a single night, and the elders rejoiced — until the inquisitors, examining not the wounds but the stitches, found that one healer had sewn the patient's mouth to his ear. Thereafter every stitch was examined by a second pair of eyes before the patient went home, and he went home only once.*
+>
+> — *Necronomicon, On the Examination of Stitches (no guarantees)*
+
+---
+
 ## The seals were kept {#seals-were-kept}
 
 *2026-09-23* · `engine: v1.7.0 · cert-manager: v0.5.0 · cnpg: v0.2.1 · helmfile2compose: v3.4.0 · kubernetes2simple: v1.2.0`
