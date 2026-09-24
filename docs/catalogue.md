@@ -36,11 +36,11 @@ If your helmfile only uses standard Kubernetes resources, the monks and bundled 
 | [The Binder](https://github.com/dekubeio/dekube-indexer-pvc) | IndexerConverter | `PersistentVolumeClaim` | 50 |
 | [The Weaver](https://github.com/dekubeio/dekube-indexer-service) | IndexerConverter | `Service` | 50 |
 | [The Builder](https://github.com/dekubeio/dekube-provider-simple-workload) | Provider | `DaemonSet`, `Deployment`, `Job`, `Pod`, `StatefulSet` | 500 |
-| [The Herald](https://github.com/dekubeio/dekube-rewriter-haproxy) | IngressRewriter | — | — |
+| [The Herald](https://github.com/dekubeio/dekube-rewriter-haproxy) | IngressRewriter | — | 1100 |
 | [The Gatekeeper](https://github.com/dekubeio/dekube-provider-caddy) | IngressProvider | `Ingress` | 900 |
 | [The Custodian](https://github.com/dekubeio/dekube-transform-fix-permissions) | Transform | — | 8000 |
 
-The four indexers populate `ConvertContext` lookups so that later stages can resolve ConfigMap keys, Secret references, PVC claims, and Service ports. The Builder turns workloads into compose services. The Herald translates HAProxy ingress annotations, the Gatekeeper assembles them into a Caddy reverse proxy. The Custodian runs last — it scans for non-root containers and generates a busybox init service that fixes bind mount permissions.
+The four indexers populate `ConvertContext` lookups so that later stages can resolve ConfigMap keys, Secret references, PVC claims, and Service ports. The Builder turns workloads into compose services. The Herald translates HAProxy ingress annotations, the Gatekeeper assembles them into a Caddy reverse proxy. The Custodian runs last — it scans for non-root containers (`runAsUser`) and pod `fsGroup`, and generates a busybox init service that fixes ownership of their bind mounts and named volumes, emulating fsGroup (group ownership, group-write, setgid dirs, `group_add`). Every service it fixes waits for it to complete.
 
 The distribution also bundles the [emptydir transform](#emptydir) (priority 1000), which auto-detects shared `emptyDir` volumes and promotes them to named Compose volumes. Not a monk — it was never part of the original engine extraction — but bundled from day one.
 
@@ -61,7 +61,7 @@ For building your own, see [Writing ingress providers](extend/extensions/writing
 
 The alternative gate. Same ingress entries, different keeper. Generates an `nginx.conf` with upstream blocks, `proxy_pass` directives, and optional TLS (ACME via certbot, self-signed, or user-provided certs). Reads `response_headers`, `max_body_size`, `strip_prefix` from the structured entry format — no Caddy syntax leaks through.
 
-Three TLS modes: `extensions.nginx.email` triggers certbot with ACME challenges, `extensions.nginx.tls_internal: true` generates self-signed certs via openssl, `extensions.nginx.tls_cert_path` mounts user-provided certificates. Without any TLS config, plain HTTP on port 80.
+Three TLS modes: `extensions.nginx.email` triggers certbot with ACME challenges, `extensions.nginx.tls_internal: true` generates self-signed certs via openssl, `extensions.nginx.tls_cert_path` mounts user-provided certificates. Without any TLS config, plain HTTP on port 80. In ACME mode nginx starts on a throwaway self-signed cert and reloads every 6h to pick up the real one; certbot retries a failed first issuance with backoff (5 min doubling to 60 min, under Let's Encrypt's failure limit), then renews every 12h. `nginx:alpine` ships no `openssl`, so both `tls_internal` and the ACME bootstrap `apk add` it on first start — they need network access to Alpine's mirrors. The block is `extensions.nginx`, shared with the nginx rewriter: `enabled: false` there disables both.
 
 Untested in production. The Gatekeeper (Caddy) remains the recommended default. Use this if you need nginx specifically or if Caddy's automatic HTTPS doesn't suit your environment.
 
@@ -111,7 +111,7 @@ Why would you need monitoring in a compose stack? You wouldn't. You absolutely w
 
 In Kubernetes, the Prometheus Operator watches ServiceMonitor CRDs and rewrites scrape config dynamically. This extension reads the same CRDs and bakes everything into a static `prometheus.yml`. No operator, no watch, no dynamic anything. Prometheus doesn't know the difference. Prometheus doesn't need to know.
 
-Features: FQDN scrape targets (via network aliases), HTTPS scrape with CA bundle mounting (uses trust-manager ConfigMaps if available), named port resolution, label-based Service matching, fallback name-based matching for converter-created resources (e.g. Keycloak). No hard dependencies on other extensions — works standalone for HTTP scrape targets.
+Features: FQDN scrape targets on the K8s Service's own name (the one the network aliases carry), HTTPS scrape with the CA from `tlsConfig.ca.configMap` or `tlsConfig.ca.secret` written to disk and mounted (trust-manager bundles work), `insecureSkipVerify`, named port resolution, label-based Service matching scoped by `namespaceSelector` (absent → the ServiceMonitor's own namespace, as the operator does; `any: true` or `matchNames` to widen), `job_name` = `serviceMonitor/<namespace>/<name>/<endpoint>` like the operator's, fallback name-based matching for converter-created resources (e.g. Keycloak). No hard dependencies on other extensions — works standalone for HTTP scrape targets.
 
 ```bash
 python3 dekube-manager.py servicemonitor
@@ -169,13 +169,13 @@ Converters produce synthetic resources (Secrets, ConfigMaps, files on disk) with
 
 Very heretical — and paradoxically, the one with a strong case for existing. Try setting up a local CA chain, issuing certs with the right SANs for a dozen services, and mounting them where they need to go, all by hand in a compose file. cert-manager's declarative model actually makes *more* sense going through helmfile2compose than doing it manually. That's the uncomfortable part: the ICBM-to-kill-flies pipeline is, for once, genuinely simpler than the alternative.
 
-This extension generates real PEM certificates at conversion time — CA chains, SANs, ECDSA/RSA — and injects them as synthetic K8s Secrets into the conversion context. No ACME challenges. No renewal. No controller. Just cryptographic material, conjured from nothing, valid until it isn't.
+This extension generates real PEM certificates at conversion time — CA chains, SANs (`dnsNames`, `ipAddresses`, `uris`, `emailAddresses`), ECDSA/RSA — and injects them as synthetic K8s Secrets into the conversion context. `issuerRef` resolves like cert-manager: `kind` defaults to `Issuer`, an `Issuer` is looked up in the Certificate's own namespace, a `ClusterIssuer` cluster-wide — so an Issuer and a ClusterIssuer sharing a name no longer shadow each other. No ACME challenges. No renewal. No controller. Just cryptographic material, conjured from nothing, valid until it isn't.
 
 It also forges the fine print: KeyUsage (marked critical) and ExtendedKeyUsage from `spec.usages`, defaulting to `digital signature` + `key encipherment` when unset — cert-manager's own default, and notably *not* server auth, whatever the cert-manager docs page implies. CAs always get `cert sign` + `crl sign` on top; KeyUsage is never left empty; `key encipherment` is dropped for non-RSA keys, where it doesn't apply. The result passes strict chain verification (Python's default context on 3.13+, `openssl verify -x509_strict`), which the previous, looser certificates did not always survive. `duration` is parsed as a Go duration string (`87600h0m0s`, `1h30m`, `2160h`) — an invalid one falls back to 90 days. `duration: null`, `privateKey: {algorithm: null, size: null}`, and `isCA: null` are all tolerated.
 
 Since v0.5.0 the forgery is at least consistent: certificates already in `secrets/<secretName>/` are reused as long as they still match the spec (subject, SANs, isCA, usages, key type and size, duration, issuer) and aren't due for renewal (`renewBefore`, `renewBeforePercentage`, or cert-manager's default of two thirds of the lifetime). Before that, every run minted a new CA and new leaves. Renewal only happens when you re-run; delete `secrets/<secretName>/` to force rotation — the CA's directory rotates the whole chain.
 
-Then it starts merging certificates. Duplicate `secretName` entries across namespaces? Combined into a single cert with merged SANs. Rounds of issuance — self-signed CAs first, then CA-issued certs — because dependency order matters even in forgery. The kind of extension you can't predict, can't control, and can't entirely disapprove of — because the results speak for themselves, even if the methods are grounds for intervention.
+Then it starts merging certificates. Duplicate `secretName` entries across namespaces? Combined into a single cert with merged SANs (all four kinds; a SAN change forces reissue instead of reuse). Rounds of issuance — self-signed CAs first, then CA-issued certs — because dependency order matters even in forgery. The kind of extension you can't predict, can't control, and can't entirely disapprove of — because the results speak for themselves, even if the methods are grounds for intervention.
 
 ```bash
 python3 dekube-manager.py cert-manager
@@ -192,10 +192,10 @@ pip install cryptography  # required dependency
 | **Kinds** | `Bundle` |
 | **Dependencies** | `cert-manager` extension; optional `certifi` (falls back to system CA paths) |
 | **Priority** | 200 |
-| **Produces** | synthetic ConfigMaps (CA bundles) |
+| **Produces** | synthetic ConfigMaps and/or Secrets (CA bundles) |
 | **Status** | stable |
 
-The accomplice. Assembles CA trust bundles from cert-manager Secrets, ConfigMaps, inline PEM, and system default CAs. Injects the result as a synthetic ConfigMap. Pods that mount the trust bundle ConfigMap get the assembled CA chain automatically — believing they live in a cluster where a trust-manager controller reconciled this for them.
+The accomplice. Assembles CA trust bundles from cert-manager Secrets, ConfigMaps, inline PEM, and system default CAs. Injects the result as a synthetic ConfigMap (`spec.target.configMap`), a synthetic Secret (`spec.target.secret`), or both. Pods that mount the trust bundle ConfigMap get the assembled CA chain automatically — believing they live in a cluster where a trust-manager controller reconciled this for them.
 
 Depends on the cert-manager extension (needs its generated secrets). When installed via dekube-manager, cert-manager is auto-resolved as a dependency.
 
@@ -220,7 +220,7 @@ Transforms are extensions that modify the final compose output *after* converter
 
 The only extension with a heresy score of NaN/10. It destroys the K8s naming temple — but in doing so, it reduces the overall desecration. Whether this makes it a sin or a penance is left as an exercise for the theologian.
 
-Strips Docker Compose network aliases and rewrites K8s FQDNs (`svc.ns.svc.cluster.local`) to short compose service names. Rewrites env vars, configmap files on disk, and Caddy upstreams. v2.1 spent considerable effort building the alias system so that K8s names would carry into compose; this transform rips it all out. On purpose.
+Strips Docker Compose network aliases and rewrites K8s FQDNs (`svc.ns.svc.cluster.local`) to short compose service names. Rewrites env vars, command/args, configmap files on disk, and Caddy upstreams. A Service name is only rewritten where it's unambiguously a host: a URL host (after `://` or `@`; in env and ConfigMap text, after any `/` as before) or `name:<port>` with a numeric port. A bare word (`CACHE_DRIVER=redis`, a YAML key `redis:`) is never touched — the alias it would need is kept instead of stripped, so it still resolves. Command/args get no path-segment rewrite (`/usr/local/bin/api` stays). v2.1 spent considerable effort building the alias system so that K8s names would carry into compose; this transform rips it all out. On purpose.
 
 Built to restore **nerdctl compose** compatibility — nerdctl silently ignores network aliases, so FQDNs never resolve. But nerdctl isn't the only reason to use it. The transform also produces **cleaner compose output** — no 4-line alias blocks on every service, no `keycloak.auth.svc.cluster.local` in environment variables when `keycloak` would do. If you don't need FQDN preservation (no inter-service TLS, no cert SANs to match), flattening makes the generated files easier to read, debug, and diff.
 
@@ -260,7 +260,7 @@ Uses `ctx.compose_extras` to declare the top-level `volumes:` block. Runs at pri
 
 The janitor. Bitnami charts — Redis, PostgreSQL, Keycloak — wrap standard images in custom entrypoints, init containers, and volume conventions that assume a full Kubernetes environment. In compose, the entrypoints fail, the volumes don't line up, and the init containers crash on missing emptyDirs. The workarounds are well-documented in [common charts](https://helmfile2compose.dekube.io/docs/known-workarounds/common-charts/) — this transform applies them automatically so you don't have to copy-paste overrides across projects.
 
-Detects Bitnami images by name, then: replaces Redis entirely with stock `redis:7-alpine`, fixes PostgreSQL volume paths, injects Keycloak passwords as env vars and removes the failing init container. Every modification is logged to stderr. User `overrides:` take precedence — if you've already handled a service manually, the transform leaves it alone.
+Detects Bitnami images by exact repository name (`bitnami/redis`, any registry, tag or digest — so `bitnami/redis-exporter` and `redis-sentinel` sidecars are left alone), then: replaces Redis entirely with stock `redis:7-alpine`, fixes PostgreSQL volume paths, injects Keycloak passwords as env vars and removes the failing init container. Every modification is logged to stderr. User `overrides:` take precedence — if you've already handled a service manually, the transform leaves it alone.
 
 ```bash
 python3 dekube-manager.py bitnami
@@ -273,19 +273,19 @@ python3 dekube-manager.py bitnami
 
 Ingress rewriters translate controller-specific annotations into ingress entries consumed by the ingress provider. Unlike converters, they don't claim K8s kinds — they intercept individual Ingress manifests based on `ingressClassName` or annotation prefix, read whatever vendor-specific incantations the chart author scattered across the annotations, and produce routing rules that the provider assembles. The annotations were never meant to be portable. That's the point.
 
-The built-in `HAProxyRewriter` handles `haproxy` and empty/absent ingress classes. If your cluster uses something else — and statistically, it does, because nobody agrees on ingress controllers — you need a rewriter for it. External rewriters with the same `name` replace the built-in one. Remember to map them in `dekube.yaml`.
+The built-in `HAProxyRewriter` handles `haproxy` and empty/absent ingress classes, as the fallback: at priority 1100 it runs after nginx and traefik (1000), so a classless Ingress carrying their annotations goes to them when they're loaded. An explicit known class always wins — `ingressClassName: haproxy` stays with HAProxy whatever stray nginx annotations it carries; an unmapped custom class falls back to the annotation scan. If your cluster uses something else — and statistically, it does, because nobody agrees on ingress controllers — you need a rewriter for it. External rewriters with the same `name` replace the built-in one. Remember to map them in `dekube.yaml`.
 
 ### nginx
 
 | | |
 |---|---|
 | **Repo** | [dekube-rewriter-nginx](https://github.com/dekubeio/dekube-rewriter-nginx) |
-| **Matches** | `nginx` ingressClassName |
+| **Matches** | `nginx` ingressClassName; `nginx.ingress.kubernetes.io/*` annotations unless the class is `haproxy`/`traefik` |
 | **Status** | stable |
 
 It just translates. Not its fault the controller it serves gets deprecated while the project still can't agree on whether it's called `ingress-nginx`, `nginx-ingress`, or `kubernetes-ingress`. The annotations are a mess. The rewriter faithfully reproduces the mess. Shoot the messenger if you want, but maybe update your ingress controller first.
 
-Handles `rewrite-target`, `backend-protocol`, CORS, `proxy-body-size`, `configuration-snippet`. If your helmfile uses nginx annotations, install this or watch your Caddy routes silently ignore everything that made your app work.
+Handles `rewrite-target`, `backend-protocol`, CORS, `proxy-body-size`, `configuration-snippet`. `rewrite-target` is emulated when it's a plain prefix strip, capture groups included (`/api(/|$)(.*)` + `/$2`, `/api/(.*)` + `/$1`); any other target warns and passes through unrewritten. Access control (`auth-url`, `auth-type`, `whitelist-source-range`, `denylist-source-range`) isn't emulated and warns loudly: those routes are open in compose. If your helmfile uses nginx annotations, install this or watch your Caddy routes silently ignore everything that made your app work.
 
 ```bash
 python3 dekube-manager.py nginx
@@ -298,10 +298,10 @@ python3 dekube-manager.py nginx
 | | |
 |---|---|
 | **Repo** | [dekube-rewriter-traefik](https://github.com/dekubeio/dekube-rewriter-traefik) |
-| **Matches** | `traefik` ingressClassName |
+| **Matches** | `traefik` ingressClassName; `traefik.ingress.kubernetes.io/*` annotations unless the class is `haproxy`/`nginx` |
 | **Status** | POC |
 
-A translator that knows it doesn't speak the full language, and chooses silence over hallucination. Traefik CRDs (`IngressRoute`, `Middleware`, etc.) are not supported — only standard `Ingress` resources with Traefik annotations. If your helmfile uses Traefik CRDs extensively, this won't save you. If it uses standard Ingress with a few Traefik-flavored annotations, it might. Handles `router.tls` and standard path rules. Everything else passes through unremarked, unrewritten, unrepentant.
+A translator that knows it doesn't speak the full language, and chooses silence over hallucination. Traefik CRDs (`IngressRoute`, `Middleware`, etc.) are not converted — only standard `Ingress` resources with Traefik annotations. If your helmfile uses Traefik CRDs extensively, this won't save you. If it uses standard Ingress with a few Traefik-flavored annotations, it might. The backend scheme comes from the Service, as Traefik decides it (`service.serversscheme` annotation, else port 443 or a port named `https*`) — `router.tls` is router-side TLS, which Caddy does anyway. `router.middlewares` strips a prefix only for references to a StripPrefix `Middleware` found in the manifests; every other middleware warns, loudly for auth ones (`basicAuth`, `forwardAuth`, `ipAllowList`…), whose routes end up open. Everything else passes through unremarked, unrewritten, unrepentant.
 
 Untested. Known gaps above. Use HAProxy for anything that matters.
 
@@ -314,7 +314,7 @@ python3 dekube-manager.py traefik
 Extensions that live outside the dekubeio org. They follow the same contracts and install the same way — but the org takes no credit, no blame, and no responsibility.
 
 ### fake-apiserver
-A transform that breaches [the wall](understand/concepts.md#the-emulation-boundary). For applications that require a live kube-apiserver at runtime — leader election, service discovery via API, in-cluster auth — this extension provides one. What it does, how it does it, and why you should not use it are documented in the [repo itself](https://github.com/baptisterajaut/dekube-fakeapi). No further instructions will be given here. The catalogue acknowledges its existence; it does not condone it.
+A transform that breaches [the wall](understand/concepts.md#the-emulation-boundary). For applications that require a live kube-apiserver at runtime — leader election, service discovery via API, in-cluster auth — this extension provides one. What it does, how it does it, and why you should not use it are documented in the [repo itself](https://github.com/baptisterajaut/dekube-fakeapi). It does at least lock the door: every request needs the generated service-account token, an exposed host port binds to `127.0.0.1` unless told otherwise, the server script is pinned to a commit and hash-checked, and its TLS key is mounted only into the fake apiserver. Stacks generated before that keep running with a warning until you reconvert and hand out the new kubeconfig. No further instructions will be given here. The catalogue acknowledges its existence; it does not condone it.
 
 ## Something not working?
 
