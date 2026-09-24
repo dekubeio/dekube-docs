@@ -177,8 +177,8 @@ Helm charts with conditional `{{ if }}` blocks render absent fields as explicit 
 # WRONG — returns None when key exists with null value
 annotations = manifest.get("metadata", {}).get("annotations", {})
 
-# RIGHT — coalesces None to empty dict
-annotations = manifest.get("metadata", {}).get("annotations") or {}
+# RIGHT — coalesces None to empty dict at every step
+annotations = (manifest.get("metadata") or {}).get("annotations") or {}
 ```
 
 Every field that Helm may render as `null` is a trap: `annotations`, `ports`, `initContainers`, `securityContext`, `data`, `stringData`, `rules`, `selector`. Use `or {}` / `or []` on all of them. v2.3.1 fixed 30+ instances across dekube-engine, nginx, and traefik. v1.3.3 found four more that had survived. The null finds passages we didn't know existed.

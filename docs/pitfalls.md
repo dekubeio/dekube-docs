@@ -14,8 +14,8 @@ Python's `dict.get("key", default)` returns `default` only when the key is **abs
 # WRONG — returns None when key exists with null value
 annotations = manifest.get("metadata", {}).get("annotations", {})
 
-# RIGHT — coalesces None to empty dict
-annotations = manifest.get("metadata", {}).get("annotations") or {}
+# RIGHT — coalesces None to empty dict at every step
+annotations = (manifest.get("metadata") or {}).get("annotations") or {}
 ```
 
 This applies to any field that Helm may render as `null`: `annotations`, `ports`, `initContainers`, `securityContext`, `data`, `stringData`, `rules`, `selector`. Use `or {}` / `or []` for any `.get()` on a YAML field that could be explicitly null.
