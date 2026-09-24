@@ -102,7 +102,7 @@ nerdctl compose ignores `healthcheck` entirely. Docker Compose uses it with `dep
 
 ### Hostname length
 
-Linux hostnames are limited to 63 characters. Compose uses the service name as the container hostname. Services with names longer than 63 characters automatically get a truncated `hostname:` to avoid `sethostname: invalid argument` failures.
+Linux hostnames are limited to 63 characters. Compose uses the service name as the container hostname. Services with names longer than 63 characters automatically get a truncated `hostname:` to avoid `sethostname: invalid argument` failures. Sidecars are the exception: they join the main container's network namespace (`network_mode: container:`), share its hostname, and Docker refuses a `hostname:` on them (`conflicting options: hostname and the network mode`), so they get none.
 
 ## What is ignored
 

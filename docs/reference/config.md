@@ -206,6 +206,7 @@ Changes you can see after regenerating with a newer engine than v1.7.0 (helmfile
 - **HAProxy is the ingress fallback** (haproxy rewriter after v0.1.3, priority 1100). With nginx or traefik loaded (kubernetes2simple, or `--extensions-dir`), a classless Ingress carrying their annotations now goes to them instead of getting plain HAProxy routing. `enabled: false` now disables rewriters too.
 - **servicemonitor** (after v0.3.5): without `namespaceSelector`, only Services in the ServiceMonitor's own namespace match, as with the operator. Cross-namespace setups need `namespaceSelector`. Targets use the K8s Service name, and every `job_name` becomes `serviceMonitor/<ns>/<name>/<i>` as with the operator — the `job` label your dashboards and alerts query changes with it.
 - **fake-apiserver** (after v0.666.2) requires the service-account token and binds its exposed port to `127.0.0.1`. Reconvert, then hand out the new kubeconfig.
+- **flatten-internal-urls: path segments stay put.** A Service name is rewritten only after `//` or `@` (a URL host), no longer after any `/` — `http://gw/api/v1` keeps its `/api/` segment even when `api` is a Service. The network alias that segment matches is now kept instead of stripped.
 - **Distribution builders**: `build-distribution.py` fails when two sources define a top-level name differently ([details](../understand/build-system.md#top-level-collisions)).
 
 ## Legacy key migration
