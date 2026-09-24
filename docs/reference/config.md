@@ -190,6 +190,21 @@ Every `environment` value the engine or an extension generates has its `$` doubl
 !!! note "Upgrading"
     If you were pre-escaping `$$` by hand in chart values or `replacements:` to work around the old behavior, you'll now get `$$$$` — remove the manual escaping. A `${VAR}` you meant for compose interpolation but that arrives through chart values or `replacements:` is now taken literally — move it into `overrides:` instead, where it's left raw.
 
+## Upgrading from engine ≤ v1.7.0 {#upgrading-from-engine-v170}
+
+Changes you can see after regenerating with a newer engine than v1.7.0 (helmfile2compose v3.4.0, kubernetes2simple v1.2.0):
+
+- **Mounts with `items`** get their own `configmaps/<name>_<hash>/` (or `secrets/…`) directory, so their paths in `compose.yml` change. Update anything pointing at the old `configmaps/<name>/`. Mounts without `items` keep `<name>/`.
+- **`env` wins over `envFrom`**, as in Kubernetes (and the last `envFrom` source wins). A variable defined in both used to take the `envFrom` value.
+- **`$` in command/args**: every `$` is now escaped for compose, so `${X}` and `$$` reach the container's shell as written, and `$$(VAR)` is a literal `$(VAR)`. A `${VAR}` meant for compose interpolation in a container command must move to `overrides:`. Literal env values now get `$(VAR)` expansion, and `$$` in them becomes `$`, as with kubelet.
+- **An extension that fails to load stops the run** (exit 1). It used to print a warning and convert without it — e.g. cert-manager with `cryptography` missing.
+- **PVC `subPath` is honoured**: the mount moves to `<host_path>/<subPath>`. If the volume root already holds data and the subdirectory doesn't exist, the whole volume stays mounted with a warning until you move the data.
+- **Secret files hold decoded bytes**: binary keys (keystores) used to be written as base64 text. A binary value referenced as an env var is skipped with a warning instead of passing base64.
+- **HAProxy is the ingress fallback** (haproxy rewriter after v0.1.3, priority 1100). With nginx or traefik loaded (kubernetes2simple, or `--extensions-dir`), a classless Ingress carrying their annotations now goes to them instead of getting plain HAProxy routing. `enabled: false` now disables rewriters too.
+- **servicemonitor** (after v0.3.5): without `namespaceSelector`, only Services in the ServiceMonitor's own namespace match, as with the operator. Cross-namespace setups need `namespaceSelector`. Targets use the K8s Service name, and `job_name` becomes `serviceMonitor/<ns>/<name>/<i>`.
+- **fake-apiserver** (after v0.666.2) requires the service-account token and binds its exposed port to `127.0.0.1`. Reconvert, then hand out the new kubeconfig.
+- **Distribution builders**: `build-distribution.py` fails when two sources define a top-level name differently ([details](../understand/build-system.md#top-level-collisions)).
+
 ## Legacy key migration
 
 On load, the engine auto-migrates legacy keys to their modern equivalents:
