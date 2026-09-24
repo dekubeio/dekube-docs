@@ -123,7 +123,7 @@ extensions:
 | `volume_root` | `str` | `./data` | Root directory for PVC bind mount paths. |
 | `volumes` | `dict` | `{}` | PVC claim name → `{host_path: "..."}` mapping. Auto-populated on first run. `volumeClaimTemplate` claims are keyed `<vct>-<sts>`. Named volumes (no `host_path`) are added to compose `volumes:` top-level. |
 | `exclude` | `list[str]` | `[]` | Workload names to skip. Supports `fnmatch` wildcards. |
-| `replacements` | `list[dict]` | `[]` | String replacements: `[{old: "...", new: "..."}]`. Applied to env vars, ConfigMap files, and reverse proxy upstreams. |
+| `replacements` | `list[dict]` | `[]` | String replacements: `[{old: "...", new: "..."}]`. Applied once to env vars, ConfigMap files, text Secret files, and reverse proxy upstreams. An entry with an empty or null `old` is skipped; a null `new` means `""`. |
 | `disable_ingress` | `bool` | `false` | Skip the reverse proxy compose service. Ingress manifests are still dispatched to rewriters and the config file (e.g. Caddyfile) is still written, renamed to `Caddyfile-<project>` so it isn't picked up by accident. |
 | `infer_namespaces` | `bool` | `true` | Infer missing `metadata.namespace` from sibling manifests and helmfile metadata. Set to `false` if your charts already set namespaces on all resources. See [namespace inference](../understand/engine.md#namespace-inference). |
 | `ingress_types` | `dict[str, str]` | *(none)* | Custom `ingressClassName` → canonical rewriter name mapping. |
@@ -160,7 +160,7 @@ The `enabled` key is checked by the engine before each `convert()` / `transform(
 
 Two placeholder patterns are resolved in config values:
 
-- **`$volume_root`** — replaced with the value of `volume_root`. Useful in `volumes:` entries:
+- **`$volume_root`** — replaced with the value of `volume_root`. In `volumes:` entries it must lead the `host_path` (`$volume_root` or `$volume_root/…`); in `overrides:` and `services:` it's replaced anywhere:
 
     ```yaml
     volume_root: ./data
@@ -169,7 +169,7 @@ Two placeholder patterns are resolved in config values:
         host_path: $volume_root/my-pvc   # → ./data/my-pvc
     ```
 
-- **`$secret:<secret_name>:<key>`** — resolved to the value of a K8s Secret key. Useful in `replacements:` when you need to inject a Secret value into a string:
+- **`$secret:<secret_name>:<key>`** — resolved to the value of a K8s Secret key, in `overrides:`, `services:` and `replacements:`. The key ends at the first character a Secret key can't contain (anything outside `[-._a-zA-Z0-9]`), so `postgres://app:$secret:db:password@db:5432/app` keeps its `@db`. In `replacements:` the refs are resolved once the Secrets are indexed (generated ones included), right before the first provider runs; the resolved value is never written back to `dekube.yaml`:
 
     ```yaml
     replacements:

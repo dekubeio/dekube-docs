@@ -63,7 +63,7 @@ ctx.secrets["my-tls-secret"] = {
 write_secret_files("my-tls-secret", ctx)
 ```
 
-Use `stringData` (not `data`) to avoid double-encoding — the main pipeline handles base64 decoding for `data` entries, but synthetic secrets should use plain text. `write_secret_files` handles both (plus `binaryData`) and warns rather than crashing on a path-traversal key. Don't hand-roll `os.makedirs` + `open` + `ctx.generated_secrets.add` — that's what the helper is for.
+Use `stringData` (not `data`) to avoid double-encoding — the main pipeline handles base64 decoding for `data` entries, but synthetic secrets should use plain text. `write_secret_files` handles both — `data` is written as decoded bytes, so a binary value (keystore, DER cert) lands intact — and warns rather than crashing on a path-traversal key. Don't hand-roll `os.makedirs` + `open` + `ctx.generated_secrets.add` — that's what the helper is for.
 
 ### ConfigMaps
 

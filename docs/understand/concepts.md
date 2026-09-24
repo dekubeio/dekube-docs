@@ -88,7 +88,7 @@ There is, however, a way back. The [`flatten-internal-urls`](../catalogue.md#fla
 
 ## No validation by design
 
-dekube does not validate its input. If a manifest references a ConfigMap that doesn't exist, a Secret with a missing key, or a Service pointing at a non-existent Deployment — the engine crashes with a Python traceback and that's the correct behavior.
+dekube does not validate its input. If a manifest references a ConfigMap that doesn't exist, a Secret with a missing key, or a Service pointing at a non-existent Deployment, the engine drops what it can't resolve (usually with a warning) and carries on — it doesn't tell you why your chart is wrong. Input malformed enough to break its assumptions crashes with a Python traceback, and that's the correct behavior.
 
 Nothing *prevents* dekube from being a linter. Scope creep is fine — but it has to be at least interesting. Integrating 300 pages of Kubernetes API spec to tell someone their manifest is malformed is not. That's what `helmfile lint`, `helm template --validate`, and `kubectl apply --dry-run` already do, and they do it authoritatively because they *are* the spec. dekube is a downstream consumer. Feed it valid manifests and it converts them. Feed it garbage and it crashes. Actions, consequences.
 

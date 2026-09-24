@@ -68,9 +68,9 @@ The shared mutable state that every converter reads from — and writes to. This
 | `ctx.config` | `dict` | The `dekube.yaml` config |
 | `ctx.output_dir` | `str` | Output directory for generated files |
 | `ctx.warnings` | `list[str]` | Append warnings here (printed to stderr) |
-| `ctx.generated_cms` | `set[str]` | Names of ConfigMaps already written to disk |
-| `ctx.generated_secrets` | `set[str]` | Names of Secrets already written to disk |
-| `ctx.replacements` | `list[dict]` | User-defined string replacements |
+| `ctx.generated_cms` | `set[str]` | ConfigMap directories already written to disk (`<name>`, or `<name>_<hash>` for an `items` mount) |
+| `ctx.generated_secrets` | `set[str]` | Secret directories already written to disk (same naming) |
+| `ctx.replacements` | `list[dict]` | User-defined string replacements. `$secret:` refs in them are resolved right before the first `Provider` runs — indexers and converters see them raw. |
 | `ctx.alias_map` | `dict` | Service alias map (K8s Service name -> workload name) |
 | `ctx.service_port_map` | `dict` | Service port map ((svc_name, port) -> container_port) |
 | `ctx.fix_permissions` | `dict[str, int]` | Legacy field (kept for backwards compatibility). Previously used to track PVC claim → UID mappings for permission fixing. The built-in [fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) transform now handles this by scanning K8s manifests and final compose volumes directly. |
@@ -78,7 +78,7 @@ The shared mutable state that every converter reads from — and writes to. This
 | `ctx.pvc_names` | `set[str]` | Names of PersistentVolumeClaims discovered in manifests. Used to distinguish PVC mounts from other volume types during conversion. |
 | `ctx.manifests` | `dict[str, list]` | All parsed K8s manifests, keyed by kind (e.g. `{"Deployment": [...], "Service": [...]}`). Read-only — useful for transforms or converters that need to inspect manifests outside their own `kinds`. |
 | `ctx.first_run` | `bool` | `True` if `dekube.yaml` didn't exist before this run. Used to gate auto-population of volumes and excludes. |
-| `ctx.extension_config` | `dict` | Per-converter config section from `dekube.yaml`. Set automatically before each `convert()` call, keyed by the converter's `name` attribute. Empty dict if not configured. Configured in `dekube.yaml` under `extensions.<name>`: |
+| `ctx.extension_config` | `dict` | The extension's own config section from `dekube.yaml`, keyed by its `name` attribute. Set automatically before each `convert()`, `transform()`, and rewriter `match()`/`rewrite()` call. Empty dict if not configured (or `null`). Configured in `dekube.yaml` under `extensions.<name>`: |
 
 ```yaml
 # dekube.yaml

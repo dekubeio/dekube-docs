@@ -54,6 +54,16 @@ Kubernetes PVCs request dynamic storage from a provisioner (Longhorn, Ceph, etc.
 
 StatefulSet `volumeClaimTemplate` PVCs are registered under the key `<vct>-<sts>` — the same naming Kubernetes itself uses, minus the ordinal (compose runs one replica). An existing `dekube.yaml` with the older bare `<vct>` key still works: the engine falls back to it and warns that it should be renamed. If several StatefulSets fall back to the same legacy key, a collision warning flags that they share one data directory.
 
+A `volumeMount.subPath` on a bind-mounted PVC mounts `<host_path>/<subPath>` (compose creates the directory). Releases before subPath support mounted the whole volume, so if the volume root already holds data and the subPath directory doesn't exist yet, the engine keeps mounting the whole volume and warns `data found at <host_path> but subPath '<sub>' is not there` — move the data into the subdirectory to switch. The same fallback applies, with its own warning, when the root can't be read (a `0700` data dir owned by the container's UID). `subPath` on a named volume and `subPathExpr` are not supported: the volume root is mounted, with a warning.
+
+### Volume types
+
+PVC, ConfigMap, Secret and emptyDir volumes are converted. Everything else — `hostPath`, `projected`, `downwardAPI`, `csi`, … — is dropped with one warning per workload and volume (`volume '<name>' on <workload> has unsupported type 'hostPath' — mount skipped`), as is a `volumeMount` naming a volume the pod doesn't declare. Map them by hand with `overrides:`.
+
+### ConfigMap and Secret file modes
+
+Generated files get `items[].mode`, else `defaultMode`, else `0644` — so exec bits (`defaultMode: 0755` scripts) are honoured. Owner read-write and group/other read are always added: the files are bind-mounted owned by your host user rather than by root or `fsGroup`, so an exact `0400` would be unreadable to a container running as any other UID, and the next run (or flatten-internal-urls) rewrites them in place. Mounts are `:ro` anyway. A ConfigMap or Secret mounted without `items` shares one directory across all its mounts, so the first mount's modes win (with a warning if a later one wants exec bits).
+
 ### Secrets
 
 Kubernetes Secrets exist because serious people built a serious system for serious production workloads. RBAC-gated access. Base64 encoding (yes, it's encoding, not encryption — but at least it's *something*). Encryption at rest in etcd. Audit logs. Pod-level access control. A whole security model designed by people who think about threat vectors for a living.
@@ -72,19 +82,19 @@ The [cert-manager extension](catalogue.md#cert-manager) can generate real certif
 
 Bitnami images (PostgreSQL, Redis, MongoDB) run as non-root (UID 1001) and expect Unix permissions on their data directories. The host directory is typically owned by your user (UID 1000), so the container can't write to it. This causes `mkdir: cannot create directory: Permission denied`.
 
-This is handled automatically: the [fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) transform (bundled in helmfile2compose) detects non-root containers (`securityContext.runAsUser`) with bind-mounted volumes and generates a `fix-permissions` service that runs `chown -R <uid>` as root on first startup. No manual intervention needed in most cases.
+This is handled automatically: the [fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions) transform (bundled in helmfile2compose) detects non-root containers (`securityContext.runAsUser`) and pod-level `fsGroup` on bind-mounted or named volumes, and generates a `fix-permissions` service that runs as root before them: `chown -R <uid>[:<fsGroup>]` (or `chgrp -R <fsGroup>` when only `fsGroup` is set), plus group-write and setgid on directories whenever `fsGroup` applies — Kubernetes's own fsGroup walk. Each fixed service gets `depends_on: {fix-permissions: {condition: service_completed_successfully}}` and `group_add: [<fsGroup>]`. A path that fails to fix logs a warning without blocking the others. No manual intervention needed in most cases.
 
-**Caveat: image swaps.** fix-permissions reads the UID from the Kubernetes manifest. If another transform changes the image (e.g. bitnami replaces `bitnami/redis` with `redis:7-alpine`), the manifest UID is no longer reliable — fix-permissions detects the mismatch and skips the service with a warning. To restore the chown, set `user:` on the compose service (via `overrides:` in `dekube.yaml` or in the transform itself). fix-permissions will use the explicit `user:` value over the manifest UID.
+**Caveat: image swaps.** fix-permissions reads the UID and `fsGroup` from the Kubernetes manifest. If another transform changes the image (e.g. bitnami replaces `bitnami/redis` with `redis:7-alpine`), both are no longer reliable — fix-permissions detects the mismatch and skips the service with a warning. To restore the chown, set `user:` on the compose service (via `overrides:` in `dekube.yaml` or in the transform itself). fix-permissions will use the explicit `user:` value over the manifest UID.
 
 ### Resource limits
 
-CPU/memory **limits** are translated to `deploy.resources.limits` (`memory` and `cpus`). **Requests** are ignored — compose has no concept of guaranteed vs burstable QoS classes; only hard limits exist.
+CPU/memory **limits** are translated to `deploy.resources.limits` (`memory` and `cpus`); a limit rendered as `null` is dropped. **Requests** are ignored — compose has no concept of guaranteed vs burstable QoS classes; only hard limits exist.
 
 nerdctl compose ignores `deploy.resources` entirely. Docker Compose enforces them.
 
 ### Probes and healthchecks
 
-Readiness and liveness probes are converted to compose `healthcheck` (readiness preferred, fallback to liveness). Supported probe types: `exec` (→ `CMD`), `httpGet` (→ `wget`), `tcpSocket` (→ `/dev/tcp`). Timing fields (`periodSeconds`, `timeoutSeconds`, `failureThreshold`, `initialDelaySeconds`) are mapped to their compose equivalents.
+Readiness and liveness probes are converted to compose `healthcheck` (readiness preferred, fallback to liveness). Supported probe types: `exec` (→ `CMD`), `httpGet` (→ `wget`), `tcpSocket` (→ `nc -z 127.0.0.1 <port>`, falling back to bash's `/dev/tcp` — plain `sh` has no `/dev/tcp`). The generated checks need those tools in the image: a distroless image has neither `nc` nor `bash`, so its tcpSocket healthcheck always fails, and an image without `wget` (debian-slim) fails its httpGet one — override the `healthcheck:` there. Timing fields (`periodSeconds`, `timeoutSeconds`, `failureThreshold`, `initialDelaySeconds`) are mapped to their compose equivalents.
 
 Startup probes are not converted — compose has no equivalent concept (startup probes gate liveness checks, not readiness).
 
