@@ -208,6 +208,7 @@ Changes you can see after regenerating with a newer engine than v1.7.0 (helmfile
 - **fake-apiserver** (after v0.666.2) requires the service-account token and binds its exposed port to `127.0.0.1`. Reconvert, then hand out the new kubeconfig.
 - **flatten-internal-urls: path segments stay put.** A Service name is rewritten only after `//` or `@` (a URL host), no longer after any `/` — `http://gw/api/v1` keeps its `/api/` segment even when `api` is a Service. The network alias that segment matches is now kept instead of stripped.
 - **nginx and traefik rewriters** (after v0.4.3 and v0.3.3): `spec.defaultBackend` and rules without a host are still skipped, now with a warning (same as HAProxy). nginx `use-regex` paths without `rewrite-target` become real prefix matches (`/api(/|$)(.*)` → `/api`) instead of a literal glob that never matched; a regex that isn't a plain prefix wildcard falls back to its literal prefix with a warning — broader than the regex, so extra paths reach the backend. `auth-tls-secret` (client-cert mTLS) now joins the access-control warning.
+- **httpGet healthchecks** (simple-workload after v0.4.0) try `wget`, then `curl`, then bash's `/dev/tcp`, pass `httpHeaders`, and target `127.0.0.1` instead of `localhost`. An image without wget (debian-slim) now passes its check; a `healthcheck:` override you added for that reason can go.
 - **Distribution builders**: `build-distribution.py` fails when two sources define a top-level name differently ([details](../understand/build-system.md#top-level-collisions)).
 
 ## Legacy key migration
