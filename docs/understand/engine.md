@@ -71,7 +71,7 @@ from dekube.pacts import ConvertContext, IngressRewriter
 from dekube.pacts.types import Provider
 ```
 
-Both paths work — `__init__.py` re-exports the pacts API. These are the only imports extensions should use. If it's not in `pacts/`, it's internal and may change.
+Both paths work — `__init__.py` re-exports the pacts API, and distributions alias `dekube.pacts` and `dekube.pacts.{types,helpers,ingress}` to their single flat module, so the `from dekube.pacts[.x] import …` form works there too. These are the only imports extensions should use. If it's not in `pacts/`, it's internal and may change.
 
 ### `core/` — the conversion engine
 

@@ -71,17 +71,26 @@ The `convert()` method on `IngressProvider` is already implemented — you don't
 
 ```python
 def convert(self, _kind, manifests, ctx):
+    own_config = ctx.extension_config
+    extensions_config = ctx.config.get("extensions") or {}
+    rewriters = []
+    for rw in _REWRITERS:
+        rw_conf = extensions_config.get(rw.name) or {}
+        if not rw_conf.get("enabled", True):
+            continue  # "Rewriter disabled: <name>"
+        rewriters.append((rw, rw_conf))
     entries = []
     for m in manifests:
-        rewriter = self._find_rewriter(m, ctx)
+        rewriter = self._find_rewriter(m, ctx, rewriters)  # sets ctx.extension_config per rewriter
         entries.extend(rewriter.rewrite(m, ctx))
+    ctx.extension_config = own_config  # back to the provider's own, for build_service
     services = {}
     if entries and not ctx.config.get("disable_ingress"):
         services = self.build_service(entries, ctx)
     return ProviderResult(services=services, ingress_entries=entries)
 ```
 
-Each Ingress manifest is matched against loaded `IngressRewriter` classes. The rewriter translates controller-specific annotations into a list of entry dicts (see [Writing rewriters](writing-rewriters.md) for the entry format). Your provider then consumes those entries to build the service and config.
+Each Ingress manifest is matched against the enabled `IngressRewriter` classes, in priority order, each with its own `extensions.<name>` block as `ctx.extension_config`. Your `build_service()` gets the provider's own block back. The rewriter translates controller-specific annotations into a list of entry dicts (see [Writing rewriters](writing-rewriters.md) for the entry format). Your provider then consumes those entries to build the service and config.
 
 ## Entry format
 

@@ -60,14 +60,14 @@ Both scripts follow the same core pattern:
 
 ### Extension discovery
 
-Extensions are discovered from `--extensions-dir`: all `.py` files except `__init__.py` and hidden/underscore-prefixed files. Each is processed the same way as core modules (strip internal imports, collect stdlib imports, extract body).
+Extensions are discovered from `--extensions-dir`: all `.py` files except `__init__.py` and hidden/underscore-prefixed files. Each is processed the same way as core modules (strip internal imports, collect stdlib imports, extract body). Before anything is written, the [collision check](#top-level-collisions) runs over the engine modules and every extension.
 
 ### Post-concatenation steps
 
 After all code (core + extensions), three incantations are appended. They must appear in this exact order, or the scroll is inert:
 
 1. **`_auto_register()` call** — appended to populate converter/rewriter/transform registries from all classes in globals
-2. **`sys.modules` hack** — registers the flat file as the `dekube` module so runtime-loaded extensions can `from dekube import ...`
+2. **`sys.modules` hack** — registers the flat file as the `dekube` module (and as `dekube.pacts`, `dekube.pacts.types`, `.helpers`, `.ingress`) so runtime-loaded extensions can `from dekube import ...` or `from dekube.pacts import ...`
 3. **`__main__` guard** — `if __name__ == "__main__": main()`
 
 ## The `sys.modules` fix
@@ -111,7 +111,18 @@ Error: kind 'Ingress' claimed by both CaddyProvider and MyIngressProvider
 
 ...one of them needs to go. A distribution can only have one handler per kind.
 
-### 5. Third-party import grouping is aesthetic
+### 5. Top-level name collisions fail the build {#top-level-collisions}
+
+Every source's top-level `def`, `class` and assignment names are fingerprinted (`ast.dump`). A name bound differently by two sources — two extensions, or an extension and an engine module (`def log()`, `def main()`) — fails the build, because in the flat file the last one silently replaces the others:
+
+```
+Top-level name collision detected (differing definitions):
+  log defined by: engine:pacts/helpers.py, ext:my_extension
+```
+
+Identical definitions are allowed. `--my-extensions-are-fine-i-swear` downgrades the failure to a warning. With `--core-dir`, each engine module is its own source; in CI and stacking modes the pre-built base counts as one source (its internals were checked when it was built). Names bound by imports or inside top-level `if`/`try` blocks are not checked.
+
+### 6. Third-party import grouping is aesthetic
 
 The import sorter checks `module == "yaml"` to separate third-party imports from stdlib with a blank line (PEP 8 style). This is purely cosmetic — it affects formatting of the generated file, not execution. If an extension adds a new third-party dependency (e.g. `cryptography` via cert-manager), its imports land in the stdlib block. The output is ugly but works fine.
 

@@ -21,7 +21,7 @@ Transforms use duck typing — no base class. The extension loader detects a tra
 | `transform(self, compose_services, ingress_entries, ctx)` | **yes** | Called once after all converters. Mutates in place, no return value. |
 | `kinds` | **must be absent** | Presence of `kinds` makes the loader treat the class as a converter. |
 | `priority` | optional | `int`, default 1000. Lower = earlier. |
-| `name` | optional | `str`. Used to match `extensions.<name>.enabled: false` in `dekube.yaml`. |
+| `name` | optional | `str`. Selects the `extensions.<name>` block of `dekube.yaml`: passed as `ctx.extension_config`, and `enabled: false` skips the transform. An external transform with the same `name` as a built-in one replaces it (`Transform overrides built-in: <name>`); nameless transforms are never deduplicated. |
 
 ```python
 class MyTransform:

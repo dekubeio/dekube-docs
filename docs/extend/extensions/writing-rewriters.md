@@ -19,7 +19,7 @@ A rewriter class must have:
 1. **`name`** — a string identifying the rewriter (e.g. `"haproxy"`, `"nginx"`). Used for override matching: an external rewriter with the same `name` as a built-in one replaces it.
 2. **`match(manifest, ctx)`** — return `True` if this rewriter handles this Ingress manifest. Typically checks `ingressClassName` (resolved through `ingress_types` config) or annotation prefixes.
 3. **`rewrite(manifest, ctx)`** — convert one Ingress manifest to a list of entry dicts (see [entry format](#entry-format) below).
-4. **`priority`** *(optional)* — integer, default `1000`. Lower = checked earlier. External rewriters are always checked before built-in ones, regardless of priority. Priority only orders rewriters within the same pool (external or built-in).
+4. **`priority`** *(optional)* — integer, default `1000`. Lower = checked earlier. External and built-in rewriters are sorted together; on a tie, an external rewriter is checked before a built-in one. The built-in HAProxy rewriter sits at `1100` so that annotation-specific rewriters at the default `1000` get first pick.
 
 ```python
 from dekube import IngressRewriter, get_ingress_class, resolve_backend
@@ -32,20 +32,26 @@ class NginxRewriter(IngressRewriter):
         cls = get_ingress_class(manifest, ingress_types)
         if cls == "nginx":
             return True
+        if cls in ("haproxy", "traefik"):  # another known controller's class wins
+            return False
         annotations = (manifest.get("metadata") or {}).get("annotations") or {}
         return any(k.startswith("nginx.ingress.kubernetes.io/") for k in annotations)
 
     def rewrite(self, manifest, ctx):
         entries = []
         for rule in (manifest.get("spec") or {}).get("rules") or []:
-            host = rule.get("host", "")
+            if not rule:
+                continue
+            host = rule.get("host") or ""
             if not host:
                 continue
             for path_entry in (rule.get("http") or {}).get("paths") or []:
+                if not path_entry:
+                    continue
                 backend = resolve_backend(path_entry, manifest, ctx)
                 entries.append({
                     "host": host,
-                    "path": path_entry.get("path", "/"),
+                    "path": path_entry.get("path") or "/",
                     "upstream": backend["upstream"],
                     "scheme": "http",
                 })
@@ -93,14 +99,16 @@ entries.append({
 
 When the `IngressProvider` processes Ingress manifests, each manifest is dispatched to the first matching rewriter:
 
-1. External rewriters are checked first (in priority order)
-2. Built-in rewriters are checked next
+1. Rewriters with `extensions.<name>.enabled: false` are dropped (`Rewriter disabled: <name>`)
+2. The rest are checked in priority order, external and built-in together (ties: external first). Each sees its own `extensions.<name>` block as `ctx.extension_config` during `match()`, and the winner keeps it during `rewrite()`
 3. If no rewriter matches, a warning is emitted and the manifest is skipped
 
-The built-in `HAProxyRewriter` matches:
+The built-in `HAProxyRewriter` (priority `1100`, checked last) matches:
 
 - `ingressClassName: haproxy` or empty/absent class (acts as default fallback)
 - Any manifest with `haproxy.org/*` annotations
+
+The official nginx and traefik rewriters claim their own class, refuse another known class (`haproxy`, `nginx`, `traefik`) — as the real controller would — and otherwise (classless or an unmapped custom class) claim any Ingress carrying their annotation prefix. So a classless Ingress with nginx annotations goes to nginx when it's loaded, and to the HAProxy fallback when it isn't.
 
 ### Custom ingress class names (`ingress_types`)
 
@@ -113,7 +121,7 @@ ingress_types:
   nginx-internal: nginx
 ```
 
-The mapping is applied before rewriter dispatch — rewriters see the canonical name. Without it, custom class names won't match any rewriter and the Ingress is skipped with a warning.
+The mapping is applied before rewriter dispatch — rewriters see the canonical name. Without it, a custom class name only matches through a rewriter's annotation heuristic (nginx/traefik annotations, `haproxy.org/*`); an Ingress with neither is skipped with a warning.
 
 Inside your rewriter, use `get_ingress_class(manifest, ctx.config.get("ingress_types") or {})` to get the resolved class name. Both `get_ingress_class` and `resolve_backend` are part of the public interface — import them from `dekube`.
 

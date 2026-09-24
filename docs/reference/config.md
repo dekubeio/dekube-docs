@@ -66,7 +66,8 @@ disable_ingress: false
 infer_namespaces: true
 
 # Map custom ingressClassName values to canonical rewriter names.
-# Without this, custom class names won't match any rewriter.
+# Without this, a custom class only matches through a rewriter's
+# annotation heuristic (e.g. nginx.ingress.kubernetes.io/* annotations).
 # Legacy key: ingressTypes
 ingress_types:
   haproxy-controller-internal: haproxy
@@ -137,7 +138,7 @@ extensions:
 
 ## Per-extension config (`extensions.*`)
 
-Each extension receives its own config section via `ctx.extension_config`. The engine resolves it automatically: an extension with `name = "caddy"` receives the contents of `extensions.caddy` from the config file.
+Each extension — converter, provider, indexer, transform, rewriter — receives its own config section via `ctx.extension_config`. The engine resolves it automatically: an extension with `name = "caddy"` receives the contents of `extensions.caddy` from the config file. An absent or empty block (`caddy:` with nothing under it) is `{}`.
 
 ```yaml
 extensions:
@@ -154,7 +155,12 @@ extensions:
     enabled: false
 ```
 
-The `enabled` key is checked by the engine before each `convert()` / `transform()` call. When `false`, the extension is loaded but never executed.
+The `enabled` key is checked by the engine before each `convert()` / `transform()` call and before rewriter dispatch. When `false`, the extension is loaded but never executed; a disabled rewriter's Ingresses fall through to the next matching rewriter.
+
+!!! note "`extensions.nginx` is shared"
+    The nginx ingress provider and the nginx rewriter are both named `nginx`, so they read the same block — and `enabled: false` there disables both.
+
+Empty entries are treated as absent rather than crashing the run: `overrides: {svc: }`, `services: {svc: }`, an empty `volume_root` (→ `./data`), an empty `ingress_types` value.
 
 ## Special value placeholders
 

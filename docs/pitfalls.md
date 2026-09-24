@@ -35,7 +35,7 @@ sys.modules.setdefault("dekube", sys.modules[__name__])
 **Consequences for extension authors:**
 
 - Prefer duck typing over `isinstance`. Use `getattr(result, 'services', None)` instead of `isinstance(result, ProviderResult)`.
-- Import from `dekube`, not from internal submodules (`dekube.pacts.types`). The flat file has no submodules.
+- Import from `dekube` or `dekube.pacts[.types|.helpers|.ingress]` with `from … import`. The flat file has no submodules: the build aliases those four names to it, nothing else — `dekube.core.*` doesn't exist there, and `import dekube.pacts as p` fails.
 - The legacy `h2c` shim still works but new extensions should use `dekube`.
 
 See [Build system — The `sys.modules` fix](understand/build-system.md#the-sysmodules-fix) for the full explanation.
@@ -49,6 +49,8 @@ These affect distribution builders, not extension authors.
 - **Third-party detection** — the import sorter checks `module == "yaml"`. If a new third-party dep is added, update this check.
 - **`_auto_register()` skips `_`-prefixed names** — naming a class `_MyConverter` prevents registration. New base classes must be added to `_BASE_CLASSES`.
 - **Duplicate kind = fatal** — two classes claiming the same `kind` causes `sys.exit(1)`. Intentional — silent conflicts are worse.
+- **Top-level name collision = fatal** — a function, class or assignment defined differently by two sources (engine modules included) fails the build. Identical definitions pass; `--my-extensions-are-fine-i-swear` overrides.
+- **Extension load failure = fatal** — at runtime, an `--extensions-dir` file that fails to import exits 1 instead of being skipped with a warning.
 
 See [Build system — Gotchas](understand/build-system.md#gotchas) for details on each.
 

@@ -77,6 +77,8 @@ from dekube import ConvertContext           # via re-export
 from dekube.pacts import ConvertContext     # explicit
 ```
 
+Both work in the package and in a distribution's single file, where `dekube.pacts` and `dekube.pacts.{types,helpers,ingress}` are aliased to the flat module. Use the `from dekube.pacts[.x] import …` form: `import dekube.pacts as p` fails in a distribution, and `dekube.core.*` paths don't exist there at all.
+
 The conversion primitives (`convert_command`, `convert_volume_mounts`, `build_alias_map`, `build_service_port_map`, `resolve_named_port`) and `IngressProvider` live in `dekube.core` — import them from `dekube` only.
 
 - **`ConverterResult`** — return type for converters and indexers. One field: `ingress_entries` (list). Use when your extension doesn't produce compose services.
@@ -113,10 +115,10 @@ Internal functions (`_apply_port_remap`, `_resolve_env_entry`, `_build_vol_map`,
 
 ## Keep helpers inside the class
 
-Distributions concatenate all extension `.py` files into a single script. Top-level function names share a flat namespace — if two extensions define `_log()`, the second silently overwrites the first. The build system detects this and refuses to build (unless you pass `--my-extensions-are-fine-i-swear`).
+Distributions concatenate the engine and all extension `.py` files into a single script. Top-level functions, classes and assignments share one flat namespace — with the other extensions **and with the engine**: an extension's `def log()` or `def main()` would silently replace the engine's for everyone. The build refuses any top-level name that two sources define differently (identical definitions are allowed); `--my-extensions-are-fine-i-swear` downgrades that to a warning. Names bound by imports or inside top-level `if`/`try` blocks aren't checked.
 
 !!! tip "First, reach for the engine's helpers"
-    Before writing a helper at all, check [Available imports](#available-imports) — the common ones are already there. `log("my-extension", msg)` replaces a hand-rolled `_log`; `generate_password`, `is_excluded`, `iter_workloads`, `iter_named_containers` cover the usual cases. Engine functions live in the `dekube` namespace, so they can't collide with an extension's top-level names. What you don't define can't clash.
+    Before writing a helper at all, check [Available imports](#available-imports) — the common ones are already there. `log("my-extension", msg)` replaces a hand-rolled `_log`; `generate_password`, `is_excluded`, `iter_workloads`, `iter_named_containers` cover the usual cases. What you don't define can't clash.
 
 The fix, for helpers the engine doesn't provide: put them inside your class.
 
@@ -141,7 +143,7 @@ class MyTransform:
 - Methods that need `self` (logging with `self.name`) → regular methods
 - Pure helpers → `@staticmethod`
 - Call via `self._func()` from instance methods, `ClassName._func()` from static methods
-- Top-level constants (`_WORKLOAD_KINDS = (...)`) are fine — only functions collide
+- Top-level constants collide too: two extensions defining `_WORKLOAD_KINDS` with different values fail the build. Make them class attributes
 
 This applies to all extension types: converters, providers, transforms, rewriters.
 
@@ -259,6 +261,8 @@ Loaded transforms: MyTransform
 Loaded rewriters: NginxRewriter (nginx)
 ```
 
+A file that fails to import (syntax error, missing dependency such as `cryptography`) aborts the run with exit code 1 and `Error: failed to load extension <path>: <ExcType>: <msg>` — nothing is written. A silently skipped extension would produce a wrong compose file. Extension modules are registered in `sys.modules` before they execute, so `@dataclass` with `from __future__ import annotations` works.
+
 ## Repo structure
 
 For distribution via [dekube-manager](https://manager.dekube.io/docs/), each extension is a GitHub repo with:
@@ -289,13 +293,14 @@ The README should cover: what the extension does, handled kinds (for converters/
       "description": "What it does",
       "file": "{name}.py",
       "depends": [],
-      "incompatible": []
+      "incompatible": [],
+      "min_engine": "v1.5.0"
     }
   }
 }
 ```
 
-`depends` lists extensions that must be installed alongside. `incompatible` lists extensions that conflict (bidirectional — declaring on one side is enough). Both are optional.
+`depends` lists extensions that must be installed alongside. `incompatible` lists extensions that conflict (bidirectional — declaring on one side is enough). `min_engine` is the oldest dekube-engine your file works with (set it when you import a helper added later); dekube-manager refuses the install when it knows the engine is older — today, only for `--distribution engine`, since the other distributions don't expose their engine version. All three are optional.
 
 Once merged, users can install with:
 

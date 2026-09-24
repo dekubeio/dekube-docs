@@ -42,7 +42,7 @@ The bare dekube-engine has **no** built-in converters — all registries are emp
 
 - **`ConfigMapIndexer`** / **`SecretIndexer`** / **`PVCIndexer`** / **`ServiceIndexer`** — index resources into `ctx` ([dekube-indexer-*](https://github.com/dekubeio))
 - **`SimpleWorkloadProvider`** — kinds: DaemonSet, Deployment, Job, Pod, StatefulSet ([dekube-provider-simple-workload](https://github.com/dekubeio/dekube-provider-simple-workload))
-- **`HAProxyRewriter`** — built-in ingress rewriter, haproxy + default fallback ([dekube-rewriter-haproxy](https://github.com/dekubeio/dekube-rewriter-haproxy))
+- **`HAProxyRewriter`** — built-in ingress rewriter, haproxy + default fallback (priority 1100, checked last) ([dekube-rewriter-haproxy](https://github.com/dekubeio/dekube-rewriter-haproxy))
 - **`CaddyProvider`** — IngressProvider, produces a Caddy service + Caddyfile ([dekube-provider-caddy](https://github.com/dekubeio/dekube-provider-caddy))
 - **`EmptyDirTransform`** — transform, promotes shared emptyDir volumes to named Compose volumes ([dekube-transform-emptydir](https://github.com/dekubeio/dekube-transform-emptydir))
 - **`FixPermissions`** — transform, generates fix-permissions service for non-root bind mounts ([dekube-transform-fix-permissions](https://github.com/dekubeio/dekube-transform-fix-permissions))
@@ -51,7 +51,7 @@ Each lives in its own repo, referenced in `distribution.json`. The distribution 
 
 ### External extensions (providers and converters)
 
-Loaded via `--extensions-dir`. Each `.py` file (or one-level subdirectory with `.py` files) is scanned for classes with `kinds` and `convert()`. Providers (keycloak, servicemonitor) produce compose services; converters (cert-manager, trust-manager) produce synthetic resources. Both share the same code interface and are sorted by `priority` (lower = earlier; default 1000 for `Converter`, 50 for `IndexerConverter`, 500 for `Provider`) and registered into the dispatch loop.
+Loaded via `--extensions-dir`. Each `.py` file (or one-level subdirectory with `.py` files) is scanned for classes with `kinds` and `convert()`. Providers (keycloak, servicemonitor) produce compose services; converters (cert-manager, trust-manager) produce synthetic resources. Both share the same code interface and are sorted by `priority` (lower = earlier; default 1000 for `Converter`, 50 for `IndexerConverter`, 500 for `Provider`) and registered into the dispatch loop. A file that fails to import stops the run (exit 1) instead of being skipped.
 
 ```
 .dekube/extensions/
@@ -65,7 +65,7 @@ See [Writing converters](../extend/extensions/writing-converters.md) for the ful
 
 ### External transforms
 
-Loaded from the same `--extensions-dir` as converters. The loader distinguishes them automatically: classes with `transform()` and no `kinds` are transforms. Sorted by `priority` (lower = earlier, default 1000). Run after all converters, aliases, and hostname truncation, but **before** user overrides — so overrides always have the final say.
+Loaded from the same `--extensions-dir` as converters. The loader distinguishes them automatically: classes with `transform()` and no `kinds` are transforms. An external transform with the same `name` as a built-in one replaces it. Sorted by `priority` (lower = earlier, default 1000). Run after all converters, aliases, and hostname truncation, but **before** user overrides — so overrides always have the final say.
 
 See [Writing transforms](../extend/extensions/writing-transforms.md) for the full guide.
 
@@ -73,9 +73,9 @@ See [Writing transforms](../extend/extensions/writing-transforms.md) for the ful
 
 Ingress annotation handling is dispatched through `IngressRewriter` classes. Each rewriter targets a specific ingress controller (identified by `ingressClassName` or annotation prefix) and translates its annotations into ingress entry dicts consumed by the configured `IngressProvider`.
 
-The built-in `HAProxyRewriter` handles `haproxy` and empty/absent ingress classes, plus any manifest with `haproxy.org/*` annotations. It also acts as the default fallback when no `ingressClassName` is set — if no external rewriter matches first, HAProxy claims the manifest.
+The built-in `HAProxyRewriter` handles `haproxy` and empty/absent ingress classes, plus any manifest with `haproxy.org/*` annotations. It also acts as the default fallback when no `ingressClassName` is set: at priority 1100 it runs after the default-1000 rewriters, so nginx or traefik claim a classless Ingress carrying their annotations first, and HAProxy takes whatever is left.
 
-External rewriters are loaded from `--extensions-dir` alongside converters and transforms. A rewriter with the same `name` as a built-in one replaces it. Dispatch order: external rewriters first, then built-in.
+External rewriters are loaded from `--extensions-dir` alongside converters and transforms. A rewriter with the same `name` as a built-in one replaces it. External and built-in rewriters are sorted together by priority (ties: external first); `enabled: false` removes one from dispatch.
 
 See [Writing rewriters](../extend/extensions/writing-rewriters.md) for the full guide.
 
